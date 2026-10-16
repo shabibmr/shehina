@@ -1,0 +1,12 @@
+{
+  "name": "shehna-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shehna API: global profit-sharing container export platform, operated from the UAE, all amounts in USD (no third-party dependencies)",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node --no-warnings src/server.js",
+    "dev": "NODE_ENV=development node --no-warnings src/server.js",
+    "test": "node --no-warnings --test test/*.test.js"
+  }
+}
