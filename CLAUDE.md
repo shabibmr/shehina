@@ -54,3 +54,13 @@ npm start                                                  # serves API + web ap
 - Served under a strict CSP: **no inline scripts or inline event handlers** — put all code in the `.js` modules. Escape interpolated values with `esc()`.
 - Amounts arrive in cents; format with `usd()` / `usdx()`.
 - Three visual themes (`container`, `majlis`, `oasis`) selected via `data-look` on `<html>`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues (`shabibmr/shehina`) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context: one `GLOSSARY.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
