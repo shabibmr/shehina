@@ -121,12 +121,14 @@ They tick *"I confirm these details are true and I am authorised to act for this
 
 ### 5.4 Shipment listing lifecycle
 
+> **Agreed change, not built yet (2026-10-31):** all money comes in through the **payment gateway** (§5.5), so there are no manual checks. The manager pays the deposit **from their wallet**, and the listing goes live in the same step. The code still has the old flow: a "deposit sent" flag, then finance confirming a bank transfer with a bank reference. That code is to be removed.
+
 ```
 pending_review ──reject──▶ rejected   (final; the manager must create a new listing)
       │ approve
       ▼
-awaiting_deposit ── manager clicks "I have sent the deposit" (a flag only)
-      │ finance confirms the bank receipt + bank reference
+awaiting_deposit ── manager pays the deposit from their wallet
+      │            (or, with a deposit waiver, the treasury stand-in is booked at approval, §11.3)
       ▼
 live (stage 0 "Funding open") ── investors invest / ops funds the remainder
       │ stage 1..5 advanced one at a time by ops
@@ -142,12 +144,11 @@ Each step in detail:
 2. **Review** (reviewer or owner):
    - Approving moves it to `awaiting_deposit`.
    - Rejecting needs a reason and moves it to `rejected`.
-3. **Deposit:**
-   - The manager transfers `target × company_pct %` in USD to the escrow bank account, using reference `LISTING-<id>` *(UI only)*.
-   - They then optionally click "I have sent the deposit". This only sets a flag. Finance can confirm without it.
-4. **Confirm deposit** (finance or owner, with a bank reference):
-   - The deposit is booked into the shipment's escrow and recorded as the manager's contribution.
-   - The listing becomes **live**, and the `live_at` time is stamped. This can happen only once per listing.
+3. **Pay deposit** (the manager, from their wallet):
+   - The manager pays `target × company_pct %` from their wallet balance. If the wallet doesn't cover it, they top it up first through the payment gateway (§5.5).
+   - In one transaction, the deposit moves from the wallet into the shipment's escrow and is recorded as the manager's contribution. The listing becomes **live**, and the `live_at` time is stamped. This can happen only once per listing.
+   - There is no bank transfer to escrow, no "deposit sent" flag and no finance confirmation.
+4. **Deposit waiver** (planned, §11.3): if owner or finance waived the deposit during the review, the treasury stand-in is booked into escrow at approval, and the listing goes live straight away without waiting for the manager.
 5. **Funding** (only while live and at stage 0):
    - Approved investors invest any amount between the listing's **minimum** and **what is left**, as long as it is covered by their **wallet balance**.
    - The money moves from the wallet to the shipment's escrow.
@@ -168,6 +169,14 @@ Each step in detail:
    - The listing becomes `completed`, stage 6.
 
 ### 5.5 Wallet top-up
+
+> **Agreed change, not built yet (2026-10-31):** top-ups go through a **payment gateway** and are reconciled automatically, with no manual checks.
+> - The user starts a payment for a stated USD amount.
+> - The gateway's signed confirmation credits exactly that amount, once per payment.
+> - Only approved investors and managers can top up.
+> - The user always receives the full amount. The gateway's fee is the platform's cost.
+>
+> The bank-transfer webhook described below is the current code and is to be replaced.
 
 - **Production:** the bank calls `POST /webhooks/bank`.
   - The call carries an HMAC-SHA256 signature in `x-signature`, and a JSON body `{event_id, user_id, amount_usd}`.
@@ -423,11 +432,11 @@ Fixed in the global upgrade:
 - ~~Date of birth, phone and ID type were only length-checked.~~ Date of birth (real date, 18+), phone (international) and ID type are now validated.
 
 Still open:
-1. **Bank credits ignore approval status.** The webhook credits any investor or manager, even one whose KYC or registration was never approved. Withdrawals do check approval.
+1. **Bank credits ignore approval status.** The webhook credits any investor or manager, even one whose KYC or registration was never approved. Withdrawals do check approval. *(Resolved by the agreed change in §5.5: only approved users can top up through the gateway.)*
 2. **Treasury top-ups are de-duplicated by bank reference.** Entering the same reference twice silently books nothing the second time.
 3. **A remaining amount smaller than the minimum investment can't be filled by investors.** For example, USD 300 left on a listing with a minimum of USD 1,000. Only platform funding can close it.
 4. **A rejected listing is final.** There is no edit-and-resubmit path, unlike applications.
-5. **The deposit-sent flag is informational only.** Finance can confirm a deposit the manager never marked as sent.
+5. **The deposit-sent flag is informational only.** Finance can confirm a deposit the manager never marked as sent. *(Goes away with the agreed change in §5.4: the deposit is paid from the wallet.)*
 6. **Settlement has no second approval.** One ops user enters the sale price and every wallet is paid at once.
 7. **The blocked list only checks where someone lives or is registered.** It does not screen names, owners' nationalities or counterparties, and a person who moves country isn't re-checked until their next submission.
 8. **The account-holder name isn't compared to the user's name.** Finance checks it by eye.
