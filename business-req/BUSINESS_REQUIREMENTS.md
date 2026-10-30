@@ -37,6 +37,7 @@ Everything is checked by staff before it can touch money: investors pass identit
 | **Staff: Reviewer** | Added by an owner | Approves or rejects investors, managers and new listings. Assigns review items. |
 | **Staff: Ops** | Added by an owner | Moves shipments through their stages, funds the remaining balance from the treasury, and completes or settles shipments. |
 | **Staff: Finance** | Added by an owner | Confirms manager deposits, tops up the treasury, and approves or declines withdrawals under USD 10,000. |
+| **Shareholder** *(planned, §11)* | Not a separate account. The owner marks an approved investor or manager account as a Shareholder. | Receives the Shareholder share of the treasury's profit on Listings where they are the buyer or the manager. |
 
 Permission map (`perms.js`). The owner is included in every row.
 
@@ -410,6 +411,7 @@ Every page shows a footer: the platform operator and country, that it is open to
 8. Native mobile app for investors, and languages other than English.
 9. Notifications (email, SMS, push), rate limiting, TLS, monitoring, and a security review.
 10. Legal text: terms, risk disclosure, privacy policy, and wording that returns are estimates, per country and language.
+11. Shareholders, Shareholder Listings, the deposit waiver and the Reserve fund (§11).
 
 ---
 
@@ -431,3 +433,87 @@ Still open:
 8. **The account-holder name isn't compared to the user's name.** Finance checks it by eye.
 9. **Flag emoji don't render on Windows browsers.** The country name is always shown next to it.
 10. **Existing data in AED is not converted.** Older databases keep their numbers as they were.
+
+---
+
+## 11. Planned: Shareholders and Shareholder Listings
+
+**Status: agreed on 2026-10-31, not built yet.** Source: `docs/Equitry Invesstors/New User-Equity Investor.txt`, and the decisions recorded in `GLOSSARY.md` and `docs/adr/0001-shareholder-share-of-treasury-profit.md`.
+
+### 11.1 Who Shareholders are
+
+- About **10 Shareholders**, each owning **1% of Shehna**, mostly importers. Their money goes to Shehna's expenses and treasury.
+- The stake is bought and documented **outside the platform**. Shehna doesn't sell shares, keep a share register or pay dividends.
+- On Shehna, the **owner marks** an existing **approved** investor or manager account as a Shareholder, and can remove the mark. Both actions are audited. A Shareholder has no extra screens: payouts arrive in their wallet.
+- A Shareholder who lists a trade as a **manager** keeps the usual manager benefits and obligations, including paying their own manager deposit.
+
+### 11.2 Shareholder Listing
+
+A Listing is a **Shareholder Listing** when its **buyer** or its **manager** is a Shareholder.
+
+- **Buyer link:** today the buyer is recorded only as a country. During the listing review, staff (`review`) also record **which Shareholder** the buyer is, if any. The manager doesn't choose this and the Shareholder doesn't confirm it. It is locked at approval.
+- The reviewer **checks the expected sale price against the market** before approval, because a Shareholder-buyer who pays a low price lowers the investors' profit. The settlement approver checks the sale document against it. There is no fixed tolerance yet.
+- **Investors are not told** that a Listing is a Shareholder Listing, and they don't see the waiver or the treasury amounts (consistent with §6.5).
+- The same Shareholder may be both the manager and the buyer.
+
+### 11.3 Deposit waiver (only when the buyer is a Shareholder)
+
+- **Owner or finance** (`deposit`) may waive the manager deposit during the listing review, before approval. It is audited and locked once the Listing is approved.
+- It is **all or nothing**: the manager pays the full deposit or none of it.
+- When the Listing goes live, the treasury puts in a **stand-in contribution** of the waiver stand-in % of the funding target (**default 20%**, a setting of its own, separate from the 20–90% manager deposit range).
+- Investors fund the rest. If the Listing becomes **Overdue**, ops or the owner fill the balance from the treasury as usual (§5.4 step 6). Nothing is filled automatically.
+- The manager still receives the **manager share** of net profit, but earns nothing on capital because they put none in.
+- There is no waiver when only the manager is a Shareholder.
+
+### 11.4 Settlement on a Shareholder Listing
+
+The formula in §6.3 is unchanged, **including the 1% service fee on the sale price**. One extra step applies to the treasury's profit:
+
+```
+treasury profit   = sum of the pool slices of every treasury contribution on the Listing
+                    (the waiver stand-in and any Overdue fill)
+if treasury profit > 0:
+  shareholder     = shareholder_share% of treasury profit       (default 75%, fixed when the Listing is approved)
+  reserve         = treasury profit − shareholder                (default 25%)
+treasury payout   = treasury capital (+ treasury profit if ≤ 0)
+```
+
+- The **Shareholder share** is paid to the Shareholder's **wallet**, and the rest to the **Reserve fund**, in the same settlement transaction.
+- If the manager and the buyer are **two different Shareholders**, they split the Shareholder share **equally**. If one Shareholder is both, they get all of it.
+- **Loss:** treasury contributions lose pro-rata like everyone else's. The Shareholder bears none of the loss, and the Reserve fund is not drawn on automatically.
+- Rounding *(proposed)*: the Shareholder share is rounded down to the cent and the remainder goes to the Reserve fund. In an equal split between two Shareholders, the odd cent goes to the buyer.
+
+*Example:* target USD 100,000, buyer is a Shareholder, deposit waived, investor share 60%.
+- The treasury stand-in is 20,000. Investors put in 70,000. The Listing goes Overdue and the treasury fills 10,000, so the treasury holds 30,000 (30%).
+- Cost of goods 95,000, sold for 110,000 → gross 15,000, fee 1,100, net 13,900.
+- Manager share (40%) 5,560 → pool 8,340.
+- Investors' slice (70%) 5,838. Treasury's slice (30%) 2,502.
+- Treasury profit 2,502 → **Shareholder 1,876.50**, **Reserve fund 625.50**. The treasury gets its 30,000 capital back.
+
+### 11.5 Reserve fund
+
+- A new platform ledger account, separate from the treasury (proposed name `platform:reserve`). It **can never go negative**.
+- It receives the Reserve fund part of the treasury's profit on Shareholder Listings.
+- Only the **owner** moves money out of it, at their discretion. Every move is audited.
+
+### 11.6 Settings, permissions and audit
+
+| Setting | Default | Rule |
+|---|---|---|
+| Waiver stand-in % | 20% | Treasury stand-in for a waived manager deposit, as a % of the funding target |
+| Shareholder share % | 75% | Share of the treasury's profit paid to the Shareholder; the rest goes to the Reserve fund. Fixed for each Listing at approval. |
+
+| Action | Who |
+|---|---|
+| Mark or unmark a Shareholder | owner |
+| Record the buyer as a Shareholder (listing review) | reviewer, owner |
+| Waive the manager deposit (listing review) | finance, owner |
+| Move money out of the Reserve fund | owner |
+
+New audited actions: shareholder mark and unmark, buyer-shareholder link, deposit waiver, waiver stand-in funding, shareholder payout, Reserve fund movement.
+
+### 11.7 Open questions
+
+1. A fixed tolerance for related-party sale prices, if any.
+2. A Shariah board may treat the Shareholder share as a hidden discount to the buyer on the sale price.
+3. Whether investors should be told about the Shareholder relationship. It is hidden for now. This may need to change for compliance or Shariah certification.
