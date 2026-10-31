@@ -1,4 +1,4 @@
-# Shehna: business requirements extracted from the code
+# Shehnat: business requirements extracted from the code
 
 Source: `Demo/backend/src/*` and `Demo/frontend/*`, as upgraded to global scope on 2026-10-14. Every rule below is enforced in code unless marked *(UI only)* or listed under "Gaps".
 
@@ -9,11 +9,11 @@ Source: `Demo/backend/src/*` and `Demo/frontend/*`, as upgraded to global scope 
 
 ## 1. Base idea
 
-Shehna is a platform for **crowd-funding container export shipments** from anywhere to anywhere.
+Shehnat is a platform for **crowd-funding container export shipments** from anywhere to anywhere.
 
 - A **manager** (a business, or an individual trader, in any country) lists one shipment. Examples: a 40ft container of coffee, rice, building materials or textiles. They record where the goods are **sourced** and where the **buyer** is.
 - The manager **puts in their own capital** first: at least 20% of the funding target.
-- **Investors**, from any country, fund the rest from their Shehna wallet. If investors don't fill it in time, **the platform** can fund the gap from its treasury.
+- **Investors**, from any country, fund the rest from their Shehnat wallet. If investors don't fill it in time, **the platform** can fund the gap from its treasury.
 - The manager buys the goods, ships them and sells them to the buyer.
 - When the sale is recorded, the money is split automatically:
   - The platform takes a **1% service charge**, only if the shipment made a profit.
@@ -183,7 +183,7 @@ Each step in detail:
    - **Changing a live plan** (adding, removing or reordering Steps, or changing durations, owners or Stage tags): the manager or ops proposes the change and a reviewer approves it, with finance also approving any cost change. The cycle is recalculated, and every change is recorded in the timeline.
    - The listing's overall Stage is its least advanced Shipment's Stage.
    - **Step costs** (including the cost of goods) are paid by ops from escrow, with proof. Unplanned Step costs need finance approval. Paid costs may never exceed the capital raised.
-   - **Sale proceeds:** the buyer pays Shehna, and the money is credited to the listing's escrow for that Shipment. Any shortfall against the invoice is recorded with a reason. Proceeds stay in escrow until settlement, except that finance may approve using them to pay a later Shipment's costs.
+   - **Sale proceeds:** the buyer pays Shehnat, and the money is credited to the listing's escrow for that Shipment. Any shortfall against the invoice is recorded with a reason. Proceeds stay in escrow until settlement, except that finance may approve using them to pay a later Shipment's costs.
    - **Overrun fill:** if actual costs would exceed the capital raised (and any proceeds finance allows to be used), ops requests an overrun fill with proof, and finance or the owner approves it. There is **no cap**. The treasury puts the money in as a contribution that shares profit and loss pro-rata, so it dilutes everyone else's slice (ADR 0002).
    - **Late:** a Step past its planned duration, or a listing past its cycle, is flagged to staff, and investors see the revised expected date. Nothing happens automatically and nobody is penalised.
    - **Suspended or blocked users:** if the manager is suspended, or their country is added to the blocked list, while the listing is live, ops takes over the manager's Steps and the listing runs on (or ops cancels it, if no goods have been bought yet). An investor's contribution stays in and shares the result in the same situation. Either way, the person's payout is held in their wallet until compliance clears it.
@@ -491,9 +491,9 @@ Still open:
 
 ### 11.1 Who Shareholders are
 
-- About **10 Shareholders**, each owning **1% of Shehna**, mostly importers. Their money goes to Shehna's expenses and treasury.
-- The stake is bought and documented **outside the platform**. Shehna doesn't sell shares, keep a share register or pay dividends.
-- On Shehna, the **owner marks** an existing **approved** investor or manager account as a Shareholder, and can remove the mark. Both actions are audited. A Shareholder has no extra screens: payouts arrive in their wallet.
+- About **10 Shareholders**, each owning **1% of Shehnat**, mostly importers. Their money goes to Shehnat's expenses and treasury.
+- The stake is bought and documented **outside the platform**. Shehnat doesn't sell shares, keep a share register or pay dividends.
+- On Shehnat, the **owner marks** an existing **approved** investor or manager account as a Shareholder, and can remove the mark. Both actions are audited. A Shareholder has no extra screens: payouts arrive in their wallet.
 - A Shareholder who lists a trade as a **manager** keeps the usual manager benefits and obligations, including paying their own manager deposit.
 
 ### 11.2 Shareholder Listing

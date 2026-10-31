@@ -1,6 +1,6 @@
 // Shared core: state, API client, router, layout and reusable components.
 export const S = { meta: null, user: null, me: null, token: null, route: { name: 'boot', params: {} }, data: {}, form: {}, docs: {}, look: 'container', dev: false, sheet: null, busy: false, badges: {} };
-const TOKEN_KEY = 'shehna-token', LOOK_KEY = 'shehna-look';
+const TOKEN_KEY = 'shehnat-token', LOOK_KEY = 'shehnat-look';
 try { S.token = localStorage.getItem(TOKEN_KEY); const l = localStorage.getItem(LOOK_KEY); if (['container', 'majlis', 'oasis'].includes(l)) S.look = l; } catch (e) { /* storage blocked: fine */ }
 document.documentElement.dataset.look = S.look;
 
@@ -46,7 +46,7 @@ const PAL = ico('<path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-.5-.2-.9-.5-1.
 const CHK = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
 
 // ---- reference data (countries, rules and limits come from the server's /meta) ----
-export const META = { currency: 'USD', countries: [], blocked: [], categories: ['Food', 'Building', 'Textiles', 'Energy', 'Other'], idTypes: [], managerTypes: [], rules: {}, limits: { largeWithdrawal: 10000 }, operator: { name: 'Shehna', country_name: 'the United Arab Emirates' } };
+export const META = { currency: 'USD', countries: [], blocked: [], categories: ['Food', 'Building', 'Textiles', 'Energy', 'Other'], idTypes: [], managerTypes: [], rules: {}, limits: { largeWithdrawal: 10000 }, operator: { name: 'Shehnat', country_name: 'the United Arab Emirates' } };
 const NAMES = new Map();
 export async function loadMeta() {
   const m = await api('GET', '/meta');
@@ -152,7 +152,7 @@ function header() {
   document.documentElement.dataset.app = app;
   const chip = app === 'co' ? '<span class="achip">Manager</span>' : app === 'ad' ? `<span class="achip">${S.user.staff_role ? RL[S.user.staff_role] : 'Admin'}</span>` : '';
   const right = `<button class="lk" data-act="look" title="Change design" aria-label="Change design">${PAL}</button>` + (S.user ? `<button class="ghost logout" data-act="logout">Sign out</button>` : '');
-  return `<div class="hdin"><div class="brand">${LOGO}<span>Shehna</span>${chip}</div><div class="hr">${right}</div></div>`;
+  return `<div class="hdin"><div class="brand">${LOGO}<span>Shehnat</span>${chip}</div><div class="hr">${right}</div></div>`;
 }
 function navItems() {
   if (!S.user) return [];

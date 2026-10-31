@@ -16,7 +16,7 @@ test('meta: public reference data is in US dollars and lists the world', async (
   const r = await w.api('GET', '/meta');
   assert.equal(r.status, 200);
   assert.equal(r.body.currency, 'USD');
-  assert.deepEqual(r.body.operator, { name: 'Shehna', country: 'AE', country_name: 'United Arab Emirates' });
+  assert.deepEqual(r.body.operator, { name: 'Shehnat', country: 'AE', country_name: 'United Arab Emirates' });
   assert.ok(r.body.countries.length > 200);
   for (const c of ['AE', 'US', 'IN', 'BR', 'JP', 'KE', 'GB', 'DE']) assert.ok(r.body.countries.some((x) => x.code === c), c);
   assert.deepEqual(r.body.blocked_countries, cfg.blockedCountries);

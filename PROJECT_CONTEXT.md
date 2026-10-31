@@ -1,14 +1,14 @@
-# Shehna: project context
+# Shehnat: project context
 
 A short brief for anyone (or any AI session) picking up this project. Longer detail is in `PROJECT_OVERVIEW.md` (plain-language explanation, worked examples, flows) and `BUSINESS_REQUIREMENTS.md` (roles, rules, data, gaps).
 
 ## What it is
 
-Shehna is a **global** platform that crowd-funds **container export shipments** as profit-sharing partnerships. It is **operated from the UAE**, and **every amount is in US dollars**.
+Shehnat is a **global** platform that crowd-funds **container export shipments** as profit-sharing partnerships. It is **operated from the UAE**, and **every amount is in US dollars**.
 
 - A **manager** (a business or an individual trader, in any country) lists a shipment and funds at least 20% of the target themselves.
 - The goods can be **sourced in any country and sold to a buyer in any other**.
-- **Investors**, from any country, fund the rest from their Shehna wallet. The **platform** can fill any gap from its treasury.
+- **Investors**, from any country, fund the rest from their Shehnat wallet. The **platform** can fill any gap from its treasury.
 - **Staff** review everyone, run the shipment through 7 stages, and settle it.
 - On settlement, one transaction pays every wallet its capital plus profit:
   - 1% platform fee, on profitable shipments only
@@ -49,7 +49,7 @@ Listing status: `pending_review → awaiting_deposit → live → completed` (or
 - **Backend** (`Demo/backend/`): Node ≥ 22.13, **zero third-party dependencies** (`node:http`, `node:sqlite`, `node:crypto`, `node:test`). Do not add npm packages.
 - **Frontend** (`Demo/frontend/`): plain ES modules, no build step, served by the backend under a strict CSP (no inline scripts or handlers). 18 screens, 3 visual themes, English only.
 - **Backend modules:** `auth`, `applications` (KYC and manager registration, documents), `listings`, `settlement` (pure profit maths), `wallet` (withdrawals, webhook, staff, audit endpoints), `ledger`, `countries`. Supporting files: `server`, `db`, `config`, `perms`, `audit`, `util`, `seed`.
-- **Data:** SQLite at `./data/shehna.db`, with the schema re-run on every start (idempotent). New columns are also added by `upgrade()` in `db.js`. Delete `data/` to reset.
+- **Data:** SQLite at `./data/shehnat.db`, with the schema re-run on every start (idempotent). New columns are also added by `upgrade()` in `db.js`. Delete `data/` to reset.
 
 ## Run it
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Shehna: a global profit-sharing container-export investment platform, operated from the UAE, with every amount in US dollars. Investors anywhere fund shipments, managers anywhere (a business or an individual trader) list them, and staff (owner / reviewer / ops / finance) review, run and settle them. Goods can be sourced in any country and sold to a buyer in any other. All code lives in `Demo/`:
+Shehnat: a global profit-sharing container-export investment platform, operated from the UAE, with every amount in US dollars. Investors anywhere fund shipments, managers anywhere (a business or an individual trader) list them, and staff (owner / reviewer / ops / finance) review, run and settle them. Goods can be sourced in any country and sold to a buyer in any other. All code lives in `Demo/`:
 
 - `Demo/backend/` — Node API, **zero third-party dependencies** (built-in `node:http`, `node:sqlite`, `node:crypto`, `node:test`). Requires Node >= 22.13. Do not add npm packages.
 - `Demo/frontend/` — dependency-free web app (plain ES modules, no build step) for all three roles, served by the backend.
@@ -25,7 +25,7 @@ npm start                                                  # serves API + web ap
 
 - `npm run dev` uses POSIX `NODE_ENV=development ...` syntax and fails in PowerShell/cmd. On Windows, just use `npm start` (any `NODE_ENV` other than `production` is dev mode), or set the env var first (`$env:OWNER_EMAIL=...` in PowerShell).
 - Default port is 8080 (`src/config.js`); the README's mention of `localhost:3000` is only correct if `PORT=3000`.
-- Dev DB is `./data/shehna.db` (relative to cwd); uploads go to `./data/uploads`. Delete `data/` to reset.
+- Dev DB is `./data/shehnat.db` (relative to cwd); uploads go to `./data/uploads`. Delete `data/` to reset.
 - Production (`NODE_ENV=production`) refuses to start unless `TOKEN_SECRET` and `BANK_WEBHOOK_SECRET` are >= 32 chars. See `.env.example` and `Dockerfile`.
 
 ## Backend architecture

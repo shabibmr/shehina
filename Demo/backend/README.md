@@ -1,4 +1,4 @@
-# Shehna backend
+# Shehnat backend
 
 API for a global profit-sharing container-export investment platform, operated from the UAE. All money is in US dollars.
 Investors anywhere fund shipments, managers anywhere (a business or an individual trader) list them, and staff review, run and settle them.

@@ -5,13 +5,13 @@ const prod = env.NODE_ENV === 'production';
 const cfg = {
   prod,
   port: Number(env.PORT || 8080),
-  dbFile: env.DB_FILE || (prod ? '/var/lib/shehna/shehna.db' : './data/shehna.db'),
+  dbFile: env.DB_FILE || (prod ? '/var/lib/shehnat/shehnat.db' : './data/shehnat.db'),
   uploadDir: env.UPLOAD_DIR || './data/uploads',
   tokenSecret: env.TOKEN_SECRET || 'dev-only-secret-change-me',
   webhookSecret: env.BANK_WEBHOOK_SECRET || 'dev-only-webhook-secret',
   tokenTtlSec: Number(env.TOKEN_TTL_SEC || 8 * 3600),
   currency: 'USD',          // every wallet, listing and payout is in US dollars (stored as whole cents)
-  operator: { name: 'Shehna', country: 'AE' },   // the platform is operated from the UAE
+  operator: { name: 'Shehnat', country: 'AE' },   // the platform is operated from the UAE
   // Countries we cannot accept people or trade from (ISO 3166-1 alpha-2, comma separated).
   // This default is a placeholder: compliance must set the real list for the licences held.
   blockedCountries: (env.BLOCKED_COUNTRIES !== undefined ? env.BLOCKED_COUNTRIES : 'CU,IR,KP,SY').split(',').map((s) => s.trim().toUpperCase()).filter(Boolean),

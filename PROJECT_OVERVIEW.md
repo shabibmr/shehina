@@ -1,10 +1,10 @@
-# Shehna: Project Overview
+# Shehnat: Project Overview
 
-**Shehna** is an early-stage platform where people anywhere in the world can invest in export shipments and share in the profit when the goods sell. It is operated from the UAE, and every amount on it is in **US dollars (USD)**.
+**Shehnat** is an early-stage platform where people anywhere in the world can invest in export shipments and share in the profit when the goods sell. It is operated from the UAE, and every amount on it is in **US dollars (USD)**.
 
 ## The idea
 
-A trader wants to export a container of goods, say basmati rice sourced in India and sold to a buyer in Kenya. The trader, called the **manager**, doesn't want to fund the whole shipment alone, so they list it on Shehna and investors put money in. The goods can be sourced anywhere and the buyer can be anywhere, and so can the manager and the investors. When the goods sell, the profit is split between everyone who put in money and the manager who ran the trade.
+A trader wants to export a container of goods, say basmati rice sourced in India and sold to a buyer in Kenya. The trader, called the **manager**, doesn't want to fund the whole shipment alone, so they list it on Shehnat and investors put money in. The goods can be sourced anywhere and the buyer can be anywhere, and so can the manager and the investors. When the goods sell, the profit is split between everyone who put in money and the manager who ran the trade.
 
 This works as a **profit-sharing partnership**:
 
@@ -278,7 +278,7 @@ It follows the same pattern as investor KYC, with different details. A manager c
 
 ### Bank webhook (money arriving from the bank)
 
-This is how the bank tells Shehna that a customer has transferred money in, so their wallet can be credited. Today it's a stand-in for the real bank connection.
+This is how the bank tells Shehnat that a customer has transferred money in, so their wallet can be credited. Today it's a stand-in for the real bank connection.
 
 1. **The call.** The bank sends `POST /webhooks/bank` without signing in. The body is JSON with:
    - `event_id`: the bank's unique number for this transfer

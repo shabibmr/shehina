@@ -4,7 +4,7 @@ status: accepted
 
 # Shareholders receive most of the treasury's profit on their own trades
 
-About ten importers each hold 1% of Shehna, and we want their suppliers to trade through the platform. On a Listing where a Shareholder is the buyer or the manager, 75% of the profit on every treasury contribution goes to that Shareholder's wallet at settlement, and 25% goes to a separate Reserve fund. When the buyer is a Shareholder, owner or finance may also waive the manager deposit, and the treasury stands in for it (20% of the target). This pays Shareholders for bringing in trade, per Listing, instead of through company dividends, and it keeps the deal on the platform's ledger rather than in side agreements.
+About ten importers each hold 1% of Shehnat, and we want their suppliers to trade through the platform. On a Listing where a Shareholder is the buyer or the manager, 75% of the profit on every treasury contribution goes to that Shareholder's wallet at settlement, and 25% goes to a separate Reserve fund. When the buyer is a Shareholder, owner or finance may also waive the manager deposit, and the treasury stands in for it (20% of the target). This pays Shareholders for bringing in trade, per Listing, instead of through company dividends, and it keeps the deal on the platform's ledger rather than in side agreements.
 
 ## Considered options
 

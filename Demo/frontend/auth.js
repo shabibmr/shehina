@@ -16,6 +16,6 @@ acts.login = () => busy(async () => { await enter(await api('POST', '/auth/login
 acts.register = () => busy(async () => {
   await api('POST', '/auth/register', { email: S.form.email, password: S.form.password, name: S.form.name, role: S.form.role === 'company' ? 'company' : 'investor' });
   await enter(await api('POST', '/auth/login', { email: S.form.email, password: S.form.password }));
-  toast('Welcome to Shehna');
+  toast('Welcome to Shehnat');
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && S.route.name === 'login' && e.target.matches('input')) { acts[S.form.mode === 'register' ? 'register' : 'login'](); } });

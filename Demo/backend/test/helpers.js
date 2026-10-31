@@ -10,7 +10,7 @@ const path = require('node:path');
 
 async function boot() {
   db.close(); db.open(':memory:'); cfg.setClock(null);
-  cfg.uploadDir = fs.mkdtempSync(path.join(os.tmpdir(), 'shehna-test-'));   // uploads from tests never touch the project
+  cfg.uploadDir = fs.mkdtempSync(path.join(os.tmpdir(), 'shehnat-test-'));   // uploads from tests never touch the project
   const server = createServer();
   await new Promise((r) => server.listen(0, r));
   const base = `http://127.0.0.1:${server.address().port}`;

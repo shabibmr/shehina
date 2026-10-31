@@ -9,7 +9,7 @@ process.env.NODE_ENV = 'test';
 const db = require('../src/db');
 
 test('a database made by an earlier version is upgraded in place', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'shehna-upg-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'shehnat-upg-'));
   const file = path.join(dir, 'old.db');
   const old = new DatabaseSync(file);
   old.exec(`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, pass_hash TEXT NOT NULL, role TEXT NOT NULL, staff_role TEXT, active INTEGER NOT NULL DEFAULT 1, failed_logins INTEGER NOT NULL DEFAULT 0, locked_until INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL);

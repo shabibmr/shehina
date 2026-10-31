@@ -1,6 +1,6 @@
 New User : Equity Investor.
 
-Equity Investors are who invest in Shehna. The money goes to the Shehna expenses and treasury.
+Equity Investors are who invest in Shehnat. The money goes to the Shehnat expenses and treasury.
 Currently the plan is for 10 investors with 1% Equity. The investors picked are mostly importers.
 These investors have a different method for calculating.
 The shipments by these investors or shipments to these investors (they are the Buyers).

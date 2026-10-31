@@ -66,7 +66,7 @@ _Avoid_: reserve, reserves (as a loose name for the treasury).
 
 ## Wallet
 
-A user's balance on Shehna in US dollars. It is funded through the payment gateway, and only an approved Investor or Manager can top it up. Investors invest from it, Managers pay their Manager deposit from it, and withdrawals leave from it.
+A user's balance on Shehnat in US dollars. It is funded through the payment gateway, and only an approved Investor or Manager can top it up. Investors invest from it, Managers pay their Manager deposit from it, and withdrawals leave from it.
 
 ## Blocked country
 
@@ -126,7 +126,7 @@ _Avoid_: expired, abandoned.
 
 ## Shariah compliance
 
-A product requirement: Shehna must be structured so a Shariah board can certify it. The existing vocabulary (Investor, Manager, Manager share, Service fee) is kept as it is.
+A product requirement: Shehnat must be structured so a Shariah board can certify it. The existing vocabulary (Investor, Manager, Manager share, Service fee) is kept as it is.
 
 _Open question_: the Service fee is charged on sale price, which a Shariah board may challenge.
 
@@ -142,17 +142,17 @@ _Open question_: how a finding is made and how the loss is recovered (deferred).
 
 ## Manager
 
-A person or business, anywhere, who lists a trade on Shehna and puts in their own capital. A Manager is either a **Business** or an **Individual trader**. If a Manager is suspended or their country becomes a Blocked country while a Listing is Live, ops takes over their Steps, the Listing runs on (or is Cancelled, if no goods are bought yet), and their payout is held in their Wallet until compliance clears it.
+A person or business, anywhere, who lists a trade on Shehnat and puts in their own capital. A Manager is either a **Business** or an **Individual trader**. If a Manager is suspended or their country becomes a Blocked country while a Listing is Live, ops takes over their Steps, the Listing runs on (or is Cancelled, if no goods are bought yet), and their payout is held in their Wallet until compliance clears it.
 
 _Avoid_: Company (legacy name in the code, API and database; not a separate concept).
 
 ## Exposure limit
 
-The most a single Manager may have at stake on Shehna at once: the sum of the Funding targets of their Listings in review, approved or Live. A platform-wide default applies (a setting), and the owner can set a different limit for an individual Manager. It is checked when a Listing is submitted and again when it is approved.
+The most a single Manager may have at stake on Shehnat at once: the sum of the Funding targets of their Listings in review, approved or Live. A platform-wide default applies (a setting), and the owner can set a different limit for an individual Manager. It is checked when a Listing is submitted and again when it is approved.
 
 ## Shareholder
 
-A part-owner of Shehna (the plan is about 10, each holding 1%), mostly importers. The stake is bought and documented outside the platform. On Shehna, a Shareholder is an existing approved Investor or Manager account that the owner has marked as a Shareholder. Shehna does not sell shares or pay dividends. A Shareholder acting as a Manager has the usual Manager benefits and obligations, including paying their own Manager deposit.
+A part-owner of Shehnat (the plan is about 10, each holding 1%), mostly importers. The stake is bought and documented outside the platform. On Shehnat, a Shareholder is an existing approved Investor or Manager account that the owner has marked as a Shareholder. Shehnat does not sell shares or pay dividends. A Shareholder acting as a Manager has the usual Manager benefits and obligations, including paying their own Manager deposit.
 
 _Avoid_: equity investor (clashes with Investor).
 
@@ -184,7 +184,7 @@ One unit of work in a Step plan, with an owner, a planned duration, expected cos
 
 ## Step owner
 
-The Shehna user responsible for a Step: the Manager or a named staff member. Outside parties are not owners.
+The Shehnat user responsible for a Step: the Manager or a named staff member. Outside parties are not owners.
 
 ## Counterparty
 
@@ -198,7 +198,7 @@ _Avoid_: expense (implies the Manager pays and is reimbursed).
 
 ## Sale proceeds
 
-The money a Buyer pays for a Shipment, paid to Shehna and credited to the Listing's escrow. A shortfall against the invoice is recorded with a reason. Sale proceeds stay in escrow until Settlement, except that finance may approve using them to pay a later Shipment's costs instead of an Overrun fill.
+The money a Buyer pays for a Shipment, paid to Shehnat and credited to the Listing's escrow. A shortfall against the invoice is recorded with a reason. Sale proceeds stay in escrow until Settlement, except that finance may approve using them to pay a later Shipment's costs instead of an Overrun fill.
 
 _Avoid_: revenue, sale price (that is the figure Settlement uses, equal to the proceeds received).
 

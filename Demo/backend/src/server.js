@@ -139,6 +139,6 @@ async function handle(req, res) {
 function createServer() { db.get(); return http.createServer((req, res) => { handle(req, res); }); }
 if (require.main === module) {
   const s = createServer();
-  s.listen(cfg.port, () => console.log(`Shehna API listening on :${cfg.port} (${cfg.prod ? 'production' : 'development'})`));
+  s.listen(cfg.port, () => console.log(`Shehnat API listening on :${cfg.port} (${cfg.prod ? 'production' : 'development'})`));
 }
 module.exports = { createServer };
