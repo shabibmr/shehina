@@ -28,7 +28,7 @@ Status: ☐ to do · ◐ in progress · ☑ done. Size: S ≈ under 1 hour, M �
 
 | ID | Task | Covers | Depends on | Size | Status | Done when |
 |---|---|---|---|---|---|---|
-| **A1** | Shell `index.html`: header (mark and wordmark), screen host, bottom tab bar or sidebar, sheet, scrim and toast layers, links to `tokens.css`, IBM Plex | all | — | M | ☐ | Opens by double-click with no console errors |
+| **A1** | Shell `index.html`: header (mark and wordmark), screen host, bottom tab bar or sidebar, sheet, scrim and toast layers, links to `tokens.css`, IBM Plex | all | — | M | ☑ | Opens by double-click with no console errors |
 | A2 | `proto.css`: port the styleguide components; add list rows, tabs, steppers, a file-upload tile, diff rows, the step board, data tables (≥ 1024px), the phone frame. Logical properties only. | all | A1 | L | ☐ | Every component in DESIGN-SYSTEM §4 has a style; no off-scale values |
 | A3 | `logic.js`: settlement (BR §6.3, BR §11.4 incl. two-Shareholder split and rounding), projection (BR §6.4), funding target, cycle and expected profit from Shipments and Steps; a boot self-check of the worked examples | I5, M7, S10 | — | M | ☐ | Reproduces the worked examples in BR §6.4 and BR §11.4 to the cent (self-check shown in the inspector) |
 | A4 | `logic.js`: Stage derivation from Steps (tags, verification, skips, never backwards); Late; Overdue; auto-withdraw | I9, S8 | A3 | M | ☐ | Changing a Step state recomputes Stages correctly in every seeded case |
