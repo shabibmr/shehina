@@ -61,6 +61,68 @@
       return "<div class=\"banner\" role=\"status\"><strong>Verify your identity before you invest.</strong><a href=\"#/kyc\" data-go=\"#/kyc\">Start verification</a></div>";
     }
 
+    /* Investor dashboard: portfolio, wallet, growth, shipments and other KPIs. Shareholders get an extra block. */
+    function dashboardFor(u) {
+      var D = ShehnatDash;
+      var S = Store.state;
+      var bal = Store.bal("user:" + u.id + ":wallet");
+      var invested = 0, expected = 0, realised = 0, capDone = 0, roiW = 0, nextPay = 0, nActive = 0, nDone = 0;
+      var series = [0], cats = {}, markets = {};
+      S.listings.forEach(function (l) {
+        var held = mine(l, u.id);
+        if (held <= 0) return;
+        if (l.status === "live" || l.status === "settlement_proposed") {
+          nActive++; invested += held; expected += L.expectedFor(l, held);
+          cats[l.category] = (cats[l.category] || 0) + held;
+          markets[l.source] = 1; markets[l.buyer] = 1;
+          roiW += L.projection(l).roiYear * held;
+          if (l.liveAt && L.raised(l) >= L.fundingTarget(l)) {
+            var due = l.liveAt + L.cycleDays(l) * L.DAY;
+            if (!nextPay || due < nextPay) nextPay = due;
+          }
+        } else if (l.status === "completed") {
+          var sale = l.shipments.reduce(function (a, sh) { return a + (sh.proceeds || 0); }, 0);
+          var cost = l.shipments.reduce(function (a, sh) { return a + (sh.costActual || 0); }, 0);
+          var settled = L.settlement({ saleCents: sale, costCents: cost, investorSharePct: l.investorShare, contributions: l.contributions, shareholderListing: false });
+          var slice = settled.rows.filter(function (r) { return r.userId === u.id; })[0];
+          if (slice) { realised += slice.profit; capDone += held; nDone++; series.push(realised); }
+        }
+      });
+      var open = liveRows().filter(function (l) { return L.remaining(l) > 0 && mine(l, u.id) <= 0; }).length;
+      var total = bal + invested;
+      var gain = realised + expected;
+      var base = invested + capDone;
+      var pct = base ? gain * 100 / base : 0;
+      var tones = ["green", "blue", "amber", "red"];
+      var cat = Object.keys(cats).map(function (k, i) { return { label: k, value: cats[k], tone: tones[i % 4], text: L.formatUsd(cats[k]) }; });
+      var html = D.hero({
+        label: "Total portfolio", value: L.formatUsd(total), tone: "green",
+        sub: "Wallet " + L.formatUsd(bal) + " + invested " + L.formatUsd(invested),
+        delta: (gain >= 0 ? "\u25B2 " : "\u25BC ") + L.formatUsd(Math.abs(gain)) + " (" + pct.toFixed(1) + "%) realised + expected",
+        series: series.length > 1 ? series : [0, expected]
+      }) +
+      "<div class=\"dash-grid\">" +
+        D.tile({ label: "Wallet balance", value: L.formatUsd(bal), sub: "Available to invest", tone: "blue", icon: "wallet", href: "#/wallet" }) +
+        D.tile({ label: "Current investments", value: L.formatUsd(invested), sub: nActive + (nActive === 1 ? " shipment" : " shipments") + " funded", tone: "green", icon: "chart", href: "#/portfolio" }) +
+        D.tile({ label: "Current shipments", value: String(nActive), sub: open + " open to invest", tone: "amber", icon: "ship", href: "#/shipments" }) +
+        D.tile({ label: "Expected profit", value: L.formatUsd(expected), sub: invested ? "+" + (expected * 100 / invested).toFixed(1) + "% on invested" : "Invest to start earning", tone: "green", icon: "in" }) +
+        D.tile({ label: "Realised profit", value: (realised >= 0 ? "+" : "\u2212") + L.formatUsd(Math.abs(realised)), sub: nDone + " completed", tone: realised >= 0 ? "green" : "red", icon: "check", href: "#/portfolio" }) +
+        D.tile({ label: "Avg yearly return", value: invested ? (roiW / invested * 100).toFixed(0) + "%" : "\u2014", sub: "Expected, annualised", tone: "blue", icon: "chart" }) +
+        D.tile({ label: "Next payout", value: nextPay ? UI.when(nextPay) : "\u2014", sub: nextPay ? "Expected date" : "Nothing funded yet", tone: "amber", icon: "clock" }) +
+        D.tile({ label: "Markets", value: String(Object.keys(markets).length), sub: "Countries your money works in", tone: "blue", icon: "globe" }) +
+      "</div>" +
+      D.meter({ label: "Capital at work", pct: total ? invested * 100 / total : 0, tone: "green", text: L.formatUsd(invested) + " invested, " + L.formatUsd(bal) + " idle in your wallet" }) +
+      D.bar("Where your money is", cat);
+      if (u.shareholder === true) {
+        var mineSh = S.listings.filter(function (l) { return l.shareholderListing && l.buyerShareholderId === u.id; });
+        html += "<section class=\"stack\"><h2>Shareholder</h2><div class=\"dash-grid\">" +
+          D.tile({ label: "Treasury profit share", value: S.settings.shareholderSharePct + "%", sub: "Your share of shareholder listings", tone: "amber", icon: "users" }) +
+          D.tile({ label: "Shareholder listings", value: String(mineSh.length), sub: L.formatUsd(mineSh.reduce(function (a, l) { return a + L.fundingTarget(l); }, 0)) + " in total", tone: "blue", icon: "flag" }) +
+        "</div></section>";
+      }
+      return "<div class=\"column stack\">" + html + "</div>";
+    }
+
     UI.screen({
       id: "home",
       auth: "investor",
@@ -73,10 +135,10 @@
         var lead = rows.filter(function (l) { return l.id === "cardamom"; })[0] || rows[0];
         var next = rows.filter(function (l) { return lead && l.id !== lead.id; })[0];
         if (!lead) {
-          stage.innerHTML = "<div class=\"column\">" + gate(u) + "<div class=\"empty\"><p>No shipment is open right now.</p><a href=\"#/shipments\" data-go=\"#/shipments\">See shipments</a></div></div>";
+          stage.innerHTML = gate(u) + dashboardFor(u) + "<div class=\"column\"><div class=\"empty\"><p>No shipment is open right now.</p><a href=\"#/shipments\" data-go=\"#/shipments\">See shipments</a></div></div>";
           return;
         }
-        stage.innerHTML = gate(u) + "<a class=\"lead\" href=\"#/listing/" + lead.id + "\" data-go=\"#/listing/" + lead.id + "\"><p class=\"lead-title\">" + UI.esc(lead.name) + "</p></a><div class=\"column\"><a href=\"#/portfolio\" data-go=\"#/portfolio\">Your shipments</a>" + (next ? row(next, "#/listing/" + next.id) : "") + "</div>";
+        stage.innerHTML = gate(u) + dashboardFor(u) + "<a class=\"lead\" href=\"#/listing/" + lead.id + "\" data-go=\"#/listing/" + lead.id + "\"><p class=\"lead-title\">" + UI.esc(lead.name) + "</p></a><div class=\"column\"><a href=\"#/portfolio\" data-go=\"#/portfolio\">Your shipments</a>" + (next ? row(next, "#/listing/" + next.id) : "") + "</div>";
       }
     });
 

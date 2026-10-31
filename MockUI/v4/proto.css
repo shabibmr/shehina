@@ -478,3 +478,54 @@ a.bento:focus-visible { outline: 3px solid var(--color-ring); outline-offset: 2p
   .row-ico-in svg { animation: ico-slide calc(var(--duration-pulse) * 1.5) ease-in-out 2; }
   .row-ico-out svg { animation: ico-slide calc(var(--duration-pulse) * 1.5) ease-in-out 2 reverse; }
 }
+
+/* Dashboards: colourful KPI tiles, hero card, growth sparkline, bars. Tones: green, blue, amber, red. */
+.dash-green { --dash: var(--color-primary); --dash-bg: var(--color-primary-subtle); }
+.dash-blue { --dash: var(--color-info); --dash-bg: var(--color-info-bg); }
+.dash-amber { --dash: var(--color-warning); --dash-bg: var(--color-warning-bg); }
+.dash-red { --dash: var(--color-loss); --dash-bg: var(--color-loss-bg); }
+.dash-hero {
+  display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); align-items: end; padding: var(--space-5, var(--space-4));
+  color: var(--color-primary-foreground);
+  background: linear-gradient(135deg, var(--dash), color-mix(in srgb, var(--dash) 60%, var(--color-foreground)));
+}
+.dash-hero .dash-label, .dash-hero .dash-sub { color: color-mix(in srgb, var(--color-primary-foreground) 80%, transparent); }
+.dash-hero-value { font-size: 2.25rem; font-weight: 600; line-height: 1.05; margin-block: var(--space-1); }
+.dash-delta { display: inline-block; padding: 2px var(--space-2); background: color-mix(in srgb, var(--color-primary-foreground) 20%, transparent); font-size: var(--font-size-meta); font-weight: 600; }
+.dash-hero-chart { width: 140px; }
+.spark { width: 100%; height: 48px; display: block; overflow: visible; }
+.spark-line { fill: none; stroke: var(--dash, var(--color-primary)); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; stroke-dasharray: 100; stroke-dashoffset: 0; }
+.spark-area { fill: color-mix(in srgb, var(--dash, var(--color-primary)) 18%, transparent); stroke: none; }
+.spark-light .spark-line { stroke: var(--color-primary-foreground); }
+.spark-light .spark-area { fill: color-mix(in srgb, var(--color-primary-foreground) 20%, transparent); }
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.dash-tile {
+  position: relative; display: flex; flex-direction: column; gap: 2px; padding: var(--space-3) var(--space-4);
+  background: var(--dash-bg); color: var(--color-foreground); text-decoration: none; min-width: 0;
+  border-inline-start: 4px solid var(--dash);
+}
+.dash-tile .dash-ico { display: inline-flex; margin-block-end: var(--space-1); }
+.dash-tile .ico { width: 32px; height: 32px; background: var(--dash); color: var(--color-primary-foreground); }
+.dash-tile .ico svg { width: 18px; height: 18px; }
+.dash-label { font-size: var(--font-size-meta); color: var(--color-muted-foreground); text-transform: uppercase; letter-spacing: .04em; }
+.dash-value { font-size: var(--font-size-title-sm); font-weight: 600; color: var(--dash); overflow-wrap: anywhere; }
+.dash-sub { font-size: var(--font-size-meta); color: var(--color-muted-foreground); }
+.dash-card { background: var(--color-surface); box-shadow: inset 0 0 0 var(--line-hair) var(--color-border); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+.dash-row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+.dash-bar { display: flex; height: 12px; overflow: hidden; background: var(--color-surface-sunken); }
+.dash-bar i { display: block; background: var(--dash); }
+.dash-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); font-size: var(--font-size-meta); }
+.dash-legend li { display: flex; align-items: center; gap: var(--space-2); }
+.dash-legend li span { flex: 1; }
+.dash-legend i { width: 10px; height: 10px; flex: none; background: var(--dash); }
+.dash-meter { height: 10px; background: var(--color-surface-sunken); }
+.dash-meter i { display: block; height: 100%; background: var(--dash); }
+@media (prefers-reduced-motion: no-preference) {
+  .dash-meter i, .dash-bar i { transform-origin: left; animation: dash-grow calc(var(--duration-move) * 2) var(--ease-fade) both; }
+  .spark-line { animation: spark-draw calc(var(--duration-move) * 4) var(--ease-fade) both; }
+  .dash-tile { animation: ico-pop var(--duration-move) var(--ease-fade) both; }
+  .dash-grid .dash-tile:nth-child(2) { animation-delay: 45ms; } .dash-grid .dash-tile:nth-child(3) { animation-delay: 90ms; }
+  .dash-grid .dash-tile:nth-child(4) { animation-delay: 135ms; } .dash-grid .dash-tile:nth-child(n+5) { animation-delay: 180ms; }
+}
+@keyframes dash-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes spark-draw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }

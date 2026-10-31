@@ -362,6 +362,68 @@
         "<span class=\"end status" + (warn ? " status-warning" : "") + "\">" + esc(tag) + "</span></a>";
     }
 
+    /* Manager dashboard: wallet, exposure, capital on the water, earnings, deadlines and delivery KPIs. */
+    function dashboardFor(u, openList) {
+      var D = ShehnatDash;
+      var S = Store.state;
+      var acct = "user:" + u.id + ":wallet";
+      var bal = Store.bal(acct);
+      var mineL = S.listings.filter(function (l) { return l.managerId === u.id; });
+      var live = mineL.filter(function (l) { return l.status === "live" || l.status === "settlement_proposed"; });
+      var done = mineL.filter(function (l) { return l.status === "completed"; });
+      var raised = 0, target = 0, expShare = 0, cycles = [];
+      live.forEach(function (l) { raised += L.raised(l); target += L.fundingTarget(l); expShare += L.projection(l).managerCut; });
+      live.concat(done).forEach(function (l) { cycles.push(L.cycleDays(l)); });
+      var earned = 0, series = [0];
+      S.entries.forEach(function (e) { if (e.account === acct && e.memo === "Manager share") { earned += e.amount; series.push(earned); } });
+      var steps = 0, doneSteps = 0, lateSteps = 0, nextDue = 0;
+      live.forEach(function (l) {
+        l.shipments.forEach(function (sh) {
+          sh.steps.forEach(function (st, i) {
+            steps++;
+            if (stepIsDone(st)) { doneSteps++; return; }
+            if (L.isLate(l, sh, i, S.now)) lateSteps++;
+            var due = L.stepDue(l, sh, i);
+            if (due && st.owner === "manager" && (!nextDue || due < nextDue)) nextDue = due;
+          });
+        });
+      });
+      var attempted = doneSteps + lateSteps;
+      var onTime = attempted ? Math.round(100 * doneSteps / attempted) : 100;
+      var avgCycle = cycles.length ? Math.round(cycles.reduce(function (a, n) { return a + n; }, 0) / cycles.length) : 0;
+      var used = L.exposureUsed(S, u.id, "");
+      var limit = limitOf(u);
+      var count = function (list) { return mineL.filter(function (l) { return list.indexOf(l.status) !== -1; }).length; };
+      var action = count(["awaiting_terms", "approved", "rejected"]);
+      var late = openList.filter(function (x) { return x.late; }).length;
+      var html = D.hero({
+        label: "Capital on the water", value: L.formatUsd(raised), tone: "green",
+        sub: "Raised across " + live.length + (live.length === 1 ? " live listing" : " live listings") + " (target " + L.formatUsd(target) + ")",
+        delta: "\u25B2 " + L.formatUsd(expShare) + " expected share \u00B7 " + L.formatUsd(earned) + " earned",
+        series: series.length > 1 ? series : [0, expShare]
+      }) +
+      "<div class=\"dash-grid\">" +
+        D.tile({ label: "Wallet balance", value: L.formatUsd(bal), sub: "Your deposits and payouts", tone: "blue", icon: "wallet", href: "#/wallet" }) +
+        D.tile({ label: "Live listings", value: String(live.length), sub: count(["in_review"]) + " in review \u00B7 " + count(["draft"]) + " drafts", tone: "green", icon: "ship", href: "#/listings" }) +
+        D.tile({ label: "Actions due", value: String(openList.length), sub: late ? late + " late" : "None late", tone: late ? "red" : "amber", icon: late ? "alert" : "clock" }) +
+        D.tile({ label: "Needs you", value: String(action), sub: "Terms, deposits or fixes", tone: action ? "amber" : "blue", icon: "flag", href: "#/listings" }) +
+        D.tile({ label: "Expected share", value: L.formatUsd(expShare), sub: "From live listings", tone: "amber", icon: "in" }) +
+        D.tile({ label: "Earned to date", value: L.formatUsd(earned), sub: done.length + " completed", tone: "green", icon: "check" }) +
+        D.tile({ label: "On-time steps", value: onTime + "%", sub: doneSteps + " done \u00B7 " + lateSteps + " late", tone: onTime >= 90 ? "green" : onTime >= 70 ? "amber" : "red", icon: "clock" }) +
+        D.tile({ label: "Avg turnaround", value: avgCycle ? avgCycle + " days" : "\u2014", sub: nextDue ? "Next step due " + UI.when(nextDue) : "No step due", tone: "blue", icon: "ship" }) +
+      "</div>" +
+      D.meter({ label: "Exposure used", pct: limit ? used * 100 / limit : 0, tone: used * 100 / limit > 85 ? "red" : used * 100 / limit > 60 ? "amber" : "green", text: L.formatUsd(used) + " used of your " + L.formatUsd(limit) + " limit" }) +
+      D.meter({ label: "Funding progress", pct: target ? raised * 100 / target : 0, tone: "blue", text: L.formatUsd(Math.max(0, target - raised)) + " still to raise on live listings" }) +
+      D.bar("Your listings", [
+        { label: "Live", value: live.length, tone: "green", text: String(live.length) },
+        { label: "In review", value: count(["in_review"]), tone: "blue", text: String(count(["in_review"])) },
+        { label: "Needs action", value: action, tone: "amber", text: String(action) },
+        { label: "Drafts", value: count(["draft"]), tone: "red", text: String(count(["draft"])) },
+        { label: "Completed", value: done.length, tone: "green", text: String(done.length) }
+      ]);
+      return html;
+    }
+
     UI.screen({
       id: "desk",
       auth: "manager",
@@ -383,8 +445,7 @@
         });
         var fab = approved(u) ? link("#/list/new", "Post Shipment", "btn btn-primary fab") : "";
         stage.innerHTML = "<div class=\"column" + (fab ? " has-fab" : "") + "\"><h1>" + esc(u.name) + "</h1>" + gate(u) +
-          "<section class=\"panel stack\"><h2>Exposure</h2><p class=\"figure num\">" + L.formatUsd(used) + "</p>" +
-          "<p class=\"muted\">used of your <span class=\"num\">" + L.formatUsd(limitOf(u)) + "</span> limit</p></section>" +
+          dashboardFor(u, openSteps(u)) +
           "<section class=\"stack\"><h2>Actions due</h2>" + (rows.join("") || "<p>Nothing needs you right now.</p>") + "</section>" +
           "<p>" + link("#/listings", "All my listings") + "</p></div>" + fab;
       }
