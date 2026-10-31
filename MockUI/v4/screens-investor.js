@@ -112,7 +112,8 @@
         }
       });
       var open = liveRows().filter(function (l) { return L.remaining(l) > 0 && mine(l, u.id) <= 0; }).length;
-      var total = bal + invested;
+      var atWork = invested + queued;
+      var total = bal + atWork;
       var gain = realised + expected;
       var base = invested + capDone;
       var pct = base ? gain * 100 / base : 0;
@@ -121,7 +122,7 @@
       var html = D.hero({
         label: "Total portfolio", value: L.formatUsd(total), tone: "green",
         sub: "Your wallet and your money at work",
-        split: [{ label: "Wallet", value: bal, text: L.formatUsd(bal) }, { label: "Invested", value: invested, text: L.formatUsd(invested) }],
+        split: [{ label: "Wallet", value: bal, text: L.formatUsd(bal) }, { label: "Invested", value: atWork, text: L.formatUsd(atWork) }],
         delta: (gain >= 0 ? "\u25B2 " : "\u25BC ") + L.formatUsd(Math.abs(gain)) + " (" + pct.toFixed(1) + "%) realised + expected"
       }) +
       "<div class=\"dash-grid\">" +
@@ -134,7 +135,7 @@
         D.tile({ label: "Next payout", value: nextPay ? UI.when(nextPay) : (waiting ? "Pending" : "\u2014"), sub: nextPay ? "Expected date" : (waiting ? L.formatUsd(waiting) + " awaiting full funding" : "Nothing funded yet"), tone: "amber", icon: "clock" }) +
         D.tile({ label: "Markets", value: String(Object.keys(markets).length), sub: "Countries your money works in", tone: "blue", icon: "globe" }) +
       "</div>" +
-      D.meter({ label: "Capital at work", pct: total ? invested * 100 / total : 0, tone: "green", text: L.formatUsd(invested) + " invested, " + L.formatUsd(bal) + " idle in your wallet" }) +
+      D.meter({ label: "Capital at work", pct: total ? atWork * 100 / total : 0, tone: "green", text: L.formatUsd(atWork) + " invested, " + L.formatUsd(bal) + " idle in your wallet" }) +
       D.bar("Where your money is", cat);
       if (u.shareholder === true) {
         var mineSh = S.listings.filter(function (l) { return l.shareholderListing && l.buyerShareholderId === u.id; });
