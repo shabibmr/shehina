@@ -124,6 +124,7 @@
       on: function (act, el) { if (act === "tab") { tab = el.getAttribute("data-tab"); UI.go("#/queue-list"); } }
     });
 
+    var rvTab = "details", rvOpen = "";
     UI.screen({
       id: "review",
       auth: "staff",
@@ -150,15 +151,22 @@
         if (app.status !== "pending") actions = "<p class=\"status\">" + UI.esc(app.status) + "</p>";
         else if (denied) actions = "<p class=\"muted\">" + UI.esc(denied) + "</p>";
         else actions = "<button class=\"btn btn-primary\" type=\"button\" data-act=\"approve\">Approve</button><button class=\"btn btn-danger\" type=\"button\" data-act=\"reject\">Reject</button>";
+        if (rvOpen !== person.id) { rvOpen = person.id; rvTab = "details"; }
+        var body = "";
+        if (rvTab === "details") {
+          body = "<p>" + UI.esc(p.idType || "Identity") + " <span class=\"num\">" + UI.esc(p.idNumber || "") + "</span></p><p>" + UI.esc(p.phone || "") + "</p>" +
+            "<label class=\"field\"><span>Assign</span><select id=\"assignee\"><option value=\"\">Unassigned</option>" + options + "</select></label>" +
+            "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"assign\">Save assignment</button>";
+        }
+        if (rvTab === "documents") body = docs + "<p id=\"viewer\" class=\"muted\"></p>";
+        if (rvTab === "history") body = hist ? "<ol class=\"timeline\">" + hist + "</ol>" : "<p class=\"muted\">No history yet.</p>";
         stage.innerHTML = "<div class=\"column\"><h1>" + UI.esc(person.name) + "</h1><p class=\"muted\">" + UI.esc(person.email) + " · " + UI.esc(UI.cname(person.country)) + "</p>" +
-          "<p>" + UI.esc(p.idType || "Identity") + " <span class=\"num\">" + UI.esc(p.idNumber || "") + "</span></p><p>" + UI.esc(p.phone || "") + "</p>" +
-          "<h2>Documents</h2>" + docs + "<p id=\"viewer\" class=\"muted\"></p>" +
-          "<label class=\"field\"><span>Assign</span><select id=\"assignee\"><option value=\"\">Unassigned</option>" + options + "</select></label>" +
-          "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"assign\">Save assignment</button>" +
-          actions + "<ol class=\"timeline\">" + hist + "</ol></div>";
+          UI.tabs([["details", "Details"], ["documents", "Documents"], ["history", "History"]], rvTab, "rvtab") +
+          "<div class=\"stack\">" + body + "</div>" + UI.sticky(actions) + "</div>";
       },
       on: function (act, el, params) {
         var person = Store.byId(params.id);
+        if (act === "rvtab") { rvTab = el.getAttribute("data-tab"); UI.go("#/review/" + params.id); return; }
         if (act === "view") {
           Store.state.audit.unshift({ id: "view" + Date.now(), at: Store.state.now, actorId: Store.user().id, action: "Viewed document", entity: params.id, reason: el.getAttribute("data-name") });
           Store.save();

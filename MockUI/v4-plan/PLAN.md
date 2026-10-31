@@ -35,6 +35,7 @@ What we expect to learn: missing screens or states, actions in the wrong place, 
 | `motion.js` | Fade, the back move that follows the finger, and sheet-follow. Reduced motion is a 120ms fade. Not the styleguide catalogue. |
 | `ui.js` | Router, rendering helpers, components (rows, panels, money, forms, sheets, static route, step board) |
 | `screens-public.js`, `screens-investor.js`, `screens-manager.js`, `screens-staff.js` | One file per audience, registering screens |
+| `screens-plan.js` | Step plan editor shared by the manager wizard and the plan change screen |
 | `../v4-plan/PLAN.md`, `../v4-plan/TASKS.md` | This plan and the task register |
 
 - **Rule: surface the state.** A state inspector drawer always shows the current entity, the wallet and escrow balances, the ledger check and the latest audit entries, so every click visibly changes something.
