@@ -109,9 +109,9 @@
       var cat = Object.keys(cats).map(function (k, i) { return { label: k, value: cats[k], tone: tones[i % 4], text: L.formatUsd(cats[k]) }; });
       var html = D.hero({
         label: "Total portfolio", value: L.formatUsd(total), tone: "green",
-        sub: "Wallet " + L.formatUsd(bal) + " + invested " + L.formatUsd(invested),
-        delta: (gain >= 0 ? "\u25B2 " : "\u25BC ") + L.formatUsd(Math.abs(gain)) + " (" + pct.toFixed(1) + "%) realised + expected",
-        series: series.length > 1 ? series : [0, expected]
+        sub: "Your wallet and your money at work",
+        split: [{ label: "Wallet", value: bal, text: L.formatUsd(bal) }, { label: "Invested", value: invested, text: L.formatUsd(invested) }],
+        delta: (gain >= 0 ? "\u25B2 " : "\u25BC ") + L.formatUsd(Math.abs(gain)) + " (" + pct.toFixed(1) + "%) realised + expected"
       }) +
       "<div class=\"dash-grid\">" +
         D.tile({ label: "Wallet balance", value: L.formatUsd(bal), sub: "Available to invest", tone: "blue", icon: "wallet", href: "#/wallet" }) +

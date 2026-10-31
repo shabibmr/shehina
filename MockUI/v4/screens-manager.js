@@ -399,8 +399,7 @@
       var html = D.hero({
         label: "Capital on the water", value: L.formatUsd(raised), tone: "green",
         sub: "Raised across " + live.length + (live.length === 1 ? " live listing" : " live listings") + " (target " + L.formatUsd(target) + ")",
-        delta: "\u25B2 " + L.formatUsd(expShare) + " expected share \u00B7 " + L.formatUsd(earned) + " earned",
-        series: series.length > 1 ? series : [0, expShare]
+        delta: "\u25B2 " + L.formatUsd(expShare) + " expected share \u00B7 " + L.formatUsd(earned) + " earned"
       }) +
       "<div class=\"dash-grid\">" +
         D.tile({ label: "Wallet balance", value: L.formatUsd(bal), sub: "Your deposits and payouts", tone: "blue", icon: "wallet", href: "#/wallet" }) +

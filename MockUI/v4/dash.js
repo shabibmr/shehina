@@ -29,11 +29,20 @@
       "<polygon class=\"spark-area\" points=\"" + area + "\"/><polyline class=\"spark-line\" pathLength=\"100\" points=\"" + pts.join(" ") + "\"/></svg>";
   }
 
-  /* hero: { label, value, sub, tone, series, delta } */
+  /* hero: { label, value, sub, tone, delta, split }
+     split: [{ label, value (number, sets the share), text }]; the first item is drawn as a ring around the total. */
   function hero(o) {
-    return "<section class=\"dash-hero dash-" + (o.tone || "green") + "\"><div class=\"dash-hero-main\"><p class=\"dash-label\">" + esc(o.label) + "</p>" +
-      "<p class=\"dash-hero-value num\">" + o.value + "</p>" + (o.delta ? "<p class=\"dash-delta\">" + o.delta + "</p>" : "") +
-      (o.sub ? "<p class=\"dash-sub\">" + o.sub + "</p>" : "") + "</div>" + (o.series ? "<div class=\"dash-hero-chart\">" + spark(o.series, "light") + "</div>" : "") + "</section>";
+    var sp = o.split || [];
+    var total = sp.reduce(function (s, i) { return s + i.value; }, 0);
+    var pct = total ? Math.round(sp[0].value * 100 / total) : 0;
+    var ring = total ? "<div class=\"dash-hero-ring\" style=\"--pct:" + pct + "\" role=\"img\" aria-label=\"" + esc(sp[0].label + " " + pct + "%") + "\"><span class=\"num\">" + pct + "%</span><small>" + esc(sp[0].label) + "</small></div>" : "";
+    var stats = total ? "<ul class=\"dash-hero-stats\">" + sp.map(function (i) {
+      return "<li><span>" + esc(i.label) + "</span><b class=\"num\">" + i.text + "</b></li>";
+    }).join("") + "</ul>" : "";
+    return "<section class=\"dash-hero dash-" + (o.tone || "green") + "\"><div class=\"dash-hero-head\"><div class=\"dash-hero-main\">" +
+      "<p class=\"dash-label\">" + esc(o.label) + "</p><p class=\"dash-hero-value num\">" + o.value + "</p>" +
+      (o.sub ? "<p class=\"dash-sub\">" + o.sub + "</p>" : "") + "</div>" + ring + "</div>" +
+      (o.delta ? "<p class=\"dash-delta\">" + o.delta + "</p>" : "") + stats + "</section>";
   }
 
   /* A stacked bar with a legend. items: [{label, value, tone}] */
