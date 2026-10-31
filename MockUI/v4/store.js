@@ -37,11 +37,19 @@
           (row.contributions || []).forEach(function (c) {
             if (c.kind === "investor" && !people[c.userId]) people[c.userId] = text + " Your money stays safe in escrow.";
           });
+          stakeholders(row).forEach(function (id) { if (!people[id]) people[id] = text + " You are told because you are a stakeholder in this listing."; });
           Object.keys(people).forEach(function (id) { note(id, people[id]); });
           row.history.push({ at: state.now, actorId: "system", action: "Step late", reason: st.name });
         });
       });
     });
+  }
+
+  /* People with a stake who are not the manager, ops or an investor: the owner and the buyer shareholder. */
+  function stakeholders(row) {
+    var ids = state.users.filter(function (u) { return u.role === "owner"; }).map(function (u) { return u.id; });
+    if (row.buyerShareholderId && ids.indexOf(row.buyerShareholderId) === -1) ids.push(row.buyerShareholderId);
+    return ids;
   }
 
   function dateText(ms) {
@@ -961,6 +969,7 @@
     var told = {};
     if (row.managerId) told[row.managerId] = true;
     (row.contributions || []).forEach(function (c) { if (c.kind === "investor") told[c.userId] = true; });
+    stakeholders(row).forEach(function (id) { told[id] = true; });
     Object.keys(told).forEach(function (id) { note(id, text); });
     row.history.push({ at: state.now, actorId: gate.actor.id, action: "New step date", reason: step.name + " · " + dateText(ms) });
     audit(gate.actor.id, "Set new step date", row.id, step.name + " " + dateText(ms));
