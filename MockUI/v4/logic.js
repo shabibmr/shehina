@@ -458,6 +458,23 @@
     eq("odd buyer", splitEqual(187651, ["omar", "layla"], "layla")[1], 93826);
     eq("odd other", splitEqual(187651, ["omar", "layla"], "layla")[0], 93825);
 
+    /* S-8. Two holders, buyer Layla, odd shareholder cent. Investor capital is not part of that split. */
+    var oddHolders = settlement({
+      saleCents: 20000, costCents: 10000, investorSharePct: 50,
+      shareholderListing: true, shareholderSharePct: 75, buyerShareholderId: "layla",
+      holders: ["omar", "layla"],
+      contributions: [
+        { id: "inv", kind: "investor", userId: "aisha", amount: 9500 },
+        { id: "tr", kind: "treasury", amount: 500 }
+      ]
+    });
+    eq("s8 capital", oddHolders.rows[0].capital, 9500);
+    eq("s8 profit", oddHolders.rows[0].profit, 4655);
+    eq("s8 shareholder", oddHolders.shareholder, 183);
+    eq("s8 layla", oddHolders.holders[1].amount, 92);
+    eq("s8 omar", oddHolders.holders[0].amount, 91);
+    eq("s8 differs", oddHolders.rows[0].profit === oddHolders.shareholder ? "same" : "different", "different");
+
     eq("iban", ibanOk("GB82WEST12345698765432", "GB"), "");
     eq("iban bad", ibanOk("GB82WEST12345698765433", "GB") ? "no" : "yes", "no");
     var cap = settlement({ saleCents: 10000, costCents: 9990, investorSharePct: 50, contributions: [{ id: "a", kind: "investor", amount: 10000 }] });

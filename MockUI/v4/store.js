@@ -926,7 +926,10 @@
     }
     step.state = next === "in_progress" ? "in_progress" : next;
     if (extra.reason) step.reason = String(extra.reason).trim();
-    if (extra.doc) step.docs.push(extra.doc);
+    if (extra.doc) {
+      if (!step.docs) step.docs = [];
+      step.docs.push(extra.doc);
+    }
     row.history.push({ at: state.now, actorId: gate.actor.id, action: "Step " + next, reason: step.name });
     audit(gate.actor.id, "Updated step", row.id, step.name + " " + next);
     save();
@@ -978,8 +981,12 @@
         { account: "bank:external", amount: money.cents, memo: "Step cost" }
       ], "step-cost:" + row.id + ":" + state.entries.length);
       if (!spent.ok) return fail(spent.error);
-      if (body.doc) step.docs.push(body.doc);
+      if (body.doc) {
+        if (!step.docs) step.docs = [];
+        step.docs.push(body.doc);
+      }
       step.spent = (step.spent || 0) + money.cents;
+      shipment.costActual = (shipment.costActual || 0) + money.cents;
       audit(actor.id, "Paid step cost", row.id, L.formatUsd(money.cents));
       save();
       return { ok: true };
@@ -1045,6 +1052,7 @@
     var step = shipment && stepById(shipment, approval.stepId);
     if (approval.type === "verify" || approval.type === "skip") {
       if (!step) return fail("That step was not found.");
+      if (!step.docs) step.docs = [];
       step.state = approval.type === "verify" ? "verified" : "skipped";
       if (approval.reason) step.reason = approval.reason;
       if (approval.doc) step.docs.push(approval.doc);
