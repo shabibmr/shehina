@@ -532,6 +532,28 @@
             return `<div>• [${time}] ${a.actor}: ${a.action} - ${a.details || ''}</div>`;
           }).join('');
         }
+
+        // Live Self-check & Ledger Verification (Tasks A3, A7)
+        if (window.ShehnatLogic) {
+          const sc = window.ShehnatLogic.runSelfCheck();
+          const scEl = document.getElementById('inspSelfCheck');
+          if (scEl) {
+            scEl.textContent = sc.passed ? 'BR §6.4 & §11.4 OK' : 'FAILED';
+            scEl.style.color = sc.passed ? 'var(--gain-bg)' : 'var(--loss-bg)';
+          }
+
+          const lCheck = window.ShehnatLogic.ledger.verify(state.ledger || []);
+          const badge = document.getElementById('ledgerBadge');
+          const lEl = document.getElementById('inspLedgerStatus');
+          if (badge) {
+            badge.textContent = lCheck.ok ? '✓' : '✗';
+            badge.style.color = lCheck.ok ? 'var(--gain-bg)' : 'var(--loss-bg)';
+          }
+          if (lEl) {
+            lEl.textContent = lCheck.ok ? 'PASSED (0 diff)' : `FAILED (${lCheck.error})`;
+            lEl.style.color = lCheck.ok ? 'var(--gain-bg)' : 'var(--loss-bg)';
+          }
+        }
       }
 
       // Initialize store & subscribe
