@@ -70,7 +70,7 @@ Status: ☐ to do · ◐ in progress · ☑ done. Size: S ≈ under 1 hour, M �
 | H2 | Right-to-left check across every screen (logical properties, mirrored icons and route, numbers isolated left to right) | all | — | M | ☑ | No layout breaks in right to left at 360px |
 | H3 | States check: skeleton, empty, error, success on every screen; 320 / 360 / 768 / 1024 / 1440px | all | — | M | ☑ | No horizontal overflow at any width |
 | **I1** | Walk all 14 journeys; record findings (missing screens, awkward flows, rule surprises, the PLAN §9 hypotheses) in `MockUI/v4-plan/FINDINGS.md` | — | all | M | ☑ | Every journey completes, or its blocker is written down |
-| I2 | Capture: commit to `prototype/mockui-v4`; open an issue with the findings, the questions they settle and a pointer to the branch | — | I1 | S | ☐ | The issue links the branch, and `main` has no prototype code |
+| I2 | Capture: commit to `prototype/mockui-v4`; open an issue with the findings, the questions they settle and a pointer to the branch | — | I1 | S | ☑ | The issue links the branch, and `main` has no prototype code |
 
 **Totals:** 43 tasks (12 foundation, 3 public, 8 investor and application review, 6 manager and Listing review, 3 staff home and money, 4 staff operations, 2 admin, 3 finish, 2 capture), covering 52 screens and 14 journeys. By size: 5 S, 23 M, 15 L, roughly **70–165 hours** in all.
 
