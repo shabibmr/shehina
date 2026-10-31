@@ -409,9 +409,9 @@
         '<tr><td>Investor profit pool (' + l.investorSharePct + '%)</td><td class="num">' + U.esc(U.usd(calc.pool)) + '</td></tr>' +
         '</table>' +
         '<h2>Investor &amp; contributor payouts</h2>' +
-        '<table class="data"><thead><tr><th>Contributor</th><th class="num">Invested</th><th class="num">Profit</th><th class="num">Total Payout</th></tr></thead><tbody>' +
+        '<div class="table-wrap"><table class="data"><thead><tr><th>Contributor</th><th class="num">Invested</th><th class="num">Profit</th><th class="num">Total Payout</th></tr></thead><tbody>' +
         investorRows +
-        '</tbody></table>' +
+        '</tbody></table></div>' +
         (approval ?
           (isProposer ?
             '<p class="denied" style="margin-block-start:var(--space-4)">Needs another staff member to approve (four-eyes rule)</p>' :
@@ -593,9 +593,9 @@
       }).join('');
 
       return '<h1>Audit log</h1>' +
-        '<table class="data"><thead><tr><th>Timestamp</th><th>Actor</th><th>Action</th><th>Entity</th><th>Detail</th></tr></thead><tbody>' +
+        '<div class="table-wrap"><table class="data"><thead><tr><th>Timestamp</th><th>Actor</th><th>Action</th><th>Entity</th><th>Detail</th></tr></thead><tbody>' +
         (rows || '<tr><td colspan="5">No audit entries recorded yet.</td></tr>') +
-        '</tbody></table>';
+        '</tbody></table></div>';
     }
   });
 
@@ -619,9 +619,9 @@
         '<p class="meta">Every financial transaction across wallets, treasury, revenue, and escrow is balanced.</p>' +
         '</section>' +
         '<h2>Recent ledger journal</h2>' +
-        '<table class="data"><thead><tr><th>Date</th><th>Debit (From)</th><th>Credit (To)</th><th class="num">Amount</th><th>Description</th></tr></thead><tbody>' +
+        '<div class="table-wrap"><table class="data"><thead><tr><th>Date</th><th>Debit (From)</th><th>Credit (To)</th><th class="num">Amount</th><th>Description</th></tr></thead><tbody>' +
         (rows || '<tr><td colspan="5">No ledger transactions recorded yet.</td></tr>') +
-        '</tbody></table>';
+        '</tbody></table></div>';
     }
   });
 
