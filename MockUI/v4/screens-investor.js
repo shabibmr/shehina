@@ -310,31 +310,93 @@
         "<div class=\"range\" role=\"img\" aria-label=\"Expected profit from " + L.formatUsd(b.low) + " to " + L.formatUsd(b.high) + "\"><i class=\"range-fill\"></i><i class=\"range-mark\"></i></div>" +
         "<div class=\"range-labels num\"><span>" + L.formatUsd(b.low) + "<small>Sale 10% lower</small></span><span class=\"mid\">" + L.formatUsd(b.plan) + "<small>As planned</small></span><span>" + L.formatUsd(b.high) + "<small>Sale 10% higher</small></span></div>";
     }
+    /* One card per shipment: stage route, steps-done meter, next step and the step timeline. */
+    function shipmentCards(l, open) {
+        var now = Store.state.now;
+        var esc = UI.esc;
+        var lateN = 0;
+        var cards = l.shipments.map(function (sh, si) {
+          var stageN = L.shipmentStage(l, sh);
+          var doneN = 0;
+          var nextIdx = -1;
+          var items = sh.steps.map(function (st, i) {
+            var finished = st.state === "done" || st.state === "verified" || st.state === "skipped";
+            if (finished) doneN++; else if (nextIdx < 0) nextIdx = i;
+            var late = L.isLate(l, sh, i, now);
+            if (late) lateN++;
+            var due = L.stepDue(l, sh, i);
+            var cls = finished ? "done" : late ? "late" : st.state === "in_progress" ? "now" : "todo";
+            var dot = finished ? "&#10003;" : late ? "!" : String(i + 1);
+            var when = finished ? "Complete" : late ? "Late · new date " + UI.when(st.revisedAt || now) : st.state === "in_progress" ? "In progress" + (due ? " · due " + UI.when(due) : "") : (due ? "Due " + UI.when(due) : "Waiting");
+            return "<li class=\"" + cls + "\"><div><span class=\"track-dot\" aria-hidden=\"true\">" + dot + "</span><span class=\"track-body\"><span class=\"title\">" + esc(st.name) + "</span><span class=\"meta\">" + esc(when) + "</span></span></div></li>";
+          }).join("");
+          var pct = sh.steps.length ? Math.round(doneN * 100 / sh.steps.length) : 0;
+          var route = L.STAGES.map(function (name, i) {
+            var cls = i < stageN ? "done" : i === stageN ? "now" : "";
+            return "<li class=\"" + cls + "\"" + (i === stageN ? " aria-current=\"step\"" : "") + ">" + UI.stageGlyph(name) + "<span>" + esc(name) + "</span></li>";
+          }).join("");
+          var next = nextIdx >= 0 ? sh.steps[nextIdx] : null;
+          var nextDue = nextIdx >= 0 ? L.stepDue(l, sh, nextIdx) : null;
+          return "<section class=\"dash-card trk-card\"><div class=\"dash-row\"><h2>Shipment " + (si + 1) + (l.shipments.length > 1 ? " of " + l.shipments.length : "") + "</h2>" +
+            "<span class=\"status\">" + esc(L.STAGES[stageN]) + "</span></div>" +
+            "<ol class=\"route\" aria-label=\"Journey\">" + route + "</ol>" +
+            "<div class=\"dash-row\"><span class=\"dash-sub\">" + doneN + " of " + sh.steps.length + " steps done</span><b class=\"num\">" + pct + "%</b></div>" +
+            "<div class=\"dash-meter dash-green\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"" + pct + "\" aria-label=\"Steps done\"><i style=\"width:" + pct + "%\"></i></div>" +
+            (next ? "<div class=\"trk-next\"><span class=\"dash-label\">Next</span><b>" + esc(next.name) + "</b>" + (nextDue ? "<span class=\"dash-sub\">Expected " + UI.when(nextDue) + "</span>" : "") + "</div>" : "<div class=\"trk-next\"><span class=\"dash-label\">Next</span><b>All steps complete</b></div>") +
+            UI.fold("<strong>All steps</strong>", "<ol class=\"track\">" + items + "</ol>", open) + "</section>";
+        }).join("");
+        return { html: cards, late: lateN };
+    }
     function figures(l) {
       var p = L.projection(l);
       var b = profitBounds(l);
-      var lines = [
-        ["Funding target", L.formatUsd(p.target)],
-        ["Raised", L.formatUsd(L.raised(l))],
-        ["Remaining", L.formatUsd(L.remaining(l))],
-        ["Minimum", L.formatUsd(l.minimum)],
-        ["Investor share", l.investorShare + "%"],
-        ["Manager capital", l.companyPct + "%"],
+      var u = Store.user();
+      var held = mine(l, u.id);
+      var rowOf = function (pair) { return "<div><span>" + pair[0] + "</span><span class=\"num\">" + pair[1] + "</span></div>"; };
+      var block = function (title, lines) { return UI.group(title, "<div class=\"statement\">" + lines.map(rowOf).join("") + "</div>"); };
+      var out = "";
+      if (held > 0) out += "<div class=\"banner\" role=\"status\"><strong>You have invested " + L.formatUsd(held) + " in this shipment.</strong></div>";
+      out += block("Terms", [
+        ["Goods sourced from", UI.esc(UI.cname(l.source))],
+        ["Sold to a buyer in", UI.esc(UI.cname(l.buyer))],
+        ["Minimum investment", L.formatUsd(l.minimum)],
+        ["Your share of profit", l.investorShare + "%"],
+        ["Expected return", Math.round(p.roiYear * 1000) / 10 + "% a year (" + Math.round(p.roiCycle * 1000) / 10 + "% over " + p.cycle + " days)"],
+        ["Platform service charge", "1% of invoice value, only if the trade makes a profit"]
+      ]);
+      out += block("Funding", [["Funding target", L.formatUsd(p.target)], ["Raised", L.formatUsd(L.raised(l))], ["Remaining", L.formatUsd(Math.max(0, L.remaining(l)))]]);
+      out += block("Expected result", [
         ["Expected sale", L.formatUsd(p.expectedSale)],
         ["Expected profit", L.formatUsd(b.plan)],
         ["If the sale is 10% lower", L.formatUsd(b.low)],
-        ["If the sale is 10% higher", L.formatUsd(b.high)],
-        ["Service fee, expected", L.formatUsd(p.fee)],
-        ["Manager share, expected", L.formatUsd(p.managerCut)],
-        ["Pool, expected", L.formatUsd(p.pool)],
-        ["ROI this cycle, expected", (Math.round(p.roiCycle * 1000) / 10) + "%"],
-        ["Cycle", p.cycle + " days"]
-      ];
-      if (l.waiver) lines.push(["Deposit", "Waived"]);
-      if (l.shareholderListing) lines.push(["Shareholder listing", "Yes"], ["Shareholder share", l.shareholderSharePct + "%"]);
-      return "<div class=\"statement\">" + lines.map(function (pair) {
-        return "<div><span>" + pair[0] + "</span><span class=\"num\">" + pair[1] + "</span></div>";
-      }).join("") + "</div>";
+        ["If the sale is 10% higher", L.formatUsd(b.high)]
+      ]);
+      if (l.status === "completed") {
+        var sale = l.shipments.reduce(function (s, sh) { return s + (sh.proceeds || 0); }, 0);
+        var cost = l.shipments.reduce(function (s, sh) { return s + (sh.costActual || 0); }, 0);
+        var settled = L.settlement({ saleCents: sale, costCents: cost, investorSharePct: l.investorShare, contributions: l.contributions, shareholderListing: false });
+        var mineRow = settled.rows.filter(function (r) { return r.userId === u.id; })[0];
+        out += block("How the profit was worked out", [
+          ["Sale price", L.formatUsd(settled.sale)], ["Cost of goods", L.formatUsd(settled.costs)], ["Gross profit", L.formatUsd(settled.gross)],
+          ["Platform service charge (1% of invoice)", L.formatUsd(settled.fee)], ["Net profit", L.formatUsd(settled.net)], ["Shared among investors", L.formatUsd(settled.pool)]
+        ]);
+        if (mineRow) out += block("Your result", [["Profit received", L.formatUsd(mineRow.profit)]]);
+      }
+      out += "<p class=\"bento-k\">Profit-sharing: profit is shared as agreed, and losses are borne by the people who put in capital. Returns are estimates, not guarantees, and you can lose some or all of what you invest.</p>";
+      return "<div class=\"stack\">" + out + "</div>";
+    }
+    var STAGE_NOTES = ["Funds are collected from investors.", "Goods are bought and checked.", "Goods are loaded at the port.", "The shipment is at sea.", "Cleared by customs.", "Goods are sold to the buyer.", "Profit is paid out to wallets."];
+    function stageTimeline(l) {
+      return l.shipments.map(function (sh, si) {
+        var n = L.shipmentStage(l, sh);
+        var items = L.STAGES.map(function (name, i) {
+          var cls = i < n || (l.status === "completed") ? "done" : i === n ? "now" : "todo";
+          var dot = cls === "done" ? "&#10003;" : String(i + 1);
+          var state = cls === "done" ? "Done" : cls === "now" ? "In progress" : "Upcoming";
+          return "<li class=\"" + cls + "\"><div><span class=\"track-dot\" aria-hidden=\"true\">" + dot + "</span><span class=\"track-body\"><span class=\"title\">" + UI.esc(name) + "</span><span class=\"meta\">" + STAGE_NOTES[i] + "</span></span><span class=\"track-state status\">" + state + "</span></div></li>";
+        }).join("");
+        return "<section class=\"stack\">" + (l.shipments.length > 1 ? "<h2>Shipment " + (si + 1) + "</h2>" : "") + "<ol class=\"track\">" + items + "</ol></section>";
+      }).join("");
     }
 
     UI.screen({
@@ -375,15 +437,9 @@
             (l.shareholderListing ? "<p>This is a shareholder listing" + (l.waiver ? ", and the manager deposit was waived." : ".") + " The shareholder share of treasury profit is " + l.shareholderSharePct + "%.</p>" : "") +
             (l.status === "live" && L.remaining(l) > 0 ? "<a class=\"btn btn-primary btn-block\" href=\"#/invest/" + l.id + "\" data-go=\"#/invest/" + l.id + "\">Invest</a>" : "");
         }
-        if (tab === "shipments") body = l.shipments.map(function (sh) {
-          var steps = (sh.steps || []).map(function (st) {
-            return "<li>" + UI.esc(st.name) + " · " + UI.esc(st.state) + "</li>";
-          }).join("");
-          var stageName = L.STAGES[L.shipmentStage(l, sh)];
-          return "<section><p class=\"stage-line\">" + UI.stageGlyph(stageName) + "<span><strong>Shipment</strong> · " + UI.esc(stageName) + "</span></p><ul>" + steps + "</ul></section>";
-        }).join("");
+        if (tab === "shipments") body = "<div class=\"stack\">" + shipmentCards(l, true).html + "</div>";
         if (tab === "figures") body = figures(l);
-        if (tab === "timeline") body = "<ol class=\"timeline\">" + (l.history || []).map(function (h) { return "<li><p>" + UI.esc(h.action) + (h.reason ? ". " + UI.esc(h.reason) : "") + "</p><p class=\"muted\">" + UI.when(h.at) + "</p></li>"; }).join("") + "</ol>";
+        if (tab === "timeline") body = stageTimeline(l);
         stage.innerHTML = "<a class=\"lead\" href=\"#/listing/" + l.id + "\"><p class=\"lead-title\">" + UI.esc(l.name) + "</p></a><div class=\"column\"><div class=\"tabs\" role=\"tablist\">" + tabs + "</div>" + body + "</div>";
         stage.querySelectorAll("[data-pct]").forEach(function (el) { el.style.width = el.getAttribute("data-pct") + "%"; });
       },
@@ -471,18 +527,27 @@
           if (port === "completed") return l.status === "completed";
           return l.status === "cancelled" || l.status === "withdrawn";
         });
+        var NOTES = ["Collecting funds from investors.", "Goods are bought and checked.", "Goods are loaded at the port.", "Your shipment is at sea.", "Cleared by customs.", "Goods sold. Settlement is next.", "Profit paid out to your wallet."];
         var list = rows.length ? rows.map(function (l) {
           var held = mine(l, u.id);
-          var result = "";
-          if (l.status === "completed") {
+          var done = l.status === "completed";
+          var n = done ? 6 : Math.max(0, Math.min(6, L.listingStage(l)));
+          var pct = done ? 100 : Math.round(n * 100 / 6);
+          var fig = "<div class=\"held-fig\"><span class=\"bento-k\">Stage</span><b class=\"num\">" + (n + 1) + "<small>/7</small></b></div>";
+          if (done) {
             var sale = l.shipments.reduce(function (s, sh) { return s + (sh.proceeds || 0); }, 0);
             var cost = l.shipments.reduce(function (s, sh) { return s + (sh.costActual || 0); }, 0);
             var settled = L.settlement({ saleCents: sale, costCents: cost, investorSharePct: l.investorShare, contributions: l.contributions, shareholderListing: false });
             var slice = settled.rows.filter(function (r) { return r.userId === u.id; })[0];
-            result = slice ? UI.money(slice.profit, slice.profit >= 0 ? "gain" : "loss") : "";
-          } else result = UI.money(L.expectedFor(l, held), "expected");
-          var href = l.status === "completed" ? "#/statement/" + l.id : "#/track/" + l.id;
-          return "<a class=\"row\" href=\"" + href + "\" data-go=\"" + href + "\"><span class=\"title\">" + UI.esc(l.name) + "</span><span class=\"meta\">" + L.formatUsd(held) + "</span><span class=\"end\">" + result + "</span></a>";
+            fig = "<div class=\"held-fig\"><span class=\"bento-k\">Profit received</span><b class=\"num\">" + (slice ? L.formatUsd(slice.profit) : "—") + "</b></div>";
+          }
+          var href = done ? "#/statement/" + l.id : "#/track/" + l.id;
+          return "<a class=\"held st" + n + "\" href=\"" + href + "\" data-go=\"" + href + "\"><div class=\"held-in\">" +
+            "<div class=\"held-head\"><div class=\"bento-title\"><span class=\"bento-name\">" + UI.esc(l.name) + "</span><span class=\"bento-k\">" + UI.esc(UI.cname(l.source)) + " to " + UI.esc(UI.cname(l.buyer)) + "</span></div>" +
+            "<span class=\"held-chip\">" + UI.stageGlyph(L.STAGES[n]) + UI.esc(L.STAGES[n]) + "</span></div>" +
+            "<div class=\"held-kpis\"><div class=\"held-fig\"><span class=\"bento-k\">You invested</span><b class=\"num\">" + L.formatUsd(held) + "</b></div>" + fig + "</div>" +
+            "<div class=\"progress\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"" + pct + "\" aria-label=\"Journey\"><i style=\"width:" + pct + "%\"></i></div>" +
+            "<p class=\"bento-k\">" + NOTES[n] + "</p></div><span class=\"held-mot\" aria-hidden=\"true\"></span></a>";
         }).join("") : "<div class=\"empty\"><p>Nothing is in this list yet.</p><a href=\"#/shipments\" data-go=\"#/shipments\">See shipments</a></div>";
         stage.innerHTML = "<div class=\"column\"><h1>Your shipments</h1><div class=\"tabs\">" + tabs + "</div>" + list + "</div>";
       },
@@ -504,37 +569,9 @@
         var held = mine(l, u.id);
         var esc = UI.esc;
         var overall = L.listingStage(l);
-        var lateN = 0;
-        var cards = l.shipments.map(function (sh, si) {
-          var stageN = L.shipmentStage(l, sh);
-          var doneN = 0;
-          var nextIdx = -1;
-          var items = sh.steps.map(function (st, i) {
-            var finished = st.state === "done" || st.state === "verified" || st.state === "skipped";
-            if (finished) doneN++; else if (nextIdx < 0) nextIdx = i;
-            var late = L.isLate(l, sh, i, now);
-            if (late) lateN++;
-            var due = L.stepDue(l, sh, i);
-            var cls = finished ? "done" : late ? "late" : st.state === "in_progress" ? "now" : "todo";
-            var dot = finished ? "&#10003;" : late ? "!" : String(i + 1);
-            var when = finished ? "Complete" : late ? "Late · new date " + UI.when(st.revisedAt || now) : st.state === "in_progress" ? "In progress" + (due ? " · due " + UI.when(due) : "") : (due ? "Due " + UI.when(due) : "Waiting");
-            return "<li class=\"" + cls + "\"><div><span class=\"track-dot\" aria-hidden=\"true\">" + dot + "</span><span class=\"track-body\"><span class=\"title\">" + esc(st.name) + "</span><span class=\"meta\">" + esc(when) + "</span></span></div></li>";
-          }).join("");
-          var pct = sh.steps.length ? Math.round(doneN * 100 / sh.steps.length) : 0;
-          var route = L.STAGES.map(function (name, i) {
-            var cls = i < stageN ? "done" : i === stageN ? "now" : "";
-            return "<li class=\"" + cls + "\"" + (i === stageN ? " aria-current=\"step\"" : "") + ">" + UI.stageGlyph(name) + "<span>" + esc(name) + "</span></li>";
-          }).join("");
-          var next = nextIdx >= 0 ? sh.steps[nextIdx] : null;
-          var nextDue = nextIdx >= 0 ? L.stepDue(l, sh, nextIdx) : null;
-          return "<section class=\"dash-card trk-card\"><div class=\"dash-row\"><h2>Shipment " + (si + 1) + (l.shipments.length > 1 ? " of " + l.shipments.length : "") + "</h2>" +
-            "<span class=\"status\">" + esc(L.STAGES[stageN]) + "</span></div>" +
-            "<ol class=\"route\" aria-label=\"Journey\">" + route + "</ol>" +
-            "<div class=\"dash-row\"><span class=\"dash-sub\">" + doneN + " of " + sh.steps.length + " steps done</span><b class=\"num\">" + pct + "%</b></div>" +
-            "<div class=\"dash-meter dash-green\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"" + pct + "\" aria-label=\"Steps done\"><i style=\"width:" + pct + "%\"></i></div>" +
-            (next ? "<div class=\"trk-next\"><span class=\"dash-label\">Next</span><b>" + esc(next.name) + "</b>" + (nextDue ? "<span class=\"dash-sub\">Expected " + UI.when(nextDue) + "</span>" : "") + "</div>" : "<div class=\"trk-next\"><span class=\"dash-label\">Next</span><b>All steps complete</b></div>") +
-            UI.fold("<strong>All steps</strong>", "<ol class=\"track\">" + items + "</ol>") + "</section>";
-        }).join("");
+        var built = shipmentCards(l, false);
+        var lateN = built.late;
+        var cards = built.html;
         var done = l.status === "completed";
         var banner = lateN ? "<div class=\"banner banner-warning\" role=\"status\"><strong>" + lateN + (lateN === 1 ? " step is" : " steps are") + " running late.</strong><p>The manager has given a new date. Your money stays safe in escrow.</p></div>" : "";
         var hero = "<section class=\"dash-hero dash-green\"><div class=\"dash-hero-main\"><p class=\"dash-label\">" + esc(UI.cname(l.source)) + " → " + esc(UI.cname(l.buyer)) + "</p>" +
