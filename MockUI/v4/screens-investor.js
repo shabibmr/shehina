@@ -87,7 +87,7 @@
       var D = ShehnatDash;
       var S = Store.state;
       var bal = Store.bal("user:" + u.id + ":wallet");
-      var invested = 0, expected = 0, realised = 0, capDone = 0, roiW = 0, nextPay = 0, waiting = 0, nActive = 0, nDone = 0;
+      var invested = 0, expected = 0, realised = 0, capDone = 0, roiW = 0, nextPay = 0, waiting = 0, queued = 0, nQueued = 0, nActive = 0, nDone = 0;
       var series = [0], cats = {}, markets = {};
       S.listings.forEach(function (l) {
         var held = mine(l, u.id);
@@ -101,8 +101,8 @@
             var due = l.liveAt + L.cycleDays(l) * L.DAY;
             if (!nextPay || due < nextPay) nextPay = due;
           } else { waiting += held; }
-        } else if (l.status !== "rejected" && l.status !== "cancelled") {
-          waiting += held;
+        } else if (l.status !== "completed" && l.status !== "rejected" && l.status !== "cancelled") {
+          waiting += held; queued += held; nQueued++;
         } else if (l.status === "completed") {
           var sale = l.shipments.reduce(function (a, sh) { return a + (sh.proceeds || 0); }, 0);
           var cost = l.shipments.reduce(function (a, sh) { return a + (sh.costActual || 0); }, 0);
@@ -126,7 +126,7 @@
       }) +
       "<div class=\"dash-grid\">" +
         D.tile({ label: "Wallet balance", value: L.formatUsd(bal), sub: "Available to invest", tone: "blue", icon: "wallet", href: "#/wallet" }) +
-        D.tile({ label: "Current investments", value: L.formatUsd(invested), sub: nActive + (nActive === 1 ? " shipment" : " shipments") + " funded", tone: "green", icon: "chart", href: "#/portfolio" }) +
+        D.tile({ label: "Current investments", value: L.formatUsd(invested + queued), sub: nActive + (nActive === 1 ? " shipment" : " shipments") + " funded" + (queued ? ", " + L.formatUsd(queued) + " in " + nQueued + " awaiting funding" : ""), tone: "green", icon: "chart", href: "#/portfolio" }) +
         D.tile({ label: "Current shipments", value: String(nActive), sub: open + " open to invest", tone: "amber", icon: "ship", href: "#/shipments" }) +
         D.tile({ label: "Expected profit", value: L.formatUsd(expected), sub: invested ? "+" + (expected * 100 / invested).toFixed(1) + "% on invested" : "Invest to start earning", tone: "green", icon: "in" }) +
         D.tile({ label: "Realised profit", value: (realised >= 0 ? "+" : "\u2212") + L.formatUsd(Math.abs(realised)), sub: nDone + " completed", tone: realised >= 0 ? "green" : "red", icon: "check", href: "#/portfolio" }) +
