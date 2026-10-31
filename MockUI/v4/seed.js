@@ -231,7 +231,7 @@
     });
     parallel.shipments[0].steps[4].revisedAt = NOW + 3 * L.DAY;
     contribute(parallel, "kerala", "manager", 40000);
-    contribute(parallel, "layla", "investor", 160000);
+    contribute(parallel, "layla", "investor", 120000);
 
     var dates = listing({
       id: "dates", name: "Dates to Jeddah", managerId: "omar", source: "OM", buyer: "SA",
@@ -348,7 +348,7 @@
     expect(wallet("aisha"), 2500000);
     expect(wallet("kerala"), 6000000);
     expect(wallet("chen"), 500000);
-    expect(wallet("layla"), 1000000);
+    expect(wallet("layla"), 1040000);
     expect(wallet("omar"), 460000);
     expect("withdrawals:hold", 1400000);
     expect("platform:revenue", 24000);

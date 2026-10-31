@@ -119,7 +119,7 @@
   }
 
   function overdue(listing, now, days) {
-    return listing.status === "live" && listingStage(listing) === 0 && listing.liveAt && (now - listing.liveAt) >= days * DAY;
+    return listing.status === "live" && listingStage(listing) === 0 && remaining(listing) > 0 && listing.liveAt && (now - listing.liveAt) >= days * DAY;
   }
 
   var CATEGORIES = ["Food", "Building", "Textiles", "Energy", "Other"];
