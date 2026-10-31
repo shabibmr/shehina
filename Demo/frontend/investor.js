@@ -1,4 +1,4 @@
-import { S, esc, num, usd, usdx, dt, api, views, acts, go, reload, render, toast, busy, card, mini, door, route, roiK, voy, stages, progress, table, ln, field, docBox, openDoc, META, cname, countryOpts, idTypeOpts, show, CATS, ST } from './core.js';
+import { S, esc, num, usd, usdx, dt, api, views, acts, go, reload, render, toast, busy, card, door, route, roiK, voy, stages, progress, table, ln, field, docBox, openDoc, META, cname, countryOpts, idTypeOpts, show, CATS, ST } from './core.js';
 
 const KYC_DOCS = [['id_document', 'Government photo ID (passport, national ID, driving licence or residence permit)'], ['proof_of_address', 'Proof of address (a recent utility bill or bank statement)']];
 // [key, label, kind or input type, placeholder]. Works for investors in any country.
@@ -71,12 +71,27 @@ acts.submitKyc = () => busy(async () => {
 });
 
 // ---------- Portfolio + tracking ----------
+// Larger holding card. Motion class follows the shipment stage (0–6).
+function held(x) {
+  const l = x.listing, done = l.status === 'completed';
+  const stage = done ? 6 : Math.max(0, Math.min(6, l.stage | 0));
+  const pct = done ? 100 : Math.round((stage / 6) * 100);
+  const fig = done
+    ? `<div class="k2"><b>${usd(x.profit || 0)}</b><span>Profit received</span></div>`
+    : `<div class="k2"><b>${stage + 1}<small>/7</small></b><span>Stage</span></div>`;
+  return `<div class="ship held st${stage}" tabindex="0" data-act="openTrack" data-arg="${l.id}">
+    <div class="hull">${door(l)}<div class="sb"><div class="row"><div class="nm">${esc(l.name)}</div><span class="chip">${esc(l.stage_name || ST[stage][0])}</span></div>
+    <div class="rt">${route(l)}</div>
+    <div class="kpi"><div class="k1"><b>${usd(x.invested)}</b><span>You invested</span></div>${fig}</div>
+    <div class="bar"><i style="width:${pct}%"></i></div>
+    <div class="fb">${esc(ST[stage][1])}</div></div></div><span class="mot" aria-hidden="true"></span></div>`;
+}
 views.portfolio = {
   load: () => api('GET', '/portfolio'),
   html: (d) => {
     const p = d.portfolio, inv = p.reduce((s, x) => s + x.invested, 0), prof = p.reduce((s, x) => s + (x.profit || 0), 0), exp = p.filter((x) => x.listing.status !== 'completed').reduce((s, x) => s + x.expected_profit, 0);
     return `<h1>My portfolio</h1><div class="kpi" style="margin:10px 0"><div class="k2"><b>${usd(inv)}</b><span>Invested</span></div><div class="k2"><b>${usd(exp)}</b><span>Expected profit</span></div><div class="k2"><b>${usd(prof)}</b><span>Profit earned</span></div></div>
-    ${p.length ? p.map((x) => mini(x.listing, 'openTrack', x.listing.stage_name, `You invested <b>${usd(x.invested)}</b>${x.listing.status === 'completed' ? ` · Profit <b>${usd(x.profit || 0)}</b>` : ''}`, x.listing.status === 'completed' ? 100 : Math.round((x.listing.stage / 6) * 100))).join('') : '<div class="empty">You have not invested yet. Explore shipments to begin.</div>'}`;
+    ${p.length ? p.map(held).join('') : '<div class="empty">You have not invested yet. Explore shipments to begin.</div>'}`;
   },
 };
 acts.openTrack = (el) => go('track', { id: el.dataset.arg });

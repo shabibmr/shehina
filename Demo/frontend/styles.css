@@ -260,39 +260,78 @@ input[type=file]{width:100%;font:inherit;color:var(--mut)}
 #nav button{flex:1 0 auto;min-width:62px}
 
 /* Investor listing cards: larger, layered, lifted off the page (z-axis depth) */
-.ship:not(.sm):not(.hero2){border-radius:18px;margin-bottom:22px;border-color:transparent;
+.ship:not(.sm):not(.hero2):not(.held){border-radius:18px;margin-bottom:22px;border-color:transparent;
   box-shadow:0 1px 2px rgba(10,34,48,.08),0 6px 14px rgba(10,34,48,.10),0 18px 38px -6px rgba(10,34,48,.22);
   transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s cubic-bezier(.2,.8,.2,1)}
-.ship:not(.sm):not(.hero2) .door{height:112px;padding:0 20px}
-.ship:not(.sm):not(.hero2) .door .em{font-size:46px}
-.ship:not(.sm):not(.hero2) .door .cid{font-size:19px}
-.ship:not(.sm):not(.hero2) .sb{padding:18px 20px 20px}
-.ship:not(.sm):not(.hero2) .nm{font-size:22px}
-.ship:not(.sm):not(.hero2) .rt{font-size:14.5px;margin:5px 0 16px}
-.ship:not(.sm):not(.hero2) .kpi{gap:12px;padding:14px;margin:0 -6px 16px;background:var(--acc2);border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
-.ship:not(.sm):not(.hero2) .k1 b{font-size:46px}
-.ship:not(.sm):not(.hero2) .k2 b{font-size:30px}
-.ship:not(.sm):not(.hero2) .bar{height:10px}
-.ship:not(.sm):not(.hero2) .fb{font-size:14px;margin-top:8px}
-@media (hover:hover){.ship:not(.sm):not(.hero2):hover{transform:translateY(-6px);
+.ship:not(.sm):not(.hero2):not(.held) .door{height:112px;padding:0 20px}
+.ship:not(.sm):not(.hero2):not(.held) .door .em{font-size:46px}
+.ship:not(.sm):not(.hero2):not(.held) .door .cid{font-size:19px}
+.ship:not(.sm):not(.hero2):not(.held) .sb{padding:18px 20px 20px}
+.ship:not(.sm):not(.hero2):not(.held) .nm{font-size:22px}
+.ship:not(.sm):not(.hero2):not(.held) .rt{font-size:14.5px;margin:5px 0 16px}
+.ship:not(.sm):not(.hero2):not(.held) .kpi{gap:12px;padding:14px;margin:0 -6px 16px;background:var(--acc2);border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+.ship:not(.sm):not(.hero2):not(.held) .k1 b{font-size:46px}
+.ship:not(.sm):not(.hero2):not(.held) .k2 b{font-size:30px}
+.ship:not(.sm):not(.hero2):not(.held) .bar{height:10px}
+.ship:not(.sm):not(.hero2):not(.held) .fb{font-size:14px;margin-top:8px}
+@media (hover:hover){.ship:not(.sm):not(.hero2):not(.held):hover{transform:translateY(-6px);
   box-shadow:0 2px 4px rgba(10,34,48,.08),0 14px 28px rgba(10,34,48,.14),0 32px 60px -8px rgba(10,34,48,.32)}}
-.ship:not(.sm):not(.hero2):active{transform:translateY(-2px) scale(.99)}
-@media (prefers-reduced-motion:reduce){.ship:not(.sm):not(.hero2){transition:none}.ship:not(.sm):not(.hero2):hover,.ship:not(.sm):not(.hero2):active{transform:none}}
-:root[data-theme="dark"] .ship:not(.sm):not(.hero2){box-shadow:0 1px 2px rgba(0,0,0,.4),0 8px 18px rgba(0,0,0,.4),0 22px 44px -6px rgba(0,0,0,.6);border-color:var(--line)}
+.ship:not(.sm):not(.hero2):not(.held):active{transform:translateY(-2px) scale(.99)}
+@media (prefers-reduced-motion:reduce){.ship:not(.sm):not(.hero2):not(.held){transition:none}.ship:not(.sm):not(.hero2):not(.held):hover,.ship:not(.sm):not(.hero2):not(.held):active{transform:none}}
+:root[data-theme="dark"] .ship:not(.sm):not(.hero2):not(.held){box-shadow:0 1px 2px rgba(0,0,0,.4),0 8px 18px rgba(0,0,0,.4),0 22px 44px -6px rgba(0,0,0,.6);border-color:var(--line)}
 
 /* Investor cards: subtle ambient background motion (decorative, GPU-friendly, staggered per card) */
-.ship:not(.sm):not(.hero2){position:relative;isolation:isolate;
+.ship:not(.sm):not(.hero2):not(.held){position:relative;isolation:isolate;
   background-image:radial-gradient(circle at 20% 0%,color-mix(in srgb,var(--acc) 9%,transparent),transparent 55%),radial-gradient(circle at 90% 100%,color-mix(in srgb,var(--rust) 8%,transparent),transparent 50%);
   background-size:160% 160%;background-repeat:no-repeat;animation:shipDrift 14s ease-in-out infinite alternate;animation-delay:var(--sd,0s)}
-.ship:not(.sm):not(.hero2):nth-child(3n+2){--sd:-4s}
-.ship:not(.sm):not(.hero2):nth-child(3n){--sd:-9s}
-.ship:not(.sm):not(.hero2)::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+.ship:not(.sm):not(.hero2):not(.held):nth-child(3n+2){--sd:-4s}
+.ship:not(.sm):not(.hero2):not(.held):nth-child(3n){--sd:-9s}
+.ship:not(.sm):not(.hero2):not(.held)::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
   background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.22) 50%,transparent 60%);
   transform:translateX(-120%);animation:shipSheen 9s ease-in-out infinite;animation-delay:calc(var(--sd,0s) - 2s)}
-.ship:not(.sm):not(.hero2) .door:before{animation:doorSlide 6s linear infinite;animation-delay:var(--sd,0s)}
-.ship:not(.sm):not(.hero2) .bar i{background-image:linear-gradient(90deg,rgba(255,255,255,0) 0,rgba(255,255,255,.35) 50%,rgba(255,255,255,0) 100%);background-size:60px 100%;background-repeat:no-repeat;animation:barGlint 4s ease-in-out infinite;background-color:var(--acc)}
+.ship:not(.sm):not(.hero2):not(.held) .door:before{animation:doorSlide 6s linear infinite;animation-delay:var(--sd,0s)}
+.ship:not(.sm):not(.hero2):not(.held) .bar i{background-image:linear-gradient(90deg,rgba(255,255,255,0) 0,rgba(255,255,255,.35) 50%,rgba(255,255,255,0) 100%);background-size:60px 100%;background-repeat:no-repeat;animation:barGlint 4s ease-in-out infinite;background-color:var(--acc)}
 @keyframes shipDrift{from{background-position:0% 0%,100% 100%}to{background-position:100% 60%,0% 30%}}
 @keyframes shipSheen{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
 @keyframes doorSlide{from{background-position:0 0}to{background-position:8px 0}}
 @keyframes barGlint{from{background-position:-60px 0}to{background-position:calc(100% + 60px) 0}}
-@media (prefers-reduced-motion:reduce){.ship:not(.sm):not(.hero2),.ship:not(.sm):not(.hero2)::after,.ship:not(.sm):not(.hero2) .door:before,.ship:not(.sm):not(.hero2) .bar i{animation:none}.ship:not(.sm):not(.hero2)::after{display:none}}
+@media (prefers-reduced-motion:reduce){.ship:not(.sm):not(.hero2):not(.held),.ship:not(.sm):not(.hero2):not(.held)::after,.ship:not(.sm):not(.hero2):not(.held) .door:before,.ship:not(.sm):not(.hero2):not(.held) .bar i{animation:none}.ship:not(.sm):not(.hero2):not(.held)::after{display:none}}
+
+/* Portfolio holdings: larger than compact rows. Motion matches the shipment stage. */
+.ship.held{border-radius:20px;margin-bottom:22px;border-color:transparent;position:relative;isolation:isolate;
+  box-shadow:0 1px 2px rgba(10,34,48,.08),0 10px 24px rgba(10,34,48,.12),0 24px 48px -12px rgba(10,34,48,.24)}
+.ship.held .hull{position:relative;z-index:1}
+.ship.held .door{height:104px;padding:0 18px}
+.ship.held .door .em{font-size:44px}
+.ship.held .door .cid{font-size:18px}
+.ship.held .sb{padding:16px 18px 18px}
+.ship.held .nm{font-size:24px}
+.ship.held .rt{font-size:14.5px;margin:6px 0 12px}
+.ship.held .kpi{gap:12px;padding:12px 14px;margin:0 0 14px;background:var(--acc2);border-radius:14px}
+.ship.held .k1 b,.ship.held .k2 b{font-size:clamp(22px,6.5vw,34px);overflow-wrap:anywhere}
+.ship.held .bar{height:10px}
+.ship.held .fb{font-size:13.5px;margin-top:8px}
+.ship.held .mot{position:absolute;inset:0;z-index:2;pointer-events:none}
+.ship.held.st0 .bar i{background-image:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.7),rgba(255,255,255,0));background-size:42% 100%;background-repeat:no-repeat;background-color:var(--acc);animation:barGlint 2.2s cubic-bezier(.2,.8,.2,1) infinite}
+.ship.held.st0 .mot{background:radial-gradient(circle at 82% 18%,color-mix(in srgb,var(--acc) 32%,transparent),transparent 46%);animation:holdGlow 2.6s cubic-bezier(.45,0,.2,1) infinite}
+.ship.held.st1 .door .em{animation:holdDrop 2.4s cubic-bezier(.34,1.4,.64,1) infinite}
+.ship.held.st2 .door{transform-origin:50% 80%;animation:holdSway 3.2s cubic-bezier(.45,.05,.2,1) infinite}
+.ship.held.st3 .hull{animation:holdSea 4s cubic-bezier(.45,.05,.55,.95) infinite}
+.ship.held.st4 .mot{inset:0 0 auto 0;height:18%;background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--hl) 70%,#fff),transparent);animation:holdScan 2.6s cubic-bezier(.2,0,.2,1) infinite}
+.ship.held.st5 .chip{animation:holdPop 2s cubic-bezier(.34,1.45,.64,1) infinite}
+.ship.held.st6 .mot{background:radial-gradient(circle,var(--hl) 0 3px,transparent 4px) 22% 78%/8px 8px no-repeat,radial-gradient(circle,var(--acc) 0 3px,transparent 4px) 58% 70%/8px 8px no-repeat,radial-gradient(circle,#fff 0 2px,transparent 3.5px) 80% 84%/7px 7px no-repeat;animation:holdRise 2.2s cubic-bezier(.16,1,.3,1) infinite}
+@keyframes holdGlow{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes holdDrop{0%,62%{transform:translateY(0) scale(1)}74%{transform:translateY(-12px) scale(1)}86%{transform:translateY(0) scale(1.08)}100%{transform:translateY(0) scale(1)}}
+@keyframes holdSway{0%,100%{transform:rotate(0)}30%{transform:rotate(-1.6deg)}70%{transform:rotate(1.6deg)}}
+@keyframes holdSea{0%{transform:translate(0,0)}25%{transform:translate(6px,-4px)}50%{transform:translate(0,3px)}75%{transform:translate(-6px,-2px)}100%{transform:translate(0,0)}}
+@keyframes holdScan{0%{transform:translateY(-120%);opacity:0}16%{opacity:1}100%{transform:translateY(520%);opacity:0}}
+@keyframes holdPop{0%,55%{transform:scale(1)}72%{transform:scale(1.1)}100%{transform:scale(1)}}
+@keyframes holdRise{0%{transform:translateY(18px);opacity:0}28%{opacity:1}100%{transform:translateY(-78px);opacity:0}}
+@media (hover:hover){.ship.held:hover{box-shadow:0 2px 4px rgba(10,34,48,.08),0 16px 32px rgba(10,34,48,.16),0 36px 64px -10px rgba(10,34,48,.3)}}
+.ship.held:active .hull{transform:scale(.985)}
+:root[data-theme="dark"] .ship.held{box-shadow:0 1px 2px rgba(0,0,0,.4),0 12px 28px rgba(0,0,0,.45),0 28px 52px -8px rgba(0,0,0,.6);border-color:var(--line)}
+@media (prefers-reduced-motion:reduce){
+  .ship.held.st0 .bar i,.ship.held.st0 .mot,.ship.held.st1 .door .em,.ship.held.st2 .door,.ship.held.st3 .hull,.ship.held.st4 .mot,.ship.held.st5 .chip,.ship.held.st6 .mot{animation:none}
+  .ship.held.st0 .mot{opacity:.55}
+  .ship.held:active .hull{transform:none}
+}

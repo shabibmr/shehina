@@ -2,5 +2,7 @@
  "prototype": "prototype",
  "flutter-ui": "flutter-ui",
  "flutter-mobile-design": "flutter-mobile-design",
- "imagegen-frontend-mobile": "imagegen-frontend-mobile"
+ "imagegen-frontend-mobile": "imagegen-frontend-mobile",
+ "implement": "implement",
+ "implement-spec": "implement-spec"
 }
