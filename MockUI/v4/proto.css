@@ -2073,3 +2073,325 @@ a {
   color: var(--accent-soft);
   font-weight: 600;
 }
+
+
+/* ==========================================================================
+   GLASS LOOK (Investor and Manager, DESIGN-SYSTEM §2.1)
+   ========================================================================== */
+
+/* Applied when stage or main has .glass-look */
+.glass-look {
+  background: var(--gradient-page-glass);
+  color: var(--ink-900);
+}
+
+.glass-look #app-header {
+  background: transparent;
+  border-block-end-color: transparent;
+}
+
+.glass-look .site-title,
+.glass-look .icon-btn {
+  color: #fff;
+}
+
+.glass-look #app-header .wallet-pill {
+  background: var(--glass-bg-dark);
+  border-color: var(--glass-border-dark);
+  color: #fff;
+}
+
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow-glass);
+}
+
+.glass.dk {
+  background: var(--glass-bg-dark);
+  border-color: var(--glass-border-dark);
+  color: #fff;
+  box-shadow: var(--shadow-glass-dark);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .glass { background: var(--surface-glass-solid); }
+  .glass.dk { background: var(--surface-glass-dark-solid); }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass { background: #fff; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .glass.dk { background: var(--surface-glass-dark-solid); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+
+.gl-hi {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  padding-block: var(--sp-2);
+}
+
+.gl-hi .gl-greeting {
+  font-size: var(--fs-18);
+  opacity: 0.9;
+}
+
+.gl-hi h1 {
+  font-size: var(--fs-34);
+  font-weight: var(--fw-medium);
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+
+.gl-av {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: var(--green-900);
+  background: linear-gradient(135deg, var(--gold-300), var(--green-200));
+  border: 3px solid rgb(255 255 255 / 0.75);
+  box-shadow: 0 4px 14px rgb(3 37 26 / 0.3);
+  position: relative;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.gl-av .gl-dot {
+  position: absolute;
+  top: -2px;
+  inset-inline-end: -2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--loss);
+  border: 2px solid #fff;
+}
+
+.btn-glass-primary,
+.go-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  width: 100%;
+  min-height: 52px;
+  margin-block-start: var(--sp-3);
+  border: 0;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  font: 600 var(--fs-16) / 1 var(--font-sans);
+  color: var(--green-950);
+  background: var(--gradient-gold-green);
+  box-shadow: 0 6px 18px rgb(3 37 26 / 0.2), inset 0 1px 0 rgb(255 255 255 / 0.7);
+  transition: transform var(--dur-instant);
+  text-decoration: none;
+}
+
+.btn-glass-primary:active,
+.go-btn:active {
+  transform: scale(var(--press-scale));
+}
+
+.gl-hero-sum {
+  display: grid;
+  grid-template-columns: 136px 1fr;
+  gap: var(--sp-4);
+  align-items: center;
+  padding: var(--sp-4);
+}
+
+.gl-ring {
+  position: relative;
+  width: 136px;
+  height: 136px;
+}
+
+.gl-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.gl-ring .gl-tr {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.22);
+  stroke-width: 12;
+}
+
+.gl-ring .gl-pg {
+  fill: none;
+  stroke: url(#rg-glass);
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-dasharray: 327;
+  stroke-dashoffset: 327;
+  transition: stroke-dashoffset var(--dur-showpiece) var(--ease-count) 0.2s;
+}
+
+.gl-ring .gl-mid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.gl-ring .gl-mid small {
+  font-size: var(--fs-12);
+  opacity: 0.85;
+  color: #fff;
+}
+
+.gl-ring .gl-mid b {
+  font-size: var(--fs-28);
+  font-weight: var(--fw-medium);
+  color: #fff;
+}
+
+.gl-stats {
+  display: grid;
+  gap: 0;
+}
+
+.gl-stats .gl-stat-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 9px 0;
+  border-block-end: 1px solid rgb(255 255 255 / 0.2);
+}
+
+.gl-stats .gl-stat-row:last-child {
+  border-block-end: 0;
+}
+
+.gl-stats .gl-stat-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgb(255 255 255 / 0.18);
+  border: 1px solid rgb(255 255 255 / 0.4);
+  font-size: 13px;
+  flex: none;
+  color: #fff;
+}
+
+.gl-stats span {
+  font-size: var(--fs-14);
+  line-height: 1.2;
+  color: #fff;
+}
+
+.gl-stats small {
+  display: block;
+  font-size: var(--fs-12);
+  opacity: 0.78;
+  color: #fff;
+}
+
+.gl-tiles {
+  display: flex;
+  gap: var(--sp-3);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  margin-inline: calc(var(--gutter) * -1);
+  padding: 2px var(--gutter) var(--sp-3);
+  scrollbar-width: none;
+}
+
+.gl-tiles::-webkit-scrollbar {
+  display: none;
+}
+
+.gl-tile {
+  flex: none;
+  width: 148px;
+  scroll-snap-align: start;
+  padding: var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 168px;
+  border-radius: var(--r-lg);
+  text-decoration: none;
+  color: var(--ink-900);
+}
+
+.gl-tile .gl-gx {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: var(--green-800);
+  background: rgb(255 255 255 / 0.7);
+  border: 1px solid rgb(255 255 255 / 0.9);
+  margin-block-end: var(--sp-2);
+}
+
+.gl-tile b {
+  font-weight: var(--fw-medium);
+  line-height: 1.2;
+}
+
+.gl-tile small {
+  color: var(--text-muted);
+  font-size: var(--fs-12);
+}
+
+.gl-tile .gl-am {
+  margin-block-start: auto;
+  font-size: var(--fs-14);
+  font-weight: 600;
+}
+
+.gl-tile.need-action {
+  box-shadow: 0 10px 30px rgb(3 37 26 / 0.16), inset 0 0 0 2px var(--gold-500);
+}
+
+/* Floating Glass Nav (DESIGN-SYSTEM §2.1 & §3) */
+.floating-glass-nav {
+  position: sticky;
+  bottom: calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
+  margin-block-start: auto;
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  border-radius: var(--r-pill);
+  z-index: 50;
+  margin-inline: var(--sp-2);
+  margin-block-end: var(--sp-2);
+}
+
+.floating-glass-nav .nav-item {
+  flex: 1;
+  min-height: var(--tap);
+  border-radius: var(--r-pill);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--stone-600);
+  font-size: var(--fs-12);
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--dur-fast) var(--ease-spring-soft);
+}
+
+.floating-glass-nav .nav-item.active {
+  background: #fff;
+  color: var(--green-800);
+  box-shadow: 0 4px 12px rgb(3 37 26 / 0.14);
+}
