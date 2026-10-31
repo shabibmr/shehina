@@ -459,12 +459,7 @@ a.bento:focus-visible { outline: 3px solid var(--color-ring); outline-offset: 2p
 @keyframes ico-sail { 50% { transform: translateX(2px); } }
 @keyframes ico-slide { 50% { transform: translateY(2px); } }
 
-/* Hero icon, row icons, money arrows, Post Shipment plus. */
-.hero-ico { display: flex; margin-block-end: var(--space-3); }
-.hero-ico.center { justify-content: center; margin-block: var(--space-4); }
-.hero-ico.center .ico { width: 72px; height: 72px; }
-.hero-ico .ico { width: 44px; height: 44px; }
-.row.has-lead { grid-template-columns: auto 1fr auto; }
+/* Row icons, money arrows, Post Shipment plus. */.row.has-lead { grid-template-columns: auto 1fr auto; }
 .row.has-lead > .row-ico { grid-row: 1 / span 2; grid-column: 1; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--color-surface-sunken); color: var(--color-muted-foreground); }
 .row.has-lead > .title, .row.has-lead > .meta { grid-column: 2; }
 .row.has-lead > .end { grid-column: 3; }
@@ -529,3 +524,19 @@ a.bento:focus-visible { outline: 3px solid var(--color-ring); outline-offset: 2p
 }
 @keyframes dash-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes spark-draw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+
+/* Shipment detail (investor track) */
+.trk-card .route { overflow-x: auto; }
+.trk-next { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-3); background: var(--color-primary-subtle); }
+.trk-card .track li.todo .track-body .title { color: var(--color-muted-foreground); }
+.bento-head { flex-direction: row; justify-content: space-between; align-items: flex-start; gap: var(--space-3); }
+.bento-title { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.bento-return { font-size: var(--font-size-price); font-weight: 600; color: var(--color-primary); text-align: end; flex: none; }
+.list-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.list-head h1 { margin: 0; }
+.filter-btn { position: relative; margin-inline-start: auto; }
+.filter-count {
+  position: absolute; inset-block-start: 4px; inset-inline-end: 2px; min-width: 16px; height: 16px; padding-inline: 4px;
+  display: grid; place-items: center; font-size: 10px; line-height: 1;
+  background: var(--color-primary); color: var(--color-primary-foreground); border-radius: 8px;
+}

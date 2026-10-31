@@ -107,7 +107,6 @@ nav button.on{color:var(--acc)}nav button.on svg{background:var(--acc2)}
 .voy .ports{color:#fff;padding:0 4px}
 .pulse{animation:pls 2s ease-out infinite;transform-box:fill-box;transform-origin:center}
 @keyframes pls{from{transform:scale(.8);opacity:1}to{transform:scale(1.7);opacity:0}}
-@media (prefers-reduced-motion:reduce){.pulse{animation:none}}
 .vstats{display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:8px;margin-bottom:4px}
 .vstats div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px}
 .vstats b{display:block;font-family:var(--disp);font-size:26px;font-weight:800;line-height:1}.vstats b small{font-size:13px;color:var(--mut);font-weight:600}
@@ -277,7 +276,6 @@ input[type=file]{width:100%;font:inherit;color:var(--mut)}
 @media (hover:hover){.ship:not(.sm):not(.hero2):not(.held):hover{transform:translateY(-6px);
   box-shadow:0 2px 4px rgba(10,34,48,.08),0 14px 28px rgba(10,34,48,.14),0 32px 60px -8px rgba(10,34,48,.32)}}
 .ship:not(.sm):not(.hero2):not(.held):active{transform:translateY(-2px) scale(.99)}
-@media (prefers-reduced-motion:reduce){.ship:not(.sm):not(.hero2):not(.held){transition:none}.ship:not(.sm):not(.hero2):not(.held):hover,.ship:not(.sm):not(.hero2):not(.held):active{transform:none}}
 :root[data-theme="dark"] .ship:not(.sm):not(.hero2):not(.held){box-shadow:0 1px 2px rgba(0,0,0,.4),0 8px 18px rgba(0,0,0,.4),0 22px 44px -6px rgba(0,0,0,.6);border-color:var(--line)}
 
 /* Investor cards: subtle ambient background motion (decorative, GPU-friendly, staggered per card) */
@@ -295,7 +293,6 @@ input[type=file]{width:100%;font:inherit;color:var(--mut)}
 @keyframes shipSheen{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
 @keyframes doorSlide{from{background-position:0 0}to{background-position:8px 0}}
 @keyframes barGlint{from{background-position:-60px 0}to{background-position:calc(100% + 60px) 0}}
-@media (prefers-reduced-motion:reduce){.ship:not(.sm):not(.hero2):not(.held),.ship:not(.sm):not(.hero2):not(.held)::after,.ship:not(.sm):not(.hero2):not(.held) .door:before,.ship:not(.sm):not(.hero2):not(.held) .bar i{animation:none}.ship:not(.sm):not(.hero2):not(.held)::after{display:none}}
 
 /* Portfolio holdings: larger than compact rows. Motion matches the shipment stage. */
 .ship.held{border-radius:20px;margin-bottom:22px;border-color:transparent;position:relative;isolation:isolate;
@@ -330,8 +327,3 @@ input[type=file]{width:100%;font:inherit;color:var(--mut)}
 @media (hover:hover){.ship.held:hover{box-shadow:0 2px 4px rgba(10,34,48,.08),0 16px 32px rgba(10,34,48,.16),0 36px 64px -10px rgba(10,34,48,.3)}}
 .ship.held:active .hull{transform:scale(.985)}
 :root[data-theme="dark"] .ship.held{box-shadow:0 1px 2px rgba(0,0,0,.4),0 12px 28px rgba(0,0,0,.45),0 28px 52px -8px rgba(0,0,0,.6);border-color:var(--line)}
-@media (prefers-reduced-motion:reduce){
-  .ship.held.st0 .bar i,.ship.held.st0 .mot,.ship.held.st1 .door .em,.ship.held.st2 .door,.ship.held.st3 .hull,.ship.held.st4 .mot,.ship.held.st5 .chip,.ship.held.st6 .mot{animation:none}
-  .ship.held.st0 .mot{opacity:.55}
-  .ship.held:active .hull{transform:none}
-}

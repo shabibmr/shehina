@@ -14,6 +14,7 @@
     var walletFilter = "all";
     var gw = "";
 
+    function D() { return root.ShehnatDash; }
     function mine(listing, id) {
       return (listing.contributions || []).filter(function (c) { return c.userId === id; }).reduce(function (s, c) { return s + c.amount; }, 0);
     }
@@ -28,7 +29,18 @@
     function expireLine(l) {
       if (l.status !== "live" || L.remaining(l) <= 0) return "Funded";
       var days = fundingDaysLeft(l);
-      return days === 0 ? "Expiring today" : "Expiring in " + days + (days === 1 ? " day" : " days");
+      return days === 0 ? "Ends today" : days + (days === 1 ? " day left" : " days left");
+    }
+    /* Investor return on capital over one cycle, with the sale 10% lower and 10% higher than planned. */
+    function returnRange(l) {
+      var p = L.projection(l);
+      if (!p.target) return "";
+      function pct(sale) {
+        var r = L.settlement({ saleCents: Math.round(sale), costCents: p.target, investorSharePct: l.investorShare, contributions: [{ id: "all", kind: "investor", amount: p.target }], shareholderListing: false });
+        return Math.round(r.pool * 100 / p.target);
+      }
+      var lo = pct(p.expectedSale * 0.9), hi = pct(p.expectedSale * 1.1);
+      return "Expected " + lo + "–" + hi + "%";
     }
     function bentoCells(l) {
       var target = L.fundingTarget(l);
@@ -38,13 +50,13 @@
       var almost = l.status === "live" && left > 0 && target > 0 && left / target <= 0.1;
       return "<div class=\"bento-cell\"><span class=\"bento-k\">Still open</span><span class=\"bento-v num\">" + L.formatUsd(left) + "</span>" +
         "<span class=\"progress\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"" + pct + "\" aria-label=\"Funded\"><i style=\"width:" + pct + "%\"></i></span></div>" +
-        "<div class=\"bento-cell\"><span class=\"bento-k\">Funding</span><span class=\"bento-v\">" + expireLine(l) + "</span>" +
+        "<div class=\"bento-cell\"><span class=\"bento-k\">Expires</span><span class=\"bento-v\">" + expireLine(l) + "</span>" +
         (almost ? "<span class=\"bento-k\">Almost funded</span>" : "") + "</div>" +
-        "<div class=\"bento-cell bento-wide\">" + profitRange(l) + "</div>";
+        "<div class=\"bento-cell bento-wide\"><span class=\"bento-k\">Turnaround time</span><span class=\"bento-v\">About " + L.cycleDays(l) + " days</span></div>";
     }
     function row(l, href) {
       return "<a class=\"bento\" href=\"" + href + "\" data-go=\"" + href + "\">" +
-        "<div class=\"bento-cell bento-wide\"><span class=\"bento-name\">" + UI.esc(l.name) + "</span><span class=\"bento-k\">" + UI.esc(UI.cname(l.source)) + " to " + UI.esc(UI.cname(l.buyer)) + "</span></div>" +
+        "<div class=\"bento-cell bento-wide bento-head\"><div class=\"bento-title\"><span class=\"bento-name\">" + UI.esc(l.name) + "</span><span class=\"bento-k\">" + UI.esc(UI.cname(l.source)) + " to " + UI.esc(UI.cname(l.buyer)) + "</span></div><span class=\"bento-return num\">" + returnRange(l) + "</span></div>" +
         bentoCells(l) + "</a>";
     }
     function moneyBlock(user, action, unapproved) {
@@ -253,7 +265,9 @@
       section: "ship",
       test: function (h) { return h === "#/shipments" ? {} : null; },
       render: function (stage) {
+        var uid = Store.user().id;
         var rows = liveRows().filter(function (l) {
+          if (mine(l, uid) > 0) return false;
           if (filters.category && l.category !== filters.category) return false;
           if (filters.source && l.source !== filters.source) return false;
           if (filters.buyer && l.buyer !== filters.buyer) return false;
@@ -265,22 +279,25 @@
         });
         var list = rows.length ? rows.map(function (l) { return row(l, "#/listing/" + l.id); }).join("") : "<div class=\"empty\"><p>No shipments match these filters.</p><button class=\"btn-text\" type=\"button\" data-act=\"clear\">Clear filters</button></div>";
         var nActive = ["category", "source", "buyer"].filter(function (k) { return filters[k]; }).length + (filters.sort && filters.sort !== "name" ? 1 : 0);
-        stage.innerHTML = "<div class=\"column\"><h1>Shipments</h1><details class=\"fold\"" + (nActive ? " open" : "") + "><summary>Filters" + (nActive ? " (" + nActive + ")" : "") + "</summary><form class=\"fold-body stack\">" +
-          UI.field("category", "Category", "<select id=\"category\" name=\"category\"><option value=\"\">Any</option><option>Food</option><option>Building</option><option>Textiles</option><option>Energy</option><option>Other</option></select>", "") +
-          UI.field("source", "Sourced from", "<select id=\"source\" name=\"source\"><option value=\"\">Any</option>" + UI.countryOpts(filters.source) + "</select>", "") +
-          UI.field("buyer", "Sold in", "<select id=\"buyer\" name=\"buyer\"><option value=\"\">Any</option>" + UI.countryOpts(filters.buyer) + "</select>", "") +
-          UI.field("sort", "Sort", "<select id=\"sort\" name=\"sort\"><option value=\"name\">Name</option><option value=\"left\">Amount left</option></select>", "") +
-          "<button class=\"btn btn-secondary\" type=\"submit\">Apply filters</button></form></details>" + list + "</div>";
-        ["category", "source", "buyer", "sort"].forEach(function (k) {
-          var el = document.getElementById(k);
-          if (el && filters[k]) el.value = filters[k];
-        });
+        stage.innerHTML = "<div class=\"column\"><div class=\"list-head\"><h1>Shipments</h1><button class=\"icon-btn filter-btn\" type=\"button\" data-act=\"filters\" aria-label=\"Filters" + (nActive ? " (" + nActive + " on)" : "") + "\">" + UI.strokeIcon("filter", 22) + (nActive ? "<b class=\"filter-count\">" + nActive + "</b>" : "") + "</button></div>" + list + "</div>";
       },
       submit: function (data) {
         filters = { category: data.get("category") || "", source: data.get("source") || "", buyer: data.get("buyer") || "", sort: data.get("sort") || "name" };
+        UI.closeSheet();
         UI.go("#/shipments");
       },
-      on: function (act) { if (act === "clear") { filters = { category: "", source: "", buyer: "", sort: "name" }; UI.go("#/shipments"); } }
+      on: function (act) {
+        if (act === "filters") {
+          UI.openSheet("<header><strong>Filters</strong><button class=\"btn-text\" type=\"button\" data-close>Close</button></header><form class=\"stack\">" +
+            UI.field("category", "Category", "<select id=\"category\" name=\"category\"><option value=\"\">Any</option><option>Food</option><option>Building</option><option>Textiles</option><option>Energy</option><option>Other</option></select>", "") +
+            UI.field("source", "Sourced from", "<select id=\"source\" name=\"source\"><option value=\"\">Any</option>" + UI.countryOpts(filters.source) + "</select>", "") +
+            UI.field("buyer", "Sold in", "<select id=\"buyer\" name=\"buyer\"><option value=\"\">Any</option>" + UI.countryOpts(filters.buyer) + "</select>", "") +
+            UI.field("sort", "Sort", "<select id=\"sort\" name=\"sort\"><option value=\"name\">Name</option><option value=\"left\">Amount left</option></select>", "") +
+            "<button class=\"btn btn-primary\" type=\"submit\">Apply filters</button></form>");
+          ["category", "source", "buyer", "sort"].forEach(function (k) { var el = document.getElementById(k); if (el && filters[k]) el.value = filters[k]; });
+          return;
+        }
+        if (act === "clear") { filters = { category: "", source: "", buyer: "", sort: "name" }; UI.go("#/shipments"); } }
     });
 
     function profitBounds(l) {
@@ -481,20 +498,54 @@
       test: function (h) { var m = /^#\/track\/([\w-]+)$/.exec(h); return m ? { id: m[1] } : null; },
       render: function (stage, params) {
         var l = Store.listing(params.id);
+        var u = Store.user();
         if (!l) { stage.innerHTML = "<div class=\"column\"><h1>Not found</h1></div>"; return; }
-        var body = l.shipments.map(function (sh) {
+        var now = Store.state.now;
+        var held = mine(l, u.id);
+        var esc = UI.esc;
+        var overall = L.listingStage(l);
+        var lateN = 0;
+        var cards = l.shipments.map(function (sh, si) {
           var stageN = L.shipmentStage(l, sh);
+          var doneN = 0;
+          var nextIdx = -1;
+          var items = sh.steps.map(function (st, i) {
+            var finished = st.state === "done" || st.state === "verified" || st.state === "skipped";
+            if (finished) doneN++; else if (nextIdx < 0) nextIdx = i;
+            var late = L.isLate(l, sh, i, now);
+            if (late) lateN++;
+            var due = L.stepDue(l, sh, i);
+            var cls = finished ? "done" : late ? "late" : st.state === "in_progress" ? "now" : "todo";
+            var dot = finished ? "&#10003;" : late ? "!" : String(i + 1);
+            var when = finished ? "Complete" : late ? "Late · new date " + UI.when(st.revisedAt || now) : st.state === "in_progress" ? "In progress" + (due ? " · due " + UI.when(due) : "") : (due ? "Due " + UI.when(due) : "Waiting");
+            return "<li class=\"" + cls + "\"><div><span class=\"track-dot\" aria-hidden=\"true\">" + dot + "</span><span class=\"track-body\"><span class=\"title\">" + esc(st.name) + "</span><span class=\"meta\">" + esc(when) + "</span></span></div></li>";
+          }).join("");
+          var pct = sh.steps.length ? Math.round(doneN * 100 / sh.steps.length) : 0;
           var route = L.STAGES.map(function (name, i) {
             var cls = i < stageN ? "done" : i === stageN ? "now" : "";
-            return "<li class=\"" + cls + "\">" + UI.stageGlyph(name) + "<span>" + UI.esc(name) + "</span></li>";
+            return "<li class=\"" + cls + "\"" + (i === stageN ? " aria-current=\"step\"" : "") + ">" + UI.stageGlyph(name) + "<span>" + esc(name) + "</span></li>";
           }).join("");
-          var late = sh.steps.map(function (st, i) {
-            if (!L.isLate(l, sh, i, Store.state.now)) return "";
-            return "<p class=\"status status-warning\">Late. Revised date " + UI.when(st.revisedAt || Store.state.now) + ".</p>";
-          }).join("");
-          return "<section><h2>Shipment</h2><ol class=\"route\">" + route + "</ol>" + late + "</section>";
+          var next = nextIdx >= 0 ? sh.steps[nextIdx] : null;
+          var nextDue = nextIdx >= 0 ? L.stepDue(l, sh, nextIdx) : null;
+          return "<section class=\"dash-card trk-card\"><div class=\"dash-row\"><h2>Shipment " + (si + 1) + (l.shipments.length > 1 ? " of " + l.shipments.length : "") + "</h2>" +
+            "<span class=\"status\">" + esc(L.STAGES[stageN]) + "</span></div>" +
+            "<ol class=\"route\" aria-label=\"Journey\">" + route + "</ol>" +
+            "<div class=\"dash-row\"><span class=\"dash-sub\">" + doneN + " of " + sh.steps.length + " steps done</span><b class=\"num\">" + pct + "%</b></div>" +
+            "<div class=\"dash-meter dash-green\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"" + pct + "\" aria-label=\"Steps done\"><i style=\"width:" + pct + "%\"></i></div>" +
+            (next ? "<div class=\"trk-next\"><span class=\"dash-label\">Next</span><b>" + esc(next.name) + "</b>" + (nextDue ? "<span class=\"dash-sub\">Expected " + UI.when(nextDue) + "</span>" : "") + "</div>" : "<div class=\"trk-next\"><span class=\"dash-label\">Next</span><b>All steps complete</b></div>") +
+            UI.fold("<strong>All steps</strong>", "<ol class=\"track\">" + items + "</ol>") + "</section>";
         }).join("");
-        stage.innerHTML = "<div class=\"column\"><h1>" + UI.esc(l.name) + "</h1>" + body + "</div>";
+        var done = l.status === "completed";
+        var banner = lateN ? "<div class=\"banner banner-warning\" role=\"status\"><strong>" + lateN + (lateN === 1 ? " step is" : " steps are") + " running late.</strong><p>The manager has given a new date. Your money stays safe in escrow.</p></div>" : "";
+        var hero = "<section class=\"dash-hero dash-green\"><div class=\"dash-hero-main\"><p class=\"dash-label\">" + esc(UI.cname(l.source)) + " → " + esc(UI.cname(l.buyer)) + "</p>" +
+          "<p class=\"dash-hero-value\" style=\"font-size:1.6rem\">" + esc(l.name) + "</p>" +
+          "<p class=\"dash-delta\">" + esc(done ? "Settled" : L.STAGES[overall]) + "</p></div></section>";
+        var tiles = "<div class=\"dash-grid\">" +
+          D().tile({ label: "You invested", value: L.formatUsd(held), sub: l.shipments.length + (l.shipments.length === 1 ? " shipment" : " shipments"), tone: "green", icon: "wallet" }) +
+          D().tile({ label: done ? "Result" : "Expected return", value: L.formatUsd(L.expectedFor(l, held)), sub: done ? "See statement" : "After settlement", tone: "blue", icon: "chart" }) + "</div>";
+        var foot = "<div class=\"stack\"><a class=\"btn btn-secondary btn-block\" href=\"#/listing/" + l.id + "\" data-go=\"#/listing/" + l.id + "\">Shipment details</a>" +
+          (done ? "<a class=\"btn btn-primary btn-block\" href=\"#/statement/" + l.id + "\" data-go=\"#/statement/" + l.id + "\">View statement</a>" : "") + "</div>";
+        stage.innerHTML = "<div class=\"column stack\">" + hero + tiles + banner + cards + foot + "</div>";
       }
     });
 
