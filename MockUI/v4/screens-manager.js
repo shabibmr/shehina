@@ -750,16 +750,24 @@
     function figuresPanel(l) {
       var view = L.projection(l);
       var actual = actualFigures(l);
-      var notYet = "<span class=\"muted\">Not yet</span>";
+      var target = L.fundingTarget(l);
+      var raised = L.raised(l);
+      var pct = target ? Math.min(100, Math.round(raised * 100 / target)) : 0;
       var profit = actual ? actual.proceeds - actual.costs : 0;
-      return "<section class=\"panel\"><h2>Figures</h2><div class=\"statement\">" +
-        "<div><span></span><span class=\"muted\">Expected</span><span class=\"muted\">Actual</span></div>" +
-        "<div><span>Funding</span><span class=\"num\">" + L.formatUsd(L.fundingTarget(l)) + "</span><span class=\"num\">" + L.formatUsd(L.raised(l)) + "</span></div>" +
-        "<div><span>Cost</span><span class=\"num\">" + L.formatUsd(view.target) + "</span>" + (actual ? "<span class=\"num\">" + L.formatUsd(actual.costs) + "</span>" : notYet) + "</div>" +
-        "<div><span>Sale</span><span class=\"num\">" + L.formatUsd(view.expectedSale) + "</span>" + (actual ? "<span class=\"num\">" + L.formatUsd(actual.proceeds) + "</span>" : notYet) + "</div>" +
-        "<div><span>Profit</span>" + UI.money(view.expectedProfit, "expected") + (actual ? UI.money(profit, profit >= 0 ? "gain" : "loss") : notYet) + "</div>" +
-        "<div><span>Your share</span>" + UI.money(view.managerCut, "expected") + "<span class=\"muted\">After settlement</span></div>" +
-        "</div></section>";
+      var notYet = "<span class=\"muted\">Not yet</span>";
+      function pair(label, expected, act) {
+        return "<div class=\"fig-card\"><p class=\"fig-label\">" + label + "</p><p class=\"fig-big num\">" + (act == null ? L.formatUsd(expected) : L.formatUsd(act)) + "</p>" +
+          "<p class=\"fig-sub\">" + (act == null ? "Expected · actual after the sale" : "Expected " + L.formatUsd(expected)) + "</p></div>";
+      }
+      var hero = actual
+        ? "<p class=\"fig-label\">Actual profit</p><p class=\"fig-hero num " + (profit >= 0 ? "gain" : "loss") + "\">" + (profit >= 0 ? "+" : "") + L.formatUsd(profit) + "</p><p class=\"fig-sub\">Expected " + L.formatUsd(view.expectedProfit) + "</p>"
+        : "<p class=\"fig-label\">Expected profit</p><p class=\"fig-hero num\">" + L.formatUsd(view.expectedProfit) + "</p><p class=\"fig-sub\">Actual profit is known after the sale</p>";
+      return "<section class=\"stack\"><div class=\"fig-hero-card\">" + hero + "</div>" +
+        "<div class=\"fig-card\"><div class=\"fig-row\"><p class=\"fig-label\">Funding</p><p class=\"num\"><b>" + pct + "%</b></p></div>" +
+        "<div class=\"progress\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"" + pct + "\" aria-label=\"Funded\"><i style=\"width:" + pct + "%\"></i></div>" +
+        "<p class=\"fig-sub\"><span class=\"num\">" + L.formatUsd(raised) + "</span> raised of <span class=\"num\">" + L.formatUsd(target) + "</span></p></div>" +
+        "<div class=\"fig-grid\">" + pair("Cost", view.target, actual ? actual.costs : null) + pair("Sale", view.expectedSale, actual ? actual.proceeds : null) + "</div>" +
+        "<div class=\"fig-card fig-row\"><div><p class=\"fig-label\">Your share</p><p class=\"fig-sub\">" + (actual ? "Paid after settlement" : "Expected, after settlement") + "</p></div><p class=\"fig-big num\">" + L.formatUsd(view.managerCut) + "</p></div></section>";
     }
 
     function shipmentsPanel(l) {
