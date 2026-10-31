@@ -37,13 +37,13 @@ Status: ☐ to do · ◐ in progress · ☑ done. Size: S ≈ under 1 hour, M �
 | A7 | `logic.js`: a simple ledger (post, balance per account, verify) for wallets, escrow, hold, treasury, revenue, reserve; every money action goes through it | all money | A3 | M | ☑ | The ledger check stays OK after every journey |
 | A8 | `store.js`: one-object state in `localStorage` (`shehnat-proto-v4`), save on every action, reset, export and import JSON, simulated clock | all | — | S | ☑ | Reload keeps state; reset restores the seed |
 | A9 | `seed.js`: the personas in PLAN §4 and every seeded Listing status, with history, Step states, documents, wallets, platform account balances, demo password and audit | all | A3–A8 | L | ☑ | Every status in PLAN §4 is reachable without clicking; the ledger check passes at seed |
-| A10 | `motion.js`: port the 9 choreographies from `styleguide.js` as reusable functions, plus the FLIP move for the step board; honour reduced motion | all | A1 | M | ◐ | Each function works in a real screen, and reduced motion gives instant end states |
-| A11 | `ui.js`: router (hash routes, back stack, direction for transitions), screen registry, guards (role, KYC or registration gate), skeleton-then-render, toasts, sheets, confirm-with-reason sheet | all | A1, A10 | M | ☐ | Deep links work; back animates the right way |
-| A12 | Prototype bar: persona switcher, clock, scenarios, simulated events, fail next action, skeleton delay, state inspector, motion, direction, frame, data | X | A3–A9, A11 | L | ☐ | Every control in PLAN §3 works |
-| **B1** | P1 splash, P2 welcome walkthrough | P1, P2 | A11 | S | ☐ | The full logo fades in on splash (no sprout); the walkthrough can be skipped |
-| B2 | P3 sign in (attempts, lockout, deactivated), P4 create account, P5 forgot password | P3–P5 | A5 | M | ☐ | 5 wrong passwords lock the account for 15 simulated minutes |
-| B3 | P6 notifications (generated from state changes), P7 profile, P8 risk and legal | P6–P8 | A11 | M | ☐ | Approving or rejecting something creates a notification for the right persona |
-| **C1** | I1 investor home | I1 | A9 | M | ☐ | The banner changes with KYC status; balance counts up |
+| A10 | `motion.js`: port the 9 choreographies from `styleguide.js` as reusable functions, plus the FLIP move for the step board; honour reduced motion | all | A1 | M | ☑ | Each function works in a real screen, and reduced motion gives instant end states |
+| A11 | `ui.js`: router (hash routes, back stack, direction for transitions), screen registry, guards (role, KYC or registration gate), skeleton-then-render, toasts, sheets, confirm-with-reason sheet | all | A1, A10 | M | ☑ | Deep links work; back animates the right way |
+| A12 | Prototype bar: persona switcher, clock, scenarios, simulated events, fail next action, skeleton delay, state inspector, motion, direction, frame, data | X | A3–A9, A11 | L | ☑ | Every control in PLAN §3 works |
+| **B1** | P1 splash, P2 welcome walkthrough | P1, P2 | A11 | S | ☑ | The full logo fades in on splash (no sprout); the walkthrough can be skipped |
+| B2 | P3 sign in (attempts, lockout, deactivated), P4 create account, P5 forgot password | P3–P5 | A5 | M | ☑ | 5 wrong passwords lock the account for 15 simulated minutes |
+| B3 | P6 notifications (generated from state changes), P7 profile, P8 risk and legal | P6–P8 | A11 | M | ☑ | Approving or rejecting something creates a notification for the right persona |
+| **C1** | I1 investor home | I1 | A9 | M | ◐ | The banner changes with KYC status; balance counts up |
 | C2 | I2 KYC wizard, I3 KYC status and history | I2, I3 | A5 | L | ☐ | Journey 1 up to submission and resubmission |
 | C3 | I4 explore with filters and sort | I4 | A9 | M | ☐ | Filters combine; empty state with "clear filters" |
 | C4 | I5 Listing detail (4 tabs, every figure, Shareholder disclosure) | I5 | A3, A4 | L | ☐ | Shows every figure in BR §6.5 for investors |
