@@ -306,6 +306,9 @@
     </div>
   </aside>
 
+  <!-- Hidden file input for importing state JSON -->
+  <input type="file" id="protoImportFile" accept="application/json" style="display:none">
+
   <!-- ========================================================================
        6. Script Pipeline (Classic scripts for file:// double-click compatibility)
        ======================================================================== -->
@@ -320,11 +323,11 @@
   <script src="screens-staff.js"></script>
 
   <!-- ========================================================================
-       7. Foundational Shell Interactive Handlers
+       7. Foundational Shell & Store Integration Handlers
        ======================================================================== -->
   <script>
     (function() {
-      // Shell interactive behaviors (A1 foundations)
+      'use strict';
       const doc = document.documentElement;
       const body = document.body;
 
@@ -408,25 +411,137 @@
         });
       });
 
-      // 8. Persona Select updates Inspector
+      // 8. Persona Select updates & Store Sync
       const protoPersona = document.getElementById('protoPersona');
       protoPersona.addEventListener('change', (e) => {
         const val = e.target.value;
-        const text = e.target.options[e.target.selectedIndex].text;
-        document.getElementById('inspPersona').textContent = text.split(' (')[0];
-        document.getElementById('inspRole').textContent = text.includes('(') ? text.split('(')[1].replace(')', '') : val;
-        
-        // Show/hide sidebar for staff vs phone tabs for investor/manager
-        const isStaff = ['hadi', 'priya', 'sam', 'wei', 'fatima'].includes(val);
-        document.getElementById('appSidebar').hidden = !isPhoneMode() && !isStaff;
-        body.classList.toggle('staff-view', isStaff);
+        if (window.ShehnatStore) {
+          window.ShehnatStore.setActivePersona(val);
+        }
       });
 
-      function isPhoneMode() {
-        return body.classList.contains('frame-phone');
+      // 9. Clock Buttons (+1d, +5d, +14d)
+      document.getElementById('btnClock1').addEventListener('click', () => {
+        if (window.ShehnatStore) window.ShehnatStore.clock.advanceDays(1);
+      });
+      document.getElementById('btnClock5').addEventListener('click', () => {
+        if (window.ShehnatStore) window.ShehnatStore.clock.advanceDays(5);
+      });
+      document.getElementById('btnClock14').addEventListener('click', () => {
+        if (window.ShehnatStore) window.ShehnatStore.clock.advanceDays(14);
+      });
+
+      // 10. Fail Next Action & Skeleton Delay Toggles
+      const protoFailNext = document.getElementById('protoFailNext');
+      protoFailNext.addEventListener('change', (e) => {
+        if (window.ShehnatStore) window.ShehnatStore.setFailNext(e.target.checked);
+      });
+
+      const protoSkeletonDelay = document.getElementById('protoSkeletonDelay');
+      protoSkeletonDelay.addEventListener('change', (e) => {
+        if (window.ShehnatStore) {
+          window.ShehnatStore.setState(s => { s.skeletonDelay = e.target.checked; return s; });
+        }
+      });
+
+      // 11. Data Reset, Export & Import
+      document.getElementById('btnResetData').addEventListener('click', () => {
+        if (confirm('Reset prototype storage back to initial seed?')) {
+          if (window.ShehnatStore) window.ShehnatStore.reset();
+          window.ShehnatUI.showToast('Data reset to seed');
+        }
+      });
+
+      document.getElementById('btnExportData').addEventListener('click', () => {
+        if (!window.ShehnatStore) return;
+        const data = window.ShehnatStore.exportJSON();
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `shehnat-proto-v4-${window.ShehnatStore.clock.format()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      const protoImportFile = document.getElementById('protoImportFile');
+      document.getElementById('btnImportData').addEventListener('click', () => {
+        protoImportFile.click();
+      });
+      protoImportFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (window.ShehnatStore.importJSON(event.target.result)) {
+            window.ShehnatUI.showToast('State imported successfully');
+          } else {
+            alert('Failed to import state: invalid JSON schema');
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      // 12. Render State into Shell and Inspector
+      function renderState(state) {
+        if (!state) return;
+        
+        // Sync Persona dropdown
+        if (protoPersona.value !== state.activePersonaId) {
+          protoPersona.value = state.activePersonaId || 'aisha';
+        }
+
+        // Active persona info
+        const activePersona = (state.personas || []).find(p => p.id === state.activePersonaId) || state.personas[0];
+        if (activePersona) {
+          document.getElementById('inspPersona').textContent = activePersona.name;
+          document.getElementById('inspRole').textContent = activePersona.role.toUpperCase() + (activePersona.staffRole ? ` (${activePersona.staffRole})` : '');
+          document.getElementById('inspKYC').textContent = activePersona.kyc || 'N/A';
+
+          // Wallet balance
+          const walletCents = (state.accounts?.wallets && state.accounts.wallets[activePersona.id]) || 0;
+          const walletFormatted = '$' + (walletCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          document.getElementById('headerWalletVal').textContent = walletFormatted;
+          document.getElementById('inspWallet').textContent = walletFormatted;
+
+          // Sidebar visibility for staff vs phone tabs
+          const isStaff = activePersona.role === 'staff';
+          const isPhone = body.classList.contains('frame-phone');
+          document.getElementById('appSidebar').hidden = isPhone || !isStaff;
+          body.classList.toggle('staff-view', isStaff);
+        }
+
+        // Clock sync
+        const clockDate = state.simulatedDate ? state.simulatedDate.split('T')[0] : '2026-10-31';
+        document.getElementById('clockDisplay').textContent = 'Clock: ' + clockDate;
+        document.getElementById('inspClock').textContent = clockDate;
+
+        // Platform accounts
+        const treasuryCents = state.accounts?.treasury || 0;
+        const revenueCents = state.accounts?.revenue || 0;
+        const reserveCents = state.accounts?.reserve || 0;
+        document.getElementById('inspTreasury').textContent = '$' + (treasuryCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('inspRevenue').textContent = '$' + (revenueCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('inspReserve').textContent = '$' + (reserveCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        // Audit log in inspector
+        const auditEl = document.getElementById('inspAudit');
+        if (auditEl && state.auditLog) {
+          auditEl.innerHTML = state.auditLog.slice(0, 5).map(a => {
+            const time = a.ts ? a.ts.split('T')[1].slice(0, 5) : '08:00';
+            return `<div>• [${time}] ${a.actor}: ${a.action} - ${a.details || ''}</div>`;
+          }).join('');
+        }
       }
 
-      // 9. Keyboard Escape handler for Sheet and Inspector
+      // Initialize store & subscribe
+      if (window.ShehnatStore) {
+        const initialState = window.ShehnatStore.load();
+        renderState(initialState);
+        window.ShehnatStore.subscribe(renderState);
+      }
+
+      // 13. Keyboard Escape handler for Sheet and Inspector
       window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
           if (!sheetLayer.hidden) closeSheet();
