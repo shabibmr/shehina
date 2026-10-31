@@ -490,7 +490,25 @@
         if (u.role !== "investor" && u.role !== "manager") { UI.go(UI.homeFor(u)); return; }
         var bal = Store.bal("user:" + u.id + ":wallet");
         var held = Store.state.withdrawals.filter(function (w) { return w.userId === u.id && w.status === "pending"; }).reduce(function (s, w) { return s + w.amount; }, 0);
-        var lines = Store.state.entries.filter(function (e) { return e.account === "user:" + u.id + ":wallet"; }).slice(-12).reverse();
+        var account = "user:" + u.id + ":wallet";
+        var running = 0;
+        var cash = [];
+        Store.state.entries.forEach(function (e) {
+          if (e.account !== account) return;
+          running += e.amount;
+          var memo = e.memo || "";
+          var kind = "";
+          if (memo === "Top up" || memo === "Gateway top-up" || memo === "Withdrawal declined" || memo === "Payout failed") kind = "Deposit";
+          else if (memo === "Withdrawal") kind = "Withdrawal";
+          if (!kind) return;
+          cash.push({ kind: kind, at: e.at, amount: e.amount, balance: running, returned: memo === "Withdrawal declined" || memo === "Payout failed" });
+        });
+        cash.reverse();
+        var history = cash.length ? cash.map(function (row) {
+          var signed = (row.amount < 0 ? "−" : "+") + L.formatUsd(Math.abs(row.amount));
+          return "<div class=\"row\"><span class=\"title\">" + row.kind + (row.returned ? " · returned" : "") + "</span><span class=\"meta\">" + UI.when(row.at) + " · " + signed + "</span><span class=\"end num\">" + L.formatUsd(row.balance) + "</span></div>";
+        }).join("") : "<p>No deposits or withdrawals yet.</p>";
+        var lines = Store.state.entries.filter(function (e) { return e.account === account; }).slice(-12).reverse();
         if (walletFilter !== "all") lines = lines.filter(function (e) { return (e.memo || "").toLowerCase().indexOf(walletFilter) !== -1; });
         var list = lines.length ? lines.map(function (e) {
           return "<div class=\"kpi\"><span>" + UI.esc(e.memo || "Movement") + "</span>" + UI.money(e.amount, e.amount < 0 ? "loss" : "gain") + "</div>";
@@ -502,6 +520,7 @@
         stage.innerHTML = "<div class=\"column\"><h1>Wallet</h1><div class=\"stack\">" +
           "<section class=\"panel\"><p class=\"muted\">Available</p><p class=\"figure num\">" + L.formatUsd(bal) + "</p></section>" +
           "<section class=\"panel\"><p class=\"muted\">Held for withdrawal</p><p class=\"figure num\">" + L.formatUsd(held) + "</p></section>" +
+          "<section class=\"panel\"><h2>Transactions</h2><p class=\"muted\">Deposits and withdrawals. The amount on the right is the balance after each one.</p>" + history + "</section>" +
           "<section class=\"panel\"><h2>Movements</h2><div class=\"tabs\"><button type=\"button\" data-act=\"wf\" data-tab=\"all\" aria-selected=\"" + (walletFilter === "all") + "\">All</button><button type=\"button\" data-act=\"wf\" data-tab=\"invest\" aria-selected=\"" + (walletFilter === "invest") + "\">Investments</button><button type=\"button\" data-act=\"wf\" data-tab=\"withdraw\" aria-selected=\"" + (walletFilter === "withdraw") + "\">Withdrawals</button></div>" + list + "</section>" +
           "<section class=\"panel\"><h2>Withdrawals</h2>" + wrows + "</section></div>" +
           "<div class=\"btn-pair\"><a class=\"btn btn-primary\" href=\"#/top-up\" data-go=\"#/top-up\">Add money</a><a class=\"btn btn-secondary\" href=\"#/withdraw\" data-go=\"#/withdraw\">Withdraw</a></div></div>";

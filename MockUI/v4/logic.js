@@ -390,7 +390,7 @@
       }
       state.txn = (state.txn || 0) + 1;
       lines.forEach(function (line) {
-        state.entries.push({ txn: state.txn, key: key || "", account: line.account, amount: line.amount, memo: line.memo || "" });
+        state.entries.push({ txn: state.txn, key: key || "", account: line.account, amount: line.amount, memo: line.memo || "", at: line.at || state.now });
       });
       return { ok: true };
     }

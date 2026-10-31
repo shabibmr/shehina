@@ -98,11 +98,11 @@
     function wallet(id) { return "user:" + id + ":wallet"; }
     function escrow(id) { return "escrow:" + id; }
 
-    function move(from, to, amount, memo, key) {
+    function move(from, to, amount, memo, key, at) {
       if (!amount) return { ok: true };
       return led.post([
-        { account: from, amount: -amount, memo: memo },
-        { account: to, amount: amount, memo: memo }
+        { account: from, amount: -amount, memo: memo, at: at },
+        { account: to, amount: amount, memo: memo, at: at }
       ], key);
     }
 
@@ -131,11 +131,11 @@
       { account: "bank:external", amount: -25000000, memo: "Treasury opening" },
       { account: "platform:treasury", amount: 25000000, memo: "Treasury opening" }
     ]);
-    move("bank:external", wallet("aisha"), 4633520, "Top up");
-    move("bank:external", wallet("kerala"), 6520480, "Top up");
-    move("bank:external", wallet("chen"), 500000, "Top up");
-    move("bank:external", wallet("layla"), 1400000, "Top up");
-    move("bank:external", wallet("omar"), 500000, "Top up");
+    move("bank:external", wallet("aisha"), 4633520, "Top up", "", NOW - 60 * L.DAY);
+    move("bank:external", wallet("kerala"), 6520480, "Top up", "", NOW - 55 * L.DAY);
+    move("bank:external", wallet("chen"), 500000, "Top up", "", NOW - 20 * L.DAY);
+    move("bank:external", wallet("layla"), 1400000, "Top up", "", NOW - 50 * L.DAY);
+    move("bank:external", wallet("omar"), 500000, "Top up", "", NOW - 40 * L.DAY);
 
     var profit = listing({
       id: "profit", name: "Brazil green coffee to Kobe", managerId: "kerala", source: "BR", buyer: "JP",
@@ -320,15 +320,15 @@
     move(escrow("cancelled"), wallet("layla"), 80000, "Refund");
     cancelled.contributions = [];
 
-    move(wallet("aisha"), "withdrawals:hold", 200000, "Withdrawal");
-    move(wallet("aisha"), "withdrawals:hold", 1200000, "Withdrawal");
+    move(wallet("aisha"), "withdrawals:hold", 200000, "Withdrawal", "", NOW - 4 * L.DAY);
+    move(wallet("aisha"), "withdrawals:hold", 1200000, "Withdrawal", "", NOW - 2 * L.DAY);
     state.withdrawals.push(
-      { id: "w-small", userId: "aisha", amount: 200000, status: "pending", country: "AE", bank: "Emirates NBD", holder: "Aisha Rahman", account: "AE070331234567890123456", swift: "EBILAEAD", at: NOW - 2 * L.DAY, reason: "" },
-      { id: "w-large", userId: "aisha", amount: 1200000, status: "pending", country: "AE", bank: "Emirates NBD", holder: "Aisha Rahman", account: "AE070331234567890123456", swift: "EBILAEAD", at: NOW - L.DAY, reason: "" },
-      { id: "w-failed", userId: "aisha", amount: 50000, status: "failed", country: "AE", bank: "Emirates NBD", holder: "Aisha Rahman", account: "AE070331234567890123456", swift: "EBILAEAD", at: NOW - 6 * L.DAY, reason: "The bank returned the payment." }
+      { id: "w-small", userId: "aisha", amount: 200000, status: "pending", country: "AE", bank: "Emirates NBD", holder: "Aisha Rahman", account: "AE070331234567890123456", swift: "EBILAEAD", at: NOW - 4 * L.DAY, reason: "" },
+      { id: "w-large", userId: "aisha", amount: 1200000, status: "pending", country: "AE", bank: "Emirates NBD", holder: "Aisha Rahman", account: "AE070331234567890123456", swift: "EBILAEAD", at: NOW - 2 * L.DAY, reason: "" },
+      { id: "w-failed", userId: "aisha", amount: 50000, status: "failed", country: "AE", bank: "Emirates NBD", holder: "Aisha Rahman", account: "AE070331234567890123456", swift: "EBILAEAD", at: NOW - L.DAY, reason: "The bank returned the payment." }
     );
-    move(wallet("aisha"), "withdrawals:hold", 50000, "Withdrawal");
-    move("withdrawals:hold", wallet("aisha"), 50000, "Payout failed");
+    move(wallet("aisha"), "withdrawals:hold", 50000, "Withdrawal", "", NOW - L.DAY);
+    move("withdrawals:hold", wallet("aisha"), 50000, "Payout failed", "", NOW - L.DAY / 2);
 
     state.notes.push(
       { id: "n1", userId: "dina", at: NOW - 8 * L.DAY, text: "Verification was rejected. Photo ID is unreadable.", read: false },
