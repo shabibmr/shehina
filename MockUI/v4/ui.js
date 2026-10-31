@@ -84,8 +84,10 @@
     return '<div class="empty"><p>' + esc(text) + '</p>' + (label ? '<button class="btn btn-primary" data-go="' + esc(path) + '">' + esc(label) + '</button>' : '') + '</div>';
   }
   function statusWord(l) {
-    var word = l.overdue ? 'Overdue' : (l.status || '').replace(/_/g, ' ');
-    var cls = l.overdue ? 'word-warning' : (l.status === 'withdrawn' || l.status === 'cancelled' ? 'word-muted' : 'word');
+    var viewer = user();
+    var showOverdue = !!(l.overdue && viewer && viewer.role === 'staff');
+    var word = showOverdue ? 'Overdue' : (l.status || '').replace(/_/g, ' ');
+    var cls = showOverdue ? 'word-warning' : (l.status === 'withdrawn' || l.status === 'cancelled' ? 'word-muted' : 'word');
     return '<span class="' + cls + '">' + esc(word) + '</span>';
   }
   function funding(l) {

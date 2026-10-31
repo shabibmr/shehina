@@ -97,15 +97,15 @@
       var actionsDue = [];
       listings.forEach(function (l) {
         if (l.status === 'approved' && !l.depositWaiver) {
-          actionsDue.push('<div class="row" data-go="/m/deposit/' + l.id + '"><span class="grow"><span class="title">Pay deposit</span><span class="meta">' + U.esc(l.name) + ' · Approved, deposit required</span></span><span class="word-warning">Deposit due</span><span class="chev">›</span></div>');
+          actionsDue.push(U.row('Pay deposit', l.name + ' · Approved, deposit required', '<span class="word-warning">Deposit due</span>', '/m/deposit/' + l.id));
         } else if (l.status === 'awaiting_terms') {
-          actionsDue.push('<div class="row" data-go="/m/terms/' + l.id + '"><span class="grow"><span class="title">Review terms</span><span class="meta">' + U.esc(l.name) + ' · Reviewer sent revised terms</span></span><span class="word-warning">Action needed</span><span class="chev">›</span></div>');
+          actionsDue.push(U.row('Review terms', l.name + ' · Reviewer sent revised terms', '<span class="word-warning">Action needed</span>', '/m/terms/' + l.id));
         }
         if (l.status === 'live') {
           (l.shipments || []).forEach(function (sh) {
             (sh.steps || []).forEach(function (st) {
-              if (st.assignedParty === 'manager' && (st.status === 'to_do' || st.status === 'in_progress')) {
-                actionsDue.push('<div class="row" data-go="/m/step/' + l.id + '/' + sh.id + '/' + st.id + '"><span class="grow"><span class="title">' + U.esc(st.name) + '</span><span class="meta">' + U.esc(l.name) + ' · ' + U.esc(sh.label) + '</span></span><span class="word">Step due</span><span class="chev">›</span></div>');
+              if (st.owner === 'manager' && (st.status === 'todo' || st.status === 'in_progress')) {
+                actionsDue.push(U.row(st.name, l.name + ' · ' + sh.label, '<span class="word">Step due</span>', '/m/step/' + l.id + '/' + sh.id + '/' + st.id));
               }
             });
           });
@@ -166,8 +166,8 @@
         '<label class="field"><span>Number of shipments</span><select name="shipments"><option value="1">1 shipment</option><option value="2">2 shipments</option><option value="3">3 shipments</option></select></label>' +
         U.dollarsField('Shipment 1: Expected cargo purchase cost', 'cost0') +
         U.dollarsField('Shipment 1: Expected gross sale price', 'sale0') +
-        '<label class="field"><span>Manager capital contribution (%)</span><input name="companyPct" type="number" min="5" max="50" value="20"></label>' +
-        '<label class="field"><span>Investor profit share (%)</span><input name="investorSharePct" type="number" min="20" max="80" value="60"></label>' +
+        '<label class="field"><span>Manager capital contribution (%)</span><input name="companyPct" type="number" min="20" max="90" value="20"></label>' +
+        '<label class="field"><span>Investor profit share (%)</span><input name="investorSharePct" type="number" min="40" max="95" value="60"></label>' +
         U.dollarsField('Minimum investor ticket', 'minInvest') +
         '<p><button class="btn btn-primary" type="button" data-act="submitListingNew">Submit for review</button> ' +
         '<button class="btn btn-secondary" type="button" data-act="saveListingDraft">Save draft</button></p>' +
@@ -191,17 +191,17 @@
       var bannerHtml = '';
       if (l.status === 'approved' && !l.depositWaiver) {
         bannerHtml = U.banner('warning', 'Listing approved · Deposit pending', 'You must pay your 20% manager deposit to take this shipment live.') +
-          '<p><button class="btn btn-primary" data-go="/m/deposit/' + l.id + '" type="button">Pay deposit (' + U.esc(U.usd(Math.round(l.target * (l.companyPct || 20) / 100))) + ')</button></p>';
+          '<p><button class="btn btn-primary" data-go="/m/deposit/' + l.id + '" type="button">Pay deposit (' + U.esc(U.usd(Math.round(l.target * (l.companyPct || 20) / 100))) + ')</button> <button class="btn btn-danger" type="button" data-act="withdrawListing" data-id="' + l.id + '">Withdraw listing</button></p>';
       } else if (l.status === 'awaiting_terms') {
         bannerHtml = U.banner('warning', 'Revised terms proposed', 'The reviewer has requested changes before approval.') +
-          '<p><button class="btn btn-primary" data-go="/m/terms/' + l.id + '" type="button">View revised terms</button></p>';
-      } else if (l.status === 'draft') {
-        bannerHtml = '<p><button class="btn btn-primary" type="button" data-act="submitDraft" data-id="' + l.id + '">Submit for review</button> <button class="btn btn-danger" type="button" data-act="deleteDraft" data-id="' + l.id + '">Delete draft</button></p>';
-      } else if (l.status === 'in_review') {
-        bannerHtml = U.banner('info', 'In review', 'Staff compliance reviewer is checking market pricing and terms.');
+          '<p><button class="btn btn-primary" data-go="/m/terms/' + l.id + '" type="button">View revised terms</button> <button class="btn btn-danger" type="button" data-act="withdrawListing" data-id="' + l.id + '">Withdraw listing</button></p>';
+      } else if (l.status === 'draft' || l.status === 'in_review' || l.status === 'rejected') {
+        var withdraw = ' <button class="btn btn-danger" type="button" data-act="withdrawListing" data-id="' + l.id + '">Withdraw listing</button>';
+        if (l.status === 'draft') bannerHtml = '<p><button class="btn btn-primary" type="button" data-act="submitDraft" data-id="' + l.id + '">Submit for review</button> <button class="btn btn-danger" type="button" data-act="deleteDraft" data-id="' + l.id + '">Delete draft</button>' + withdraw + '</p>';
+        else if (l.status === 'in_review') bannerHtml = U.banner('info', 'In review', 'Staff compliance reviewer is checking market pricing and terms.') + '<p>' + withdraw + '</p>';
+        else bannerHtml = '<p>' + withdraw + '</p>';
       } else if (l.status === 'live') {
-        bannerHtml = '<p><button class="btn btn-secondary" data-go="/m/change/' + l.id + '" type="button">Propose plan change</button> ' +
-          '<button class="btn btn-danger" type="button" data-act="withdrawListing" data-id="' + l.id + '">Withdraw listing</button></p>';
+        bannerHtml = '<p><button class="btn btn-secondary" data-go="/m/change/' + l.id + '" type="button">Propose plan change</button></p>';
       }
 
       var body = '';
@@ -210,8 +210,8 @@
           return '<h2>' + U.esc(sh.label) + '</h2>' +
             '<p class="meta">' + U.esc(Logic.STAGES[sh.stage] || 'Stage 0') + (sh.late ? ' · <span class="word-warning">Late</span>' : '') + '</p>' +
             '<ul>' + (sh.steps || []).map(function (st) {
-              var stepLink = (st.assignedParty === 'manager') ? ' <a href="#/m/step/' + l.id + '/' + sh.id + '/' + st.id + '">Update step</a>' : '';
-              return '<li><b>' + U.esc(st.name) + '</b> · ' + U.esc(st.status) + ' (' + U.esc(st.assignedParty) + ')' + stepLink + '</li>';
+              var stepLink = (st.owner === 'manager') ? ' <a href="#/m/step/' + l.id + '/' + sh.id + '/' + st.id + '">Update step</a>' : '';
+              return '<li><b>' + U.esc(st.name) + '</b> · ' + U.esc(st.status) + ' (' + U.esc(st.owner) + ')' + stepLink + '</li>';
             }).join('') + '</ul>';
         }).join('');
       } else if (tabName === 'financials') {
@@ -270,7 +270,7 @@
         U.banner('info', 'Reviewer change note', reason) +
         '<div class="panel"><h2>Proposed changes</h2>' + (diffRows || '<p class="meta">Step plan or route timing adjusted.</p>') + '</div>' +
         '<p><button class="btn btn-primary" type="button" data-act="acceptTerms" data-id="' + l.id + '">Accept revised terms</button> ' +
-        '<button class="btn btn-danger" type="button" data-act="declineTerms" data-id="' + l.id + '">Decline and withdraw</button></p>';
+        '<button class="btn btn-danger" type="button" data-act="declineTerms" data-id="' + l.id + '">Decline, back to edit</button></p>';
     }
   });
 
@@ -317,7 +317,7 @@
 
       return '<h1>' + U.esc(st.name) + '</h1>' +
         '<p class="meta">' + U.esc(l.name) + ' · ' + U.esc(sh.label) + '</p>' +
-        '<p>Status: <span class="word">' + U.esc(st.status) + '</span> · Assigned to: <b>' + U.esc(st.assignedParty) + '</b></p>' +
+        '<p>Status: <span class="word">' + U.esc(st.status) + '</span> · Assigned to: <b>' + U.esc(st.owner) + '</b></p>' +
         '<h2>Attached documents</h2>' +
         (docsList ? '<ul>' + docsList + '</ul>' : '<p class="meta">No documents uploaded yet.</p>') +
         '<form>' +
@@ -363,11 +363,17 @@
     if (r.ok) U.go('/m/status'); else U.go('/m/register');
   };
 
-  U.acts.submitListingNew = function (node, data) {
-    var cost0 = U.centsOf(data.cost0) || 500000;
-    var sale0 = U.centsOf(data.sale0) || 750000;
-    var minInvest = U.centsOf(data.minInvest) || 50000;
-    var spec = {
+  function listingSpec(data) {
+    var cost0 = U.centsOf(data.cost0);
+    var sale0 = U.centsOf(data.sale0);
+    var minInvest = U.centsOf(data.minInvest);
+    if (cost0 == null || sale0 == null || minInvest == null) return null;
+    var count = Math.min(3, Math.max(1, Number(data.shipments) || 1));
+    var shipments = [];
+    for (var i = 0; i < count; i++) {
+      shipments.push({ label: 'Shipment ' + (i + 1), expectedCost: cost0, expectedSale: sale0, plannedStart: 0, steps: Logic.template() });
+    }
+    return {
       name: data.name,
       category: data.category,
       source: data.source,
@@ -376,42 +382,24 @@
       companyPct: Number(data.companyPct || 20),
       investorSharePct: Number(data.investorSharePct || 60),
       minInvest: minInvest,
-      shipments: [{
-        label: 'Shipment 1',
-        expectedCost: cost0,
-        expectedSale: sale0,
-        plannedStart: 0,
-        steps: Logic.template()
-      }]
+      shipments: shipments
     };
+  }
+
+  U.acts.submitListingNew = function (node, data) {
+    var spec = listingSpec(data);
+    if (!spec) { Store.proto.error = 'Error: Enter the cost, the sale price, and the minimum investment, with at most 2 decimals'; U.go('/m/new'); return; }
     var r = U.dispatch({ type: 'saveListing', actorId: U.user().id, strict: true, listing: spec });
-    if (!r.ok) return;
+    if (!r.ok) { U.go('/m/new'); return; }
     var sub = U.dispatch({ type: 'submitListing', actorId: U.user().id, id: r.id });
-    if (sub.ok) U.go('/m/listing/' + r.id);
+    if (sub.ok) U.go('/m/listing/' + r.id); else U.go('/m/new');
   };
 
   U.acts.saveListingDraft = function (node, data) {
-    var cost0 = U.centsOf(data.cost0) || 500000;
-    var sale0 = U.centsOf(data.sale0) || 750000;
-    var spec = {
-      name: data.name,
-      category: data.category,
-      source: data.source,
-      buyer: data.buyer,
-      certificate: data.certificate,
-      companyPct: Number(data.companyPct || 20),
-      investorSharePct: Number(data.investorSharePct || 60),
-      minInvest: U.centsOf(data.minInvest) || 50000,
-      shipments: [{
-        label: 'Shipment 1',
-        expectedCost: cost0,
-        expectedSale: sale0,
-        plannedStart: 0,
-        steps: Logic.template()
-      }]
-    };
+    var spec = listingSpec(data);
+    if (!spec) { Store.proto.error = 'Error: Enter the cost, the sale price, and the minimum investment, with at most 2 decimals'; U.go('/m/new'); return; }
     var r = U.dispatch({ type: 'saveListing', actorId: U.user().id, listing: spec });
-    if (r.ok) U.go('/m/listings');
+    if (r.ok) U.go('/m/listings'); else U.go('/m/new');
   };
 
   U.acts.submitDraft = function (node) {

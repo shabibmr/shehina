@@ -375,10 +375,11 @@
     if (blocked(s, source) || blocked(s, buyer)) return 'Error: This country is not available for a listing';
     if (!l.shipments || !l.shipments.length) return 'Error: Add at least one shipment';
     var tags = {};
-    l.shipments.forEach(function (sh) {
-      if (!(sh.expectedCost > 0) || !(sh.expectedSale > 0)) return 'Error: Each shipment needs an expected cost and an expected sale price';
-      (sh.steps || []).forEach(function (st) { if (st.tag) tags[st.tag] = true; });
-    });
+    for (var si = 0; si < l.shipments.length; si++) {
+      var shCost = l.shipments[si];
+      if (!(shCost.expectedCost > 0) || !(shCost.expectedSale > 0)) return 'Error: Each shipment needs an expected cost and an expected sale price';
+      (shCost.steps || []).forEach(function (st) { if (st.tag) tags[st.tag] = true; });
+    }
     for (var stage = 1; stage <= 5; stage++) if (!tags[stage]) return 'Error: Every stage from Goods purchased to Goods sold needs a tagged step';
     var f = figures(s, l);
     if (f.target < 100000 || f.target > 1000000000) return 'Error: The funding target must be between USD 1,000 and USD 10,000,000';
@@ -815,7 +816,7 @@
       u = actor(s, a);
       l = listing(s, a.id);
       if (!l || l.managerId !== u.id || l.status !== 'awaiting_terms') fail('Error: There are no revised terms to decline');
-      l.status = 'rejected';
+      l.status = 'draft';
       l.pendingTerms = null;
       history(l, s, u.id, 'declined_terms', a.reason || '');
       audit(s, u.id, 'decline_terms', l.id, a.reason || '');
@@ -1106,7 +1107,7 @@
       if (row.type === 'resale_shareholder') {
         if (u.staffRole !== 'owner') fail('Error: A resale to a Shareholder needs the owner');
         if (!a.marketNote && !row.payload.marketNote) fail('Error: A market check is required');
-      } else if (row.type === 'settlement' || row.type === 'overrun' || row.type === 'unplanned' || row.type === 'proceeds') {
+      } else if (row.type === 'settlement' || row.type === 'overrun' || row.type === 'unplanned' || row.type === 'proceeds' || row.type === 'useProceeds') {
         if (!can(u, 'deposit') && u.staffRole !== 'owner') fail('Error: Finance or the owner approves this');
       } else if (row.type === 'skip' || row.type === 'plan') {
         if (!can(u, 'review') && u.staffRole !== 'owner') fail('Error: A reviewer or the owner approves this');
@@ -1262,7 +1263,7 @@
       if (l.costsPaid + p.amount > cap) fail('Error: This cost needs an overrun fill');
       move(s, escrowOf(l.id), 'bank:external', p.amount, 'Unplanned cost');
       l.costsPaid += p.amount;
-    } else if (row.type === 'proceeds') {
+    } else if (row.type === 'proceeds' || row.type === 'useProceeds') {
       l.proceedsUsable = true;
     } else if (row.type === 'overrun') {
       move(s, 'platform:treasury', escrowOf(l.id), p.amount, 'Overrun fill');

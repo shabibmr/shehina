@@ -151,7 +151,7 @@
         '<form>' +
         '<label class="field"><span>Decision reason (required for reject / resubmit)</span><textarea id="reason" name="reason" rows="2" placeholder="Explain reasons or missing items..."></textarea></label>' +
         (canDecide ?
-          '<p><button class="btn btn-primary" type="button" data-act="decideApprove" data-id="' + a.id + '"' + (isBlocked ? ' disabled' : '') + '>Approve application</button> ' +
+          '<p>' + (isBlocked ? '<span class="meta">Approval is unavailable while the country is blocked.</span> ' : '<button class="btn btn-primary" type="button" data-act="decideApprove" data-id="' + a.id + '">Approve application</button> ') +
           '<button class="btn btn-secondary" type="button" data-act="decideResubmit" data-id="' + a.id + '">Request resubmission</button> ' +
           '<button class="btn btn-danger" type="button" data-act="decideReject" data-id="' + a.id + '">Reject application</button></p>' :
           '<p class="meta">Needs assigned reviewer or owner to decide. <button class="btn btn-secondary" type="button" data-act="assignMe" data-kind="application" data-id="' + a.id + '">Assign to me</button></p>') +
@@ -190,7 +190,9 @@
         '<h2>Compliance checks</h2>' +
         '<label class="field"><span>Link buyer to Shareholder (if buyer is a vetted Shareholder)</span>' +
         '<select name="buyerShareholderId">' + shOpts + '</select></label>' +
-        '<label class="field"><span><input type="checkbox" name="waiver"' + (l.depositWaiver ? ' checked' : '') + (!canWaive ? ' disabled' : '') + '> Waive manager deposit (Finance/Owner only; requires buyer Shareholder link)</span></label>' +
+        (canWaive
+          ? '<label class="field"><span><input type="checkbox" name="waiver"' + (l.depositWaiver ? ' checked' : '') + '> Waive manager deposit. Only when the buyer is a Shareholder.</span></label>'
+          : '<p class="meta">Only finance or the owner can waive the deposit.</p>') +
         '<label class="field"><span>Market check / pricing notes</span><textarea name="marketNote" rows="2" placeholder="Record verification of trade prices and counterparty checks..."></textarea></label>' +
         '<label class="field"><span>Rejection reason (if rejecting)</span><input name="rejectReason" placeholder="Reason..."></label>' +
         (canDecide ?
@@ -198,6 +200,7 @@
           '<button class="btn btn-secondary" type="button" data-go="/s/revised/' + l.id + '">Propose revised terms</button> ' +
           '<button class="btn btn-danger" type="button" data-act="rejectListing" data-id="' + l.id + '">Reject listing</button></p>' :
           '<p class="meta">Needs assigned reviewer or owner to decide. <button class="btn btn-secondary" type="button" data-act="assignMe" data-kind="listing" data-id="' + l.id + '">Assign to me</button></p>') +
+        (canWaive ? '<p><button class="btn btn-secondary" type="button" data-act="saveWaiver" data-id="' + l.id + '">Save deposit waiver</button></p>' : '') +
         '</form>';
     }
   });
@@ -276,7 +279,7 @@
 
       var shipmentsHtml = (l.shipments || []).map(function (sh) {
         var steps = sh.steps || [];
-        var cols = ['to_do', 'in_progress', 'done', 'verified', 'blocked', 'skipped'];
+        var cols = ['todo', 'in_progress', 'done', 'verified', 'blocked', 'skipped'];
         var boardCols = cols.map(function (c) {
           var inCol = steps.filter(function (st) { return st.status === c; });
           var cards = inCol.map(function (st) {
@@ -286,7 +289,7 @@
             var payBtn = (l.status === 'live' && Logic.can(u, 'ops')) ? '<p><button class="btn btn-secondary" type="button" data-act="payCostSheet" data-lid="' + l.id + '" data-sid="' + sh.id + '" data-stid="' + st.id + '">Pay step cost</button></p>' : '';
             return '<div class="card">' +
               '<b>' + U.esc(st.name) + '</b>' +
-              '<p class="meta">' + U.esc(st.assignedParty) + ' · Cost: ' + U.esc(U.usd(st.cost || 0)) + '</p>' +
+              '<p class="meta">' + U.esc(st.owner || '') + ' · Cost: ' + U.esc(U.usd(st.cost || 0)) + '</p>' +
               (st.docs && st.docs.length ? '<p class="meta">' + st.docs.length + ' doc(s)</p>' : '') +
               (st.blockedReason ? '<p class="err">' + U.esc(st.blockedReason) + '</p>' : '') +
               verifyBtn + blockBtn + skipBtn + payBtn +
@@ -299,7 +302,7 @@
           '<div class="board">' + boardCols + '</div>';
       }).join('');
 
-      var allSold = (l.shipments || []).every(function (sh) { return sh.proceedsRecorded || sh.writtenOff; });
+      var allSold = (l.shipments || []).every(function (sh) { return sh.writtenOff || (sh.proceeds > 0 && sh.saleDoc); });
       var settleBtn = (l.status === 'live' && allSold && Logic.can(u, 'ops')) ?
         '<p><button class="btn btn-primary" type="button" data-act="proposeSettle" data-id="' + l.id + '">Propose settlement</button></p>' : '';
 
@@ -311,6 +314,7 @@
         '</section>' +
         settleBtn +
         '<p><button class="btn btn-secondary" type="button" data-act="recordProceedsSheet" data-id="' + l.id + '">Record sale proceeds</button> ' +
+        '<button class="btn btn-secondary" type="button" data-act="useProceeds" data-id="' + l.id + '">Propose use of proceeds</button> ' +
         '<button class="btn btn-secondary" type="button" data-act="unplannedCostSheet" data-id="' + l.id + '">Unplanned cost</button> ' +
         '<button class="btn btn-secondary" type="button" data-act="overrunSheet" data-id="' + l.id + '">Request overrun</button> ' +
         '<button class="btn btn-secondary" type="button" data-act="resaleSheet" data-id="' + l.id + '">Propose resale</button> ' +
@@ -649,6 +653,35 @@
     if (r.ok) U.go('/s/queue');
   };
 
+  function needMoney(raw, back) {
+    var n = U.centsOf(raw);
+    if (n == null) {
+      Store.proto.error = 'Error: Enter an amount with at most 2 decimals';
+      if (back) U.go(back);
+      return null;
+    }
+    return n;
+  }
+
+  U.acts.saveWaiver = function (node, data) {
+    var id = node.getAttribute('data-id');
+    var u = U.user();
+    var action = { type: 'markListing', actorId: u.id, id: id };
+    if (data.waiver) action.waiver = true;
+    if (Logic.can(u, 'review')) {
+      if (data.buyerShareholderId) action.buyerShareholderId = data.buyerShareholderId;
+      if (data.marketNote) action.marketNote = data.marketNote;
+    }
+    U.dispatch(action);
+    U.go('/s/review/' + id);
+  };
+
+  U.acts.useProceeds = function (node) {
+    var id = node.getAttribute('data-id');
+    var r = U.dispatch({ type: 'proposeUseProceeds', actorId: U.user().id, listingId: id, reason: 'Use sale proceeds for a later cost' });
+    if (r.ok) U.go('/s/approvals'); else U.go('/s/ops/' + id);
+  };
+
   U.acts.approveListing = function (node, data) {
     var id = node.getAttribute('data-id');
     var r = U.dispatch({
@@ -657,7 +690,8 @@
       id: id,
       decision: 'approve',
       buyerShareholderId: data.buyerShareholderId || null,
-      waiver: !!data.waiver
+      waiver: !!data.waiver,
+      marketNote: data.marketNote || ''
     });
     if (r.ok) U.go('/s/queue');
   };
@@ -676,8 +710,9 @@
 
   U.acts.sendRevisedTerms = function (node, data) {
     var id = node.getAttribute('data-id');
-    var target = U.centsOf(data.target) || 800000;
-    var minInvest = U.centsOf(data.minInvest) || 50000;
+    var target = needMoney(data.target, '/s/revised/' + id);
+    var minInvest = needMoney(data.minInvest, '/s/revised/' + id);
+    if (target == null || minInvest == null) return;
     var r = U.dispatch({
       type: 'reviewListing',
       actorId: U.user().id,
@@ -767,7 +802,8 @@
     var lid = node.getAttribute('data-lid');
     var sid = node.getAttribute('data-sid');
     var stid = node.getAttribute('data-stid');
-    var amt = U.centsOf(data.costAmount) || 100000;
+    var amt = needMoney(data.costAmount, '/s/ops/' + lid);
+    if (amt == null) return;
     U.closeSheet();
     var r = U.dispatch({ type: 'payCost', actorId: U.user().id, listingId: lid, shipmentId: sid, stepId: stid, amount: amt, proof: data.proofDoc || 'invoice.pdf' });
     if (r.ok) U.go('/s/ops/' + lid);
@@ -814,7 +850,8 @@
   U.acts.confirmRecordProceeds = function (node, data) {
     var lid = node.getAttribute('data-lid');
     var sid = node.getAttribute('data-sid');
-    var amt = U.centsOf(data.proceedsAmount) || 1000000;
+    var amt = U.centsOf(data.proceedsAmount);
+    if (amt == null) { Store.proto.error = 'Error: Enter the sale proceeds, with at most 2 decimals'; U.go('/s/ops/' + lid); return; }
     U.closeSheet();
     var r = U.dispatch({ type: 'recordProceeds', actorId: U.user().id, listingId: lid, shipmentId: sid, amount: amt, doc: data.proceedsDoc || 'receipt.pdf' });
     if (r.ok) U.go('/s/ops/' + lid);
@@ -830,7 +867,8 @@
 
   U.acts.confirmUnplannedCost = function (node, data) {
     var id = node.getAttribute('data-id');
-    var amt = U.centsOf(data.unplannedAmount) || 50000;
+    var amt = needMoney(data.unplannedAmount, '/s/ops/' + id);
+    if (amt == null) return;
     U.closeSheet();
     var r = U.dispatch({ type: 'proposeUnplanned', actorId: U.user().id, listingId: id, amount: amt, reason: data.unplannedReason || 'Unplanned fee' });
     if (r.ok) U.go('/s/approvals');
@@ -846,7 +884,8 @@
 
   U.acts.confirmOverrun = function (node, data) {
     var id = node.getAttribute('data-id');
-    var amt = U.centsOf(data.overrunAmount) || 100000;
+    var amt = needMoney(data.overrunAmount, '/s/ops/' + id);
+    if (amt == null) return;
     U.closeSheet();
     var r = U.dispatch({ type: 'proposeOverrun', actorId: U.user().id, listingId: id, amount: amt, reason: data.overrunReason || 'Cost overrun' });
     if (r.ok) U.go('/s/approvals');
@@ -868,7 +907,8 @@
   U.acts.confirmResale = function (node, data) {
     var lid = node.getAttribute('data-lid');
     var sid = node.getAttribute('data-sid');
-    var price = U.centsOf(data.resalePrice) || 800000;
+    var price = needMoney(data.resalePrice, '/s/ops/' + lid);
+    if (price == null) return;
     U.closeSheet();
     var r = U.dispatch({
       type: 'proposeResale',

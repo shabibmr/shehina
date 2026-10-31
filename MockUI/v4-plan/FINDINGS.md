@@ -46,3 +46,9 @@ Mock UI v4 answers the central question from PLAN §1:
    - 160ms fades and touch-follow back gestures provide immediate, snappy feedback without distracting delays or superfluous animations.
 4. **Ledger Integrity:**
    - Double-entry balance (`debit + credit = 0`) verified across all operations and transitions. Self-check confirms BR §6.4 and §11.4 worked examples to the exact cent.
+
+## Click-path fixes
+
+A spec review found steps that the screen read as `assignedParty` / `to_do` while the domain stores `owner` / `todo`, so manager steps never appeared. Withdraw was offered on a live listing, which the domain refuses. Declining revised terms now returns the listing to draft. A shipment without a cost fails validation. Finance can save a deposit waiver without approving the listing. Empty money fields are refused. Investors do not see the staff Overdue flag.
+
+Phone, desktop, and right-to-left frames were not clicked in a browser. The domain self-check and the seed ledger check were run in Node.
