@@ -185,13 +185,14 @@
           return a.name.localeCompare(b.name);
         });
         var list = rows.length ? rows.map(function (l) { return row(l, "#/listing/" + l.id); }).join("") : "<div class=\"empty\"><p>No shipments match these filters.</p><button class=\"btn-text\" type=\"button\" data-act=\"clear\">Clear filters</button></div>";
-        stage.innerHTML = "<div class=\"column\"><h1>Shipments</h1><form class=\"stack\">" +
+        var nActive = ["category", "source", "buyer", "share", "sort"].filter(function (k) { return filters[k]; }).length;
+        stage.innerHTML = "<div class=\"column\"><h1>Shipments</h1><details class=\"fold\"" + (nActive ? " open" : "") + "><summary>Filters" + (nActive ? " (" + nActive + ")" : "") + "</summary><form class=\"fold-body stack\">" +
           UI.field("category", "Category", "<select id=\"category\" name=\"category\"><option value=\"\">Any</option><option>Food</option><option>Building</option><option>Textiles</option><option>Energy</option><option>Other</option></select>", "") +
           UI.field("source", "Sourced from", "<select id=\"source\" name=\"source\"><option value=\"\">Any</option>" + UI.countryOpts(filters.source) + "</select>", "") +
           UI.field("buyer", "Sold in", "<select id=\"buyer\" name=\"buyer\"><option value=\"\">Any</option>" + UI.countryOpts(filters.buyer) + "</select>", "") +
           UI.field("share", "Shareholder listing", "<select id=\"share\" name=\"share\"><option value=\"\">Any</option><option value=\"yes\">Shareholder listing</option></select>", "") +
           UI.field("sort", "Sort", "<select id=\"sort\" name=\"sort\"><option value=\"name\">Name</option><option value=\"left\">Amount left</option></select>", "") +
-          "<button class=\"btn btn-secondary\" type=\"submit\">Apply filters</button></form>" + list + "</div>";
+          "<button class=\"btn btn-secondary\" type=\"submit\">Apply filters</button></form></details>" + list + "</div>";
         ["category", "source", "buyer", "share", "sort"].forEach(function (k) {
           var el = document.getElementById(k);
           if (el && filters[k]) el.value = filters[k];
@@ -262,7 +263,7 @@
             "<p class=\"price num\">" + L.formatUsd(have) + " of " + L.formatUsd(target) + "</p>" +
             (l.shareholderListing ? "<p>This is a shareholder listing" + (l.waiver ? ", and the manager deposit was waived." : ".") + " The shareholder share of treasury profit is " + l.shareholderSharePct + "%.</p>" : "") +
             "<p class=\"muted\">You can lose money. Figures before the sale are expected.</p>" +
-            (l.status === "live" && L.remaining(l) > 0 ? "<a href=\"#/invest/" + l.id + "\" data-go=\"#/invest/" + l.id + "\">Invest</a>" : "");
+            (l.status === "live" && L.remaining(l) > 0 ? "<a class=\"btn btn-primary btn-block\" href=\"#/invest/" + l.id + "\" data-go=\"#/invest/" + l.id + "\">Invest</a>" : "");
         }
         if (tab === "shipments") body = l.shipments.map(function (sh) {
           var steps = (sh.steps || []).map(function (st) {
@@ -437,18 +438,13 @@
               return "<div><span>Shareholder</span><span class=\"num\">" + L.formatUsd(h.amount) + "</span></div>";
             }).join("");
         }
-        stage.innerHTML = "<div class=\"column\"><h1>" + UI.esc(l.name) + "</h1><div class=\"statement\">" +
-          "<div><span>Sale price</span><span class=\"num\">" + L.formatUsd(settled.sale) + "</span></div>" +
-          "<div><span>Costs</span><span class=\"num\">" + L.formatUsd(settled.costs) + "</span></div>" +
-          "<div><span>Gross</span><span class=\"num\">" + L.formatUsd(settled.gross) + "</span></div>" +
-          "<div><span>Service fee</span><span class=\"num\">" + L.formatUsd(settled.fee) + "</span></div>" +
-          "<div><span>Net</span><span class=\"num\">" + L.formatUsd(settled.net) + "</span></div>" +
-          "<div><span>Manager share</span><span class=\"num\">" + L.formatUsd(settled.managerCut) + "</span></div>" +
-          "<div><span>Pool</span><span class=\"num\">" + L.formatUsd(settled.pool) + "</span></div>" +
-          split +
-          "<div><span>Other investors</span><span>" + others + " anonymised</span></div>" +
-          "<div class=\"total\"><span>My payout</span><span>" + (mineRow ? UI.money(mineRow.profit, kind) : "") + "</span></div>" +
-          "</div></div>";
+        var row = function (a, b) { return "<div><span>" + a + "</span><span class=\"num\">" + b + "</span></div>"; };
+        stage.innerHTML = "<div class=\"column\"><h1>" + UI.esc(l.name) + "</h1>" +
+          "<div class=\"total statement\"><div class=\"total\"><span>My payout</span><span>" + (mineRow ? UI.money(mineRow.profit, kind) : "") + "</span></div></div>" +
+          UI.group("Sale and costs", "<div class=\"statement\">" + row("Sale price", L.formatUsd(settled.sale)) + row("Costs", L.formatUsd(settled.costs)) + row("Gross", L.formatUsd(settled.gross)) + "</div>") +
+          UI.group("Fees and shares", "<div class=\"statement\">" + row("Service fee", L.formatUsd(settled.fee)) + row("Net", L.formatUsd(settled.net)) + row("Manager share", L.formatUsd(settled.managerCut)) + row("Pool", L.formatUsd(settled.pool)) +
+            "<div><span>Other investors</span><span>" + others + " anonymised</span></div></div>") +
+          (l.shareholderListing ? UI.fold("<strong>Shareholder split</strong>", "<div class=\"statement\">" + split + "</div>") : "") + "</div>";
       }
     });
 
@@ -477,7 +473,7 @@
           "<section class=\"panel\"><p class=\"muted\">Held for withdrawal</p><p class=\"figure num\">" + L.formatUsd(held) + "</p></section>" +
           "<section class=\"panel\"><h2>Movements</h2><div class=\"tabs\"><button type=\"button\" data-act=\"wf\" data-tab=\"all\" aria-selected=\"" + (walletFilter === "all") + "\">All</button><button type=\"button\" data-act=\"wf\" data-tab=\"invest\" aria-selected=\"" + (walletFilter === "invest") + "\">Investments</button><button type=\"button\" data-act=\"wf\" data-tab=\"withdraw\" aria-selected=\"" + (walletFilter === "withdraw") + "\">Withdrawals</button></div>" + list + "</section>" +
           "<section class=\"panel\"><h2>Withdrawals</h2>" + wrows + "</section></div>" +
-          "<a href=\"#/top-up\" data-go=\"#/top-up\">Add money</a><a href=\"#/withdraw\" data-go=\"#/withdraw\">Withdraw</a></div>";
+          "<div class=\"btn-pair\"><a class=\"btn btn-primary\" href=\"#/top-up\" data-go=\"#/top-up\">Add money</a><a class=\"btn btn-secondary\" href=\"#/withdraw\" data-go=\"#/withdraw\">Withdraw</a></div></div>";
       },
       on: function (act, el) { if (act === "wf") { walletFilter = el.getAttribute("data-tab"); UI.go("#/wallet"); } }
     });
@@ -530,13 +526,14 @@
         var block = u ? moneyBlock(u, "withdraw", "Finish verification before you withdraw.") : "Finish verification before you withdraw.";
         if (block) { stage.innerHTML = "<div class=\"column\"><h1>Withdraw</h1><p>" + UI.esc(block) + "</p></div>"; return; }
         stage.innerHTML = "<div class=\"column\"><h1>Withdraw</h1><p class=\"muted\">USD 10,000 or more needs the owner to approve. The amount is held until then.</p><form class=\"stack\" id=\"wd\">" +
-          UI.field("amount", "Amount", "<span class=\"amount\"><b>$</b><input id=\"amount\" name=\"amount\" inputmode=\"decimal\"></span>", errors.amount) +
+          UI.group("Amount", UI.field("amount", "Amount", "<span class=\"amount\"><b>$</b><input id=\"amount\" name=\"amount\" inputmode=\"decimal\"></span>", errors.amount)) +
+          UI.group("Bank details",
           UI.field("country", "Bank country", "<select id=\"country\" name=\"country\"><option value=\"\">Choose</option>" + UI.countryOpts(u.country) + "</select>", errors.country) +
-          UI.blockedNote() +
-          UI.field("bank", "Bank name", "<input id=\"bank\" name=\"bank\">", errors.bank) +
-          UI.field("holder", "Account holder", "<input id=\"holder\" name=\"holder\" value=\"" + UI.esc(u.name) + "\">", errors.holder) +
-          UI.field("account", "IBAN or account number", "<input id=\"account\" name=\"account\" class=\"num\">", errors.account) +
-          UI.field("swift", "SWIFT / BIC", "<input id=\"swift\" name=\"swift\" class=\"num\">", errors.swift) +
+            UI.blockedNote() +
+            UI.field("bank", "Bank name", "<input id=\"bank\" name=\"bank\">", errors.bank) +
+            UI.field("holder", "Account holder", "<input id=\"holder\" name=\"holder\" value=\"" + UI.esc(u.name) + "\">", errors.holder) +
+            UI.field("account", "IBAN or account number", "<input id=\"account\" name=\"account\" class=\"num\">", errors.account) +
+            UI.field("swift", "SWIFT / BIC", "<input id=\"swift\" name=\"swift\" class=\"num\">", errors.swift)) +
           "</form></div>";
       },
       on: function (act) {

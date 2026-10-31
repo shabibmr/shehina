@@ -228,6 +228,30 @@
     else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
   }
 
+  /* Shared layout components. Each returns an HTML string. */
+  function kpis(items) {
+    return "<div class=\"kpis\">" + items.map(function (it) {
+      return "<div class=\"kpi-tile\"><span class=\"muted\">" + esc(it[0]) + "</span><span class=\"num kpi-val\">" + it[1] + "</span></div>";
+    }).join("") + "</div>";
+  }
+  function tabs(items, active, act) {
+    return "<div class=\"tabs\" role=\"tablist\">" + items.map(function (t) {
+      return "<button type=\"button\" role=\"tab\" data-act=\"" + act + "\" data-tab=\"" + t[0] + "\" aria-selected=\"" + (active === t[0]) + "\">" + esc(t[1]) + "</button>";
+    }).join("") + "</div>";
+  }
+  function fold(summary, body, open) {
+    return "<details class=\"fold\"" + (open ? " open" : "") + "><summary>" + summary + "</summary><div class=\"fold-body stack\">" + body + "</div></details>";
+  }
+  function menu(label, items) {
+    return "<details class=\"menu\"><summary class=\"btn-text\">" + esc(label) + "</summary><div class=\"menu-list\">" + items + "</div></details>";
+  }
+  function sticky(html) {
+    return "<div class=\"sticky-actions\">" + html + "</div>";
+  }
+  function group(title, html) {
+    return "<section class=\"group stack\"><h2>" + esc(title) + "</h2>" + html + "</section>";
+  }
+
   function field(id, label, control, error) {
     var described = error ? " aria-describedby=\"" + id + "-err\"" : "";
     return "<label class=\"field\" for=\"" + id + "\"><span>" + esc(label) + "</span>" + control.replace("<input", "<input" + described).replace("<select", "<select" + described).replace("<textarea", "<textarea" + described) + (error ? "<span class=\"err\" id=\"" + id + "-err\">" + esc(error) + "</span>" : "") + "</label>";
@@ -275,6 +299,7 @@
     esc: esc, cname: cname, countryOpts: countryOpts, blockedNote: blockedNote, when: when, money: money, icon: icon,
     screen: screen, go: go, back: back, toast: toast, openSheet: openSheet, closeSheet: closeSheet, field: field,
     homeFor: homeFor, start: start,
+    kpis: kpis, tabs: tabs, fold: fold, menu: menu, sticky: sticky, group: group,
     get params() { return params; }
   };
   root.ShehnatUI = api;

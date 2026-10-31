@@ -129,8 +129,21 @@ a { color: var(--color-primary); }
   font-weight: 500;
 }
 .btn:active { background: var(--button-bg-active); }
-.btn-primary { background: var(--button-bg); color: var(--button-fg); border-radius: var(--button-radius); }
-.btn-primary:active { background: var(--button-bg-active); }
+a.btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.btn-primary {
+  background: var(--button-bg); color: var(--button-fg); border-radius: var(--button-radius);
+  font-weight: 600; letter-spacing: 0.01em;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.18), 0 6px 14px -4px color-mix(in srgb, var(--color-primary) 55%, transparent);
+  transition: background var(--duration-fade) var(--ease-fade), box-shadow var(--duration-fade) var(--ease-fade), transform var(--duration-fade) var(--ease-fade);
+}
+.btn-primary:hover { background: var(--button-bg-hover); }
+.btn-primary:active { background: var(--button-bg-active); transform: translateY(1px); box-shadow: 0 1px 2px rgb(0 0 0 / 0.18); }
+.btn-primary:focus-visible { outline: 3px solid var(--color-ring); outline-offset: 2px; }
+.btn-block { display: flex; width: 100%; }
+.btn-pair { display: flex; gap: var(--space-3); margin-block-start: var(--space-4); }
+.btn-pair .btn { flex: 1; }
+.btn-pair .btn-primary { flex: 1.4; }
+@media (prefers-reduced-motion: reduce) { .btn-primary { transition: none; } .btn-primary:active { transform: none; } }
 .btn-secondary {
   background: var(--button-secondary-bg);
   color: var(--button-secondary-fg);
@@ -278,3 +291,26 @@ textarea { padding-block: var(--space-3); min-height: 6rem; }
 .sign-in .logo-sign { display: block; margin-inline: auto; }
 .empty { display: flex; flex-direction: column; gap: var(--space-4); padding-block: var(--space-6); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* Shared layout components */
+.kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.kpi-tile { background: var(--panel-bg); border-radius: var(--panel-radius); padding: var(--space-3) var(--space-4); display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.kpi-val { font-size: var(--font-size-title-sm); font-weight: 500; overflow-wrap: anywhere; }
+.fold { border-bottom: var(--line-hair) solid var(--row-rule); }
+.fold > summary { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); min-height: var(--size-hit); cursor: pointer; list-style: none; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::after { content: ""; width: 0.5rem; height: 0.5rem; flex: none; border-inline-end: 2px solid var(--color-muted-foreground); border-block-end: 2px solid var(--color-muted-foreground); transform: rotate(45deg); transition: transform var(--duration-fade) var(--ease-fade); }
+.fold[open] > summary::after { transform: rotate(-135deg); }
+@media (prefers-reduced-motion: reduce) { .fold > summary::after { transition: none; } }
+.fold-body { padding-block: var(--space-2) var(--space-4); }
+.menu { position: relative; }
+.menu > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; }
+.menu > summary::-webkit-details-marker { display: none; }
+.menu-list { display: flex; flex-direction: column; background: var(--color-surface); border: var(--line-hair) solid var(--color-border); padding-inline: var(--space-3); }
+.sticky-actions { position: sticky; bottom: 0; z-index: 5; display: flex; gap: var(--space-3); padding-block: var(--space-3); background: var(--color-background); border-top: var(--line-hair) solid var(--color-rule); }
+.sticky-actions .btn { flex: 1; }
+.group { padding-block: var(--space-2); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.chip { font-size: var(--font-size-meta); padding: var(--space-1) var(--space-3); border: var(--line-hair) solid var(--color-border); border-radius: 999px; }
+.chip-warn { color: var(--color-warning); border-color: var(--color-warning); }
+.danger-zone { border-top: var(--line-hair) solid var(--color-rule); padding-top: var(--space-4); }

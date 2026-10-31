@@ -86,15 +86,10 @@
           ledger = panel("Ledger", check.ok ? "OK" : "Ledger does not balance.");
         }
         stage.innerHTML = "<div class=\"column\"><h1>Queue</h1>" + lead + next +
-          "<div class=\"stack\">" +
-          panel("Live", String(live.length)) +
-          panel("Raised", L.formatUsd(raised)) +
-          panel("Treasury", L.formatUsd(Store.bal("platform:treasury"))) +
-          panel("Reserve", L.formatUsd(Store.bal("platform:reserve"))) +
-          "<a class=\"panel\" href=\"#/overdue\" data-go=\"#/overdue\"><p class=\"muted\">Overdue</p><p class=\"figure num\">" + overdueN + "</p></a>" +
-          panel("Late", String(lateN)) +
-          ledger +
-          "</div><a href=\"#/queue-list\" data-go=\"#/queue-list\">Open the queue</a></div>";
+          UI.kpis([["Live", String(live.length)], ["Raised", L.formatUsd(raised)],
+            ["Overdue", "<a href=\"#/overdue\" data-go=\"#/overdue\">" + overdueN + "</a>"], ["Late", String(lateN)]]) +
+          UI.fold("Platform", UI.kpis([["Treasury", L.formatUsd(Store.bal("platform:treasury"))], ["Reserve", L.formatUsd(Store.bal("platform:reserve"))]]) + ledger) +
+          "<a href=\"#/queue-list\" data-go=\"#/queue-list\">Open the queue</a></div>";
       }
     });
 
@@ -201,6 +196,7 @@
       return Store.state.users.filter(function (u) { return u.shareholder === true && u.application && u.application.status === "approved"; });
     }
 
+    var qlTab = "terms", qlOpen = "";
     UI.screen({
       id: "queue-listing",
       title: function (p) { var l = Store.listing(p.id); return l ? l.name : "Not found"; },
@@ -231,25 +227,40 @@
         else if (l.waiver) waive = "<p>Deposit waived.</p>";
         var denied = L.canDecide(actor, l.assigneeId);
         var actions = denied ? "<p class=\"muted\">" + UI.esc(denied) + "</p>" : "<button class=\"btn btn-primary\" type=\"button\" data-act=\"approve\">Approve</button><button class=\"btn btn-danger\" type=\"button\" data-act=\"reject\">Reject</button>";
+        if (qlOpen !== l.id) { qlOpen = l.id; qlTab = "terms"; }
+        var body = "";
+        if (qlTab === "terms") {
+          body = UI.kpis([
+            ["Investor share", l.investorShare + "%"], ["Manager capital", l.companyPct + "%"],
+            ["Minimum", L.formatUsd(l.minimum)], ["Funding target", L.formatUsd(proj.target)],
+            ["Expected sale", L.formatUsd(proj.expectedSale)], ["Expected pool", L.formatUsd(proj.pool)],
+            ["Service fee", L.formatUsd(proj.fee)], ["Cycle", proj.cycle + " days"]
+          ]) + "<p class=\"muted\">All figures except share, capital and minimum are expected.</p>";
+        }
+        if (qlTab === "plan") {
+          var chips = L.TAGS.map(function (tag) {
+            var ok = (l.shipments || []).some(function (sh) { return (sh.steps || []).some(function (st) { return st.tag === tag; }); });
+            return "<span class=\"chip" + (ok ? "" : " chip-warn") + "\">" + UI.esc(tag) + (ok ? "" : " · missing") + "</span>";
+          }).join("");
+          body = "<div class=\"chips\">" + chips + "</div>" + (l.shipments || []).map(function (sh, i) {
+            return UI.fold("Shipment " + (i + 1) + " · " + (sh.steps || []).length + " steps", (sh.steps || []).map(function (st) {
+              return "<p>" + UI.esc(st.name) + (st.tag ? " · " + UI.esc(st.tag) : "") + (st.verify ? " · Document required" : "") + "</p>";
+            }).join(""), i === 0);
+          }).join("");
+        }
+        if (qlTab === "notes") {
+          body = "<label class=\"field\"><span>Assign</span><select id=\"assignee\"><option value=\"\">Unassigned</option>" + options + "</select></label>" +
+            "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"assign\">Save assignment</button>" +
+            UI.field("market", "Market check", "<textarea id=\"market\" name=\"market\">" + UI.esc(l.marketNote || "") + "</textarea>", "") +
+            "<label class=\"field\"><span>Buyer shareholder</span><select id=\"buyer\">" + buyers + "</select></label>" + waive;
+        }
         stage.innerHTML = "<div class=\"column\"><h1>" + UI.esc(l.name) + "</h1><p>" + UI.esc(UI.cname(l.source)) + " to " + UI.esc(UI.cname(l.buyer)) + "</p>" +
-          "<div class=\"stack\">" +
-          panel("Investor share", l.investorShare + "%") +
-          panel("Manager capital", l.companyPct + "%") +
-          panel("Minimum", L.formatUsd(l.minimum)) +
-          panel("Funding target", L.formatUsd(proj.target)) +
-          panel("Expected sale", L.formatUsd(proj.expectedSale) + " expected") +
-          panel("Expected pool", L.formatUsd(proj.pool) + " expected") +
-          panel("Service fee", L.formatUsd(proj.fee) + " expected") +
-          panel("Cycle", proj.cycle + " days") +
-          "</div>" + steps + "<h2>Stage coverage</h2><ul>" + covered + "</ul>" +
-          "<label class=\"field\"><span>Assign</span><select id=\"assignee\"><option value=\"\">Unassigned</option>" + options + "</select></label>" +
-          "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"assign\">Save assignment</button>" +
-          UI.field("market", "Market check", "<textarea id=\"market\" name=\"market\">" + UI.esc(l.marketNote || "") + "</textarea>", "") +
-          "<label class=\"field\"><span>Buyer shareholder</span><select id=\"buyer\">" + buyers + "</select></label>" +
-          waive + actions +
-          "<a href=\"#/revise/" + l.id + "\" data-go=\"#/revise/" + l.id + "\">Send revised terms</a></div>";
+          UI.tabs([["terms", "Terms"], ["plan", "Plan"], ["notes", "Notes"]], qlTab, "qltab") +
+          "<div class=\"stack\">" + body + "</div>" +
+          UI.sticky(actions + "<a class=\"btn btn-secondary\" href=\"#/revise/" + l.id + "\" data-go=\"#/revise/" + l.id + "\">Revise terms</a>") + "</div>";
       },
       on: function (act, el, params) {
+        if (act === "qltab") { qlTab = el.getAttribute("data-tab"); UI.go("#/queue-listing/" + params.id); return; }
         if (act === "assign") {
           var assigned = Store.assign(params.id, document.getElementById("assignee").value);
           if (!assigned.ok) UI.toast(assigned.error);
@@ -258,8 +269,8 @@
         }
         function body() {
           return {
-            marketNote: document.getElementById("market") ? document.getElementById("market").value : "",
-            buyerShareholderId: document.getElementById("buyer") ? document.getElementById("buyer").value : ""
+            marketNote: document.getElementById("market") ? document.getElementById("market").value : (Store.listing(params.id).marketNote || ""),
+            buyerShareholderId: document.getElementById("buyer") ? document.getElementById("buyer").value : (Store.listing(params.id).buyerShareholderId || "")
           };
         }
         if (act === "waive") {
@@ -403,13 +414,14 @@
           else if (actor.role === "reviewer" && (l.status === "in_review" || l.status === "awaiting_terms")) href = "#/queue-listing/" + l.id;
           return rowLink(href, l.name, L.STAGES[L.listingStage(l)] + " · " + l.status, l.shareholderListing ? "Shareholder" : "");
         }).join("");
-        stage.innerHTML = "<div class=\"column\"><h1>Listings</h1><form class=\"stack\">" +
+        var nActive = ["status", "stage", "late", "share", "q"].filter(function (k) { return listFilter[k]; }).length;
+        stage.innerHTML = "<div class=\"column\"><h1>Listings</h1><details class=\"fold\"" + (nActive ? " open" : "") + "><summary>Filters" + (nActive ? " (" + nActive + ")" : "") + "</summary><form class=\"fold-body stack\">" +
           "<label class=\"field\"><span>Status</span><select name=\"status\">" + opt("", "Any status", listFilter.status) + statuses.map(function (s) { return opt(s, s, listFilter.status); }).join("") + "</select></label>" +
           "<label class=\"field\"><span>Stage</span><select name=\"stage\">" + opt("", "Any stage", listFilter.stage) + L.STAGES.map(function (name, i) { return opt(String(i), name, listFilter.stage); }).join("") + "</select></label>" +
           "<label class=\"field\"><span>Late</span><select name=\"late\">" + opt("", "Any", listFilter.late) + opt("yes", "Late only", listFilter.late) + "</select></label>" +
           "<label class=\"field\"><span>Shareholder</span><select name=\"share\">" + opt("", "Any", listFilter.share) + opt("yes", "Shareholder listings", listFilter.share) + opt("no", "Other listings", listFilter.share) + "</select></label>" +
           UI.field("q", "Name", "<input id=\"q\" name=\"q\" value=\"" + UI.esc(listFilter.q) + "\">", "") +
-          "<button class=\"btn btn-secondary\" type=\"submit\">Search</button></form>" +
+          "<button class=\"btn btn-secondary\" type=\"submit\">Search</button></form></details>" +
           (rows || "<div class=\"empty\"><p>No listing matches.</p></div>") + "</div>";
       },
       submit: function (data) {
@@ -418,6 +430,7 @@
       }
     });
 
+    var moneyTab = "pending";
     UI.screen({
       id: "staff-money",
       title: "Money",
@@ -426,29 +439,31 @@
       test: function (h) { return h === "#/staff-money" ? {} : null; },
       render: function (stage) {
         var actor = Store.user();
-        var rows = Store.state.withdrawals.map(function (w) {
+        if (!moneyTab) moneyTab = "pending";
+        var list = Store.state.withdrawals.filter(function (w) { return (w.status === "pending") === (moneyTab === "pending"); });
+        var rows = list.map(function (w) {
           var who = Store.byId(w.userId);
           var large = w.amount >= Store.state.settings.largeWithdrawal;
           var buttons = "";
           if (w.status === "pending") {
             var denied = L.can(actor, large ? "withdraw-large" : "withdraw-small");
-            if (denied) buttons = "<p>" + UI.esc(denied) + "</p>";
-            else buttons = "<button class=\"btn btn-primary\" type=\"button\" data-act=\"pay\" data-id=\"" + w.id + "\">Approve</button><button class=\"btn btn-secondary\" type=\"button\" data-act=\"decline\" data-id=\"" + w.id + "\">Decline</button>";
+            if (denied) buttons = "<span class=\"muted\">" + UI.esc(denied) + "</span>";
+            else buttons = UI.menu("Decide", "<button class=\"btn-text\" type=\"button\" data-act=\"pay\" data-id=\"" + w.id + "\">Approve</button><button class=\"btn-text\" type=\"button\" data-act=\"decline\" data-id=\"" + w.id + "\">Decline</button>");
           } else if (w.status === "paid" && actor.role === "owner") {
-            buttons = "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"fail\" data-id=\"" + w.id + "\">Mark failed</button>";
+            buttons = UI.menu("Options", "<button class=\"btn-text\" type=\"button\" data-act=\"fail\" data-id=\"" + w.id + "\">Mark failed</button>");
           }
-          return "<section class=\"panel\"><h2>" + UI.esc(who ? who.name : "Withdrawal") + "</h2><p class=\"num\">" + L.formatUsd(w.amount) + "</p><p class=\"status\">" + UI.esc(w.status) + (w.reference ? " · " + UI.esc(w.reference) : "") + "</p>" + buttons + "</section>";
+          return "<div class=\"row\"><span class=\"title\">" + UI.esc(who ? who.name : "Withdrawal") + "</span><span class=\"meta\">" + UI.esc(w.status) + (w.reference ? " · " + UI.esc(w.reference) : "") + "</span><span class=\"end\"><span class=\"num\">" + L.formatUsd(w.amount) + "</span> " + buttons + "</span></div>";
         }).join("");
         var reserve = actor.role === "owner" ? "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"reserve-out\">Reserve out</button>" : "";
         var top = !L.can(actor, "treasury") ? "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"topup\">Treasury top-up</button>" : "";
-        stage.innerHTML = "<div class=\"column\"><h1>Money</h1><div class=\"stack\">" +
-          "<section class=\"panel\"><h2>Withdrawals</h2>" + (rows || "<p>No withdrawals.</p>") + "</section>" +
-          panel("Treasury", L.formatUsd(Store.bal("platform:treasury"))) +
-          panel("Platform revenue", L.formatUsd(Store.bal("platform:revenue"))) +
-          panel("Reserve", L.formatUsd(Store.bal("platform:reserve"))) +
-          "</div>" + top + reserve + "</div>";
+        stage.innerHTML = "<div class=\"column\"><h1>Money</h1>" +
+          UI.kpis([["Treasury", L.formatUsd(Store.bal("platform:treasury"))], ["Revenue", L.formatUsd(Store.bal("platform:revenue"))], ["Reserve", L.formatUsd(Store.bal("platform:reserve"))]]) +
+          (top || reserve ? "<div class=\"stack\">" + top + reserve + "</div>" : "") +
+          UI.tabs([["pending", "Pending"], ["history", "History"]], moneyTab, "mtab") +
+          (rows || "<div class=\"empty\"><p>No withdrawals here.</p></div>") + "</div>";
       },
       on: function (act, el) {
+        if (act === "mtab") { moneyTab = el.getAttribute("data-tab"); UI.go("#/staff-money"); return; }
         if (act === "pay") {
           UI.openSheet("<h2>Pay withdrawal</h2>" + UI.field("reference", "Reference", "<input id=\"reference\">", "") + "<button class=\"btn btn-primary\" type=\"button\" data-act=\"pay-send\" data-id=\"" + el.getAttribute("data-id") + "\">Pay</button>");
           return;
@@ -517,19 +532,19 @@
         if (actor.role !== "owner") { stage.innerHTML = "<div class=\"column\"><h1>Team</h1><p>You cannot do that.</p></div>"; return; }
         var people = Store.state.users.filter(function (u) { return ["owner", "reviewer", "ops", "finance"].indexOf(u.role) !== -1; });
         var rows = people.map(function (u) {
-          return "<section class=\"panel\"><h2>" + UI.esc(u.name) + "</h2><p class=\"muted\">" + UI.esc(u.email) + (u.active ? "" : " · Deactivated") + "</p>" +
+          return UI.fold("<span><strong>" + UI.esc(u.name) + "</strong><br><span class=\"muted\">" + UI.esc(u.role) + (u.active ? "" : " · Deactivated") + "</span></span>",
+            "<p class=\"muted\">" + UI.esc(u.email) + "</p>" +
             "<label class=\"field\"><span>Role</span><select data-live=\"role\" data-id=\"" + u.id + "\">" +
             ["owner", "reviewer", "ops", "finance"].map(function (r) { return "<option" + (u.role === r ? " selected" : "") + ">" + r + "</option>"; }).join("") +
             "</select></label>" +
-            (u.id === actor.id ? "" : "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"off\" data-id=\"" + u.id + "\">Deactivate</button>") +
-            "</section>";
+            (u.id === actor.id ? "" : "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"off\" data-id=\"" + u.id + "\">Deactivate</button>"));
         }).join("");
         stage.innerHTML = "<div class=\"column\"><h1>Team</h1>" + rows +
-          "<h2>Add staff</h2><form class=\"stack\">" +
+          "<details class=\"fold\"><summary><strong>Add staff</strong></summary><form class=\"fold-body stack\">" +
           UI.field("name", "Name", "<input id=\"name\" name=\"name\">", "") +
           UI.field("email", "Email", "<input id=\"email\" name=\"email\" type=\"email\">", "") +
           "<label class=\"field\"><span>Role</span><select name=\"role\"><option>reviewer</option><option>ops</option><option>finance</option><option>owner</option></select></label>" +
-          "<p id=\"team-err\" class=\"err\"></p><button class=\"btn btn-primary\" type=\"submit\">Add staff</button></form></div>";
+          "<p id=\"team-err\" class=\"err\"></p><button class=\"btn btn-primary\" type=\"submit\">Add staff</button></form></details></div>";
       },
       on: function (act, el) {
         if (act === "role") {
@@ -603,9 +618,9 @@
           if (actor.role === "owner" && u.role === "manager") {
             exposure = "<label class=\"field\"><span>Exposure limit</span><input class=\"num\" id=\"exp-" + u.id + "\" value=\"" + ((u.exposureLimit != null ? u.exposureLimit : Store.state.settings.exposureDefault) / 100).toFixed(2) + "\"></label><button class=\"btn btn-secondary\" type=\"button\" data-act=\"exposure\" data-id=\"" + u.id + "\">Save exposure</button>";
           }
-          return "<section class=\"panel\"><h2>" + UI.esc(u.name) + "</h2><p class=\"muted\">" + UI.esc(u.role) + (u.suspended ? " · Suspended" : "") + "</p>" +
+          return UI.fold("<span><strong>" + UI.esc(u.name) + "</strong><br><span class=\"muted\">" + UI.esc(u.role) + (u.suspended ? " · Suspended" : "") + "</span></span>",
             "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"suspend\" data-id=\"" + u.id + "\" data-on=\"" + (u.suspended ? "0" : "1") + "\">" + (u.suspended ? "Unsuspend" : "Suspend") + "</button>" +
-            exposure + "</section>";
+            exposure);
         }).join("");
         stage.innerHTML = "<div class=\"column\"><h1>Users</h1><form>" +
           UI.field("q", "Search", "<input id=\"q\" name=\"q\" value=\"" + UI.esc(userQuery) + "\">", "") +
@@ -642,13 +657,12 @@
           return UI.field(id, label, "<input id=\"" + id + "\" name=\"" + id + "\" class=\"num\" value=\"" + value + "\">", "");
         }
         stage.innerHTML = "<div class=\"column\"><h1>Settings</h1><form class=\"stack\">" +
-          num("overdueDays", "Overdue days", s.overdueDays) +
-          num("autoWithdrawDays", "Auto-withdraw days", s.autoWithdrawDays) +
-          num("waiverStandInPct", "Waiver stand-in percent", s.waiverStandInPct) +
-          num("shareholderSharePct", "Shareholder share percent", s.shareholderSharePct) +
-          num("exposureDefault", "Default exposure (cents)", s.exposureDefault) +
-          UI.field("blocked", "Blocked countries", "<input id=\"blocked\" name=\"blocked\" value=\"" + UI.esc((s.blocked || []).join(",")) + "\">", "") +
-          UI.field("prohibited", "Prohibited goods", "<input id=\"prohibited\" name=\"prohibited\" value=\"" + UI.esc((s.prohibited || []).join(",")) + "\">", "") +
+          UI.group("Timing", num("overdueDays", "Overdue days", s.overdueDays) + num("autoWithdrawDays", "Auto-withdraw days", s.autoWithdrawDays)) +
+          UI.group("Money and shares", num("waiverStandInPct", "Waiver stand-in percent", s.waiverStandInPct) +
+            num("shareholderSharePct", "Shareholder share percent", s.shareholderSharePct) +
+            num("exposureDefault", "Default exposure (cents)", s.exposureDefault)) +
+          UI.group("Compliance", UI.field("blocked", "Blocked countries", "<input id=\"blocked\" name=\"blocked\" value=\"" + UI.esc((s.blocked || []).join(",")) + "\">", "") +
+            UI.field("prohibited", "Prohibited goods", "<input id=\"prohibited\" name=\"prohibited\" value=\"" + UI.esc((s.prohibited || []).join(",")) + "\">", "")) +
           "<p id=\"settings-err\" class=\"err\"></p><button class=\"btn btn-primary\" type=\"submit\">Save settings</button></form></div>";
       },
       submit: function (data) {

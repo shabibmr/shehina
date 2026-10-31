@@ -39,9 +39,9 @@
               }).join("");
               var moves = "";
               if (!L.can(actor, "steps")) {
-                moves = COLS.filter(function (c) { return c[0] !== col[0]; }).map(function (c) {
+                moves = UI.menu("Move to…", COLS.filter(function (c) { return c[0] !== col[0]; }).map(function (c) {
                   return "<button type=\"button\" class=\"btn-text\" data-act=\"move\" data-next=\"" + c[0] + "\" data-ship=\"" + sh.id + "\" data-step=\"" + st.id + "\">" + c[1] + "</button>";
-                }).join("");
+                }).join(""));
               }
               return "<article class=\"card\"><p>" + UI.esc(st.name) + (st.verify ? " · Document required" : "") + "</p>" + docs + moves + "</article>";
             }).join("");
@@ -49,16 +49,12 @@
           }).join("");
           return "<h2>" + UI.esc(sh.id) + "</h2><div class=\"board\" id=\"board-" + sh.id + "\">" + cols + "</div>";
         }).join("");
-        var actions = "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"step-cost\">Step cost</button>" +
-          "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"unplanned\">Unplanned cost</button>" +
-          "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"proceeds\">Sale proceeds</button>" +
-          "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"use-proceeds\">Use proceeds</button>" +
-          "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"overrun\">Overrun fill</button>" +
-          "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"cancel\">Cancel</button>" +
-          "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"writeoff\">Write-off</button>" +
-          "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"resale\">Resale</button>";
+        var actions = UI.group("Money", "<div class=\"kpis\">" +
+          "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"step-cost\">Step cost</button>" + "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"unplanned\">Unplanned cost</button>" + "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"proceeds\">Sale proceeds</button>" + "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"use-proceeds\">Use proceeds</button>" + "</div>") +
+          UI.group("Resolve", "<div class=\"kpis\">" + "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"overrun\">Overrun fill</button>" + "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"writeoff\">Write-off</button>" + "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"resale\">Resale</button>" + "</div>") +
+          "<div class=\"danger-zone\">" + "<button class=\"btn btn-danger\" type=\"button\" data-act=\"sheet\" data-kind=\"cancel\">Cancel listing</button>" + "</div>";
         var settle = "";
-        if (!L.can(actor, "propose-settlement")) settle = "<a href=\"#/settlement/" + l.id + "\" data-go=\"#/settlement/" + l.id + "\">Settlement</a>";
+        if (!L.can(actor, "propose-settlement")) settle = UI.sticky("<a class=\"btn btn-primary\" href=\"#/settlement/" + l.id + "\" data-go=\"#/settlement/" + l.id + "\">Settlement</a>");
         stage.innerHTML = "<div class=\"column\"><h1>" + UI.esc(l.name) + "</h1><p id=\"viewer\" class=\"muted\"></p>" + boards + actions + settle + "</div>";
         var board = stage.querySelector(".board");
         if (board && root.ShehnatMotion) root.ShehnatMotion.fade(board);
@@ -213,12 +209,10 @@
         var actor = Store.user();
         if (!l) { stage.innerHTML = "<div class=\"column\"><h1>Not found</h1></div>"; return; }
         var settled = (l.settlement && l.settlement.result) || Store.settlementInput(l);
-        var lines = "<div class=\"statement\">" +
-          "<div><span>Sale price</span><span class=\"num\">" + L.formatUsd(settled.sale) + "</span></div>" +
-          "<div><span>Costs</span><span class=\"num\">" + L.formatUsd(settled.costs) + "</span></div>" +
-          "<div><span>Gross</span><span class=\"num\">" + L.formatUsd(settled.gross) + "</span></div>" +
-          "<div><span>Service fee</span><span class=\"num\">" + L.formatUsd(settled.fee) + "</span></div>" +
-          "<div><span>Manager share</span><span class=\"num\">" + L.formatUsd(settled.managerCut) + "</span></div>" +
+        var srow = function (a, b) { return "<div><span>" + a + "</span><span class=\"num\">" + b + "</span></div>"; };
+        var lines = UI.group("Sale and costs", "<div class=\"statement\">" + srow("Sale price", L.formatUsd(settled.sale)) + srow("Costs", L.formatUsd(settled.costs)) + srow("Gross", L.formatUsd(settled.gross)) + "</div>") +
+          UI.group("Fees", "<div class=\"statement\">" + srow("Service fee", L.formatUsd(settled.fee)) + srow("Manager share", L.formatUsd(settled.managerCut)) + "</div>") +
+          UI.group("Payouts", "<div class=\"statement\">" +
           settled.rows.map(function (r) {
             var who = r.userId ? Store.byId(r.userId) : null;
             return "<div><span>" + UI.esc(who ? who.name : r.kind) + "</span><span class=\"num\">" + L.formatUsd(r.payout) + "</span></div>";
@@ -228,7 +222,7 @@
               var who = Store.byId(h.userId);
               return "<div><span>" + UI.esc(who ? who.name : "Shareholder") + "</span><span class=\"num\">" + L.formatUsd(h.amount) + "</span></div>";
             }).join("") : "") +
-          "</div>";
+          "</div>");
         var actions = "";
         if (l.settlement && l.settlement.status === "proposed") {
           var eyes = L.fourEyes(actor.id, l.settlement.proposerId);

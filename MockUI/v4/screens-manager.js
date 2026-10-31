@@ -437,10 +437,12 @@
       var have = {};
       steps.forEach(function (st) { if (st.tag) have[st.tag] = true; });
       var cover = L.TAGS.map(function (tag) {
-        return "<p><span class=\"status" + (have[tag] ? "" : " status-warning") + "\">" + (have[tag] ? "Covered" : "Missing") + "</span> " + esc(tag) + "</p>";
+        return "<span class=\"chip" + (have[tag] ? "" : " chip-warn") + "\">" + esc(tag) + (have[tag] ? "" : " · missing") + "</span>";
       }).join("");
-      return steps.map(function (st, n) {
-        return "<section class=\"panel stack\"><h2>Step " + (n + 1) + "</h2>" +
+      var rows = steps.map(function (st, n) {
+        var bad = !!(errs["sname" + n] || errs["sowner" + n] || errs["sdays" + n] || errs["scost" + n]);
+        var summary = "<span><strong>" + (n + 1) + ". " + esc(st.name || "New step") + "</strong><br><span class=\"muted\">" + (st.owner === "manager" ? "Manager" : "Staff") + " · " + esc(st.days) + " days · $" + esc(st.cost) + (bad ? " · needs attention" : "") + "</span></span>";
+        var body =
           UI.field("sname" + n, "Step name", "<input id=\"sname" + n + "\" name=\"sname" + n + "\" value=\"" + esc(st.name) + "\">", errs["sname" + n]) +
           UI.field("sowner" + n, "Owner", "<select id=\"sowner" + n + "\" name=\"sowner" + n + "\"><option value=\"manager\"" + (st.owner === "manager" ? " selected" : "") + ">Manager</option><option value=\"staff\"" + (st.owner === "staff" ? " selected" : "") + ">Staff</option></select>", errs["sowner" + n]) +
           UI.field("sdays" + n, "Duration, days", "<input id=\"sdays" + n + "\" name=\"sdays" + n + "\" inputmode=\"numeric\" value=\"" + esc(st.days) + "\">", errs["sdays" + n]) +
@@ -451,10 +453,11 @@
           (n > 0 ? "<button class=\"btn-text\" type=\"button\" data-act=\"up\" data-i=\"" + n + "\">Move up</button> " : "") +
           (n < steps.length - 1 ? "<button class=\"btn-text\" type=\"button\" data-act=\"down\" data-i=\"" + n + "\">Move down</button> " : "") +
           (steps.length > 1 ? "<button class=\"btn-text\" type=\"button\" data-act=\"remove-step\" data-i=\"" + n + "\">Remove step</button>" : "") +
-          "</p></section>";
-      }).join("") +
-        "<p><button class=\"btn btn-secondary\" type=\"button\" data-act=\"add-step\">Add step</button></p>" +
-        "<section class=\"panel\"><h2>Stage coverage</h2>" + cover + "</section>";
+          "</p>";
+        return UI.fold(summary, body, bad || !st.name);
+      }).join("");
+      return "<section class=\"panel stack\"><h2>Stage coverage</h2><div class=\"chips\">" + cover + "</div></section>" + rows +
+        "<p><button class=\"btn btn-secondary\" type=\"button\" data-act=\"add-step\">Add step</button></p>";
     }
 
     function planRead(data, steps) {
@@ -857,6 +860,7 @@
       }).join("");
     }
 
+    var deskTab = "overview", deskOpen = "";
     UI.screen({
       id: "listing-desk",
       auth: "manager",
@@ -900,15 +904,18 @@
         if (st === "withdrawn" || st === "cancelled") banner = "<div class=\"banner\" role=\"status\"><strong>This listing is " + st + ".</strong><p>" + esc(last ? last.reason : "") + "</p></div>";
         if (l.planProposal && l.planProposal.status === "proposed") banner += "<div class=\"banner\" role=\"status\"><strong>A plan change is waiting for staff approval.</strong></div>";
         var hist = timeline(l.history, true);
+        if (deskOpen !== l.id) { deskOpen = l.id; deskTab = "overview"; }
         stage.innerHTML = "<div class=\"column\"><h1>" + esc(l.name) + "</h1>" +
           "<p class=\"muted\">" + esc(UI.cname(l.source)) + " to " + esc(UI.cname(l.buyer)) + " · " + STATUS[st] + "</p>" + banner +
           (action ? "<div class=\"stack\">" + action + "</div>" : "") +
-          figuresPanel(l) + shipmentsPanel(l) +
-          (hist ? "<section><h2>History</h2><ol class=\"timeline\">" + hist + "</ol></section>" : "") + "</div>";
+          UI.tabs([["overview", "Overview"], ["shipments", "Shipments"], ["history", "History"]], deskTab, "desktab") +
+          (deskTab === "overview" ? figuresPanel(l) : "") + (deskTab === "shipments" ? shipmentsPanel(l) : "") +
+          (deskTab === "history" ? (hist ? "<ol class=\"timeline\">" + hist + "</ol>" : "<p class=\"muted\">No history yet.</p>") : "") + "</div>";
       },
       on: function (act, el, params) {
         var l = mine(params.id);
         if (!l) return;
+        if (act === "desktab") { deskTab = el.getAttribute("data-tab"); UI.go("#/listing-desk/" + l.id); return; }
         if (act === "withdraw") {
           UI.openSheet("<h2>Withdraw " + esc(l.name) + "?</h2><p>The listing ends. No money moves. You can create a new one later.</p><button class=\"btn btn-danger\" type=\"button\" data-act=\"withdraw-yes\">Withdraw listing</button><button class=\"btn btn-secondary\" type=\"button\" data-close>Keep listing</button>");
           return;
