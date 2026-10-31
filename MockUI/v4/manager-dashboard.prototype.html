@@ -13,7 +13,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Manager Overview prototype</title>
+<title>Shehnat</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../../Demo/frontend/brand/favicon-32.png">
+<link rel="apple-touch-icon" href="../../Demo/frontend/brand/favicon-180.png">
 <link rel="stylesheet" href="../../Demo/frontend/tokens.css">
 <style>
 *{box-sizing:border-box}
@@ -42,7 +44,7 @@ h2{font-size:var(--fs-14);margin:0;font-weight:var(--fw-semibold)}
 .btn.gold{background:var(--gold-300);border-color:var(--gold-300);color:var(--green-950)}
 .btn.sm{min-height:36px;padding:0 var(--sp-3)}
 .btn:active{transform:scale(var(--press-scale))}
-:is(.btn,.bell,.pbar button,.pbar select,.cont,.stub button):focus-visible{outline:3px solid var(--focus-ring);outline-offset:2px}
+:is(.btn,.bell,.cont,.stub button):focus-visible{outline:3px solid var(--focus-ring);outline-offset:2px}
 .tabs{position:sticky;bottom:0;display:flex;background:var(--surface-card);box-shadow:var(--shadow-nav);height:var(--nav-h);z-index:5}
 .tabs span{flex:1;display:grid;place-items:center;font-size:var(--fs-12);color:var(--text-muted)}
 .tabs span.on{color:var(--green-800);font-weight:700}
@@ -743,10 +745,6 @@ html[dir=rtl] .tk .rt b{transform:translate(50%,-50%)}
 @keyframes popO{from{opacity:0;transform:translateY(12px) scale(.97)}}
 @media (prefers-reduced-motion:reduce){.odlg,.odlg .opn{animation:none}}
 
-/* prototype bar */
-.pbar{position:fixed;inset-inline:0;bottom:12px;margin-inline:auto;width:max-content;max-width:calc(100% - 16px);display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;background:#111;color:#fff;border-radius:var(--r-pill);padding:6px 10px;font:600 13px/1 system-ui;box-shadow:0 6px 24px rgb(0 0 0/.4);z-index:99}
-.pbar button,.pbar select{background:#333;color:#fff;border:0;border-radius:var(--r-pill);padding:8px 12px;font:inherit;cursor:pointer}
-.pbar .lbl{min-width:140px;text-align:center}
 @media (prefers-reduced-motion:reduce){
  .rise,.cont,.slots i.on,.draw,.stamp.pop,.cont .tag,.node .halo,.cont.pulse .box{animation:none!important;opacity:1;transform:none}
  .draw{stroke-dashoffset:0}.cont .prog i,.hull .water,.rule i{transition:none}
@@ -755,7 +753,6 @@ html[dir=rtl] .tk .rt b{transform:translate(50%,-50%)}
 </head>
 <body>
 <div class="stage"><div class="phone" id="phone"></div></div>
-<div class="pbar" id="pbar" hidden></div>
 
 <script>
 /* ---------- seed: Emirates Spice Traders LLC, a UAE manager (PLAN section 4 used Kerala; moved to the UAE). Cents, as the real app. ---------- */
@@ -1307,16 +1304,6 @@ function render(){
   if('EFIOP'.includes(variant) && w.status!=='pending') mountE(w,d);
   if(variant==='O') mountO(w,d); else {const x=document.getElementById('dlgO'); if(x) x.remove()}
   if(variant==='N') mountN(w,d);
-  document.getElementById('pbar').innerHTML =
-    `<button id="prev" aria-label="Previous variant">←</button><span class="lbl">${variant} (${VARIANTS[variant][0]})</span><button id="next" aria-label="Next variant">→</button>
-     <select id="world" aria-label="Data"><option value="busy">UAE (busy)</option><option value="empty">New manager (no Listings)</option><option value="pending">Registration pending (gate)</option></select>
-     <button id="dir">${dir.toUpperCase()}</button><button id="frame">${full?'Full':'Phone'}</button>`;
-  document.getElementById('pbar').hidden = false;
-  document.getElementById('world').value = world;
-  document.getElementById('prev').onclick=()=>step(-1); document.getElementById('next').onclick=()=>step(1);
-  document.getElementById('world').onchange=e=>{world=e.target.value;setURL();render()};
-  document.getElementById('dir').onclick=()=>{dir=dir==='ltr'?'rtl':'ltr';render()};
-  document.getElementById('frame').onclick=()=>{full=!full;render()};
 }
 function step(n){variant = keys[(keys.indexOf(variant)+n+keys.length)%keys.length]; setURL(); render()}
 addEventListener('keydown',e=>{
