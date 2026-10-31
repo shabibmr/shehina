@@ -756,6 +756,10 @@
     settlement: ShehnatSettlement,
     workflow: ShehnatWorkflow,
     validation: ShehnatValidation,
+    isCountryBlocked: (code) => ShehnatValidation.isCountryBlocked(code),
+    validateDOB: (dob) => ShehnatValidation.validateDOB(dob),
+    validatePhone: (phone) => ShehnatValidation.validatePhone(phone),
+    validatePassword: (pwd) => ShehnatValidation.validatePassword(pwd),
     permissions: ShehnatPermissions,
     ledger: ShehnatLedger,
     runSelfCheck() {
