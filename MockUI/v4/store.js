@@ -654,7 +654,7 @@
     var row = listing(id);
     if (!row) return fail("That listing was not found.");
     if (action !== "approve" && action !== "reject" && action !== "revise") return fail("You cannot do that.");
-    if (body.buyerShareholderId) {
+    if (body.buyerShareholderId && body.buyerShareholderId !== row.buyerShareholderId) {
       var buyerPerm = L.can(actor, "buyer-shareholder");
       if (buyerPerm) return fail(buyerPerm);
       var buyer = byId(body.buyerShareholderId);
@@ -663,6 +663,13 @@
     if (body.waiver) {
       var waiverPerm = L.can(actor, "waiver");
       if (waiverPerm) return fail(waiverPerm);
+    }
+    if (body.waiver && body.waiverOnly) {
+      var waivedOnly = applyWaiver(actor, row);
+      if (!waivedOnly.ok) return waivedOnly;
+      if (String(body.marketNote || "").trim()) row.marketNote = String(body.marketNote).trim();
+      save();
+      return { ok: true };
     }
     if (action === "reject" || action === "revise") {
       if (row.status !== "in_review" && row.status !== "awaiting_terms") return fail("This listing is not waiting for a decision.");
@@ -798,8 +805,8 @@
     if (gate.actor.role !== "owner") return fail("Needs the owner to approve.");
     var row = state.withdrawals.filter(function (w) { return w.id === id; })[0];
     if (!row) return fail("That withdrawal was not found.");
-    if (row.status !== "paid" && row.status !== "pending") return fail("This withdrawal cannot be failed.");
-    var from = row.status === "paid" ? "bank:external" : "withdrawals:hold";
+    if (row.status !== "paid") return fail("This withdrawal cannot be failed.");
+    var from = "bank:external";
     var moved = led.post([
       { account: from, amount: -row.amount, memo: "Payout failed" },
       { account: wallet(row.userId), amount: row.amount, memo: "Payout failed" }
@@ -1064,7 +1071,10 @@
         { account: "bank:external", amount: approval.amount, memo: approval.type }
       ], "apply:" + approval.id);
       if (!spent.ok) return fail(spent.error);
-      if (shipment && approval.doc) shipment.docs = (shipment.docs || []).concat([approval.doc]);
+      if (shipment) {
+        shipment.costActual = (shipment.costActual || 0) + approval.amount;
+        if (approval.doc) shipment.docs = (shipment.docs || []).concat([approval.doc]);
+      }
       return { ok: true };
     }
     if (approval.type === "overrun") {
@@ -1212,6 +1222,13 @@
     add("platform:revenue", settled.fee, "Service fee");
     var out = lines.reduce(function (s, line) { return s + line.amount; }, 0);
     lines.unshift({ account: "escrow:" + row.id, amount: -out, memo: "Settlement" });
+    if (settled.shareholder > 0 || settled.reserve > 0) {
+      lines.push({ account: "platform:treasury", amount: -(settled.shareholder + settled.reserve), memo: "Shareholder distribution" });
+      (settled.holders || []).forEach(function (h) {
+        if (h.amount) lines.push({ account: wallet(h.userId), amount: h.amount, memo: "Shareholder share" });
+      });
+      if (settled.reserve) lines.push({ account: "platform:reserve", amount: settled.reserve, memo: "Reserve fund" });
+    }
     var posted = led.post(lines.filter(function (line) { return line.amount !== 0; }), "settle:" + row.id);
     if (!posted.ok) return fail(posted.error);
     if (held > 0) {
@@ -1220,15 +1237,6 @@
         country: manager.country || "", bank: "", holder: manager.name, account: "", swift: "",
         at: state.now, reason: "Payout held because the account is suspended."
       });
-    }
-    if (settled.shareholder > 0 || settled.reserve > 0) {
-      var shareLines = [{ account: "platform:treasury", amount: -(settled.shareholder + settled.reserve), memo: "Shareholder distribution" }];
-      (settled.holders || []).forEach(function (h) {
-        if (h.amount) shareLines.push({ account: wallet(h.userId), amount: h.amount, memo: "Shareholder share" });
-      });
-      if (settled.reserve) shareLines.push({ account: "platform:reserve", amount: settled.reserve, memo: "Reserve fund" });
-      var shared = led.post(shareLines, "holders:" + row.id);
-      if (!shared.ok) return fail(shared.error);
     }
     row.settlement.status = "approved";
     row.settlement.reason = "";

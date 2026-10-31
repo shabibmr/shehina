@@ -144,7 +144,8 @@
             ship = parts[0];
             step = parts[1];
           } else if (document.getElementById("ship")) ship = document.getElementById("ship").value;
-          var body = { cents: money.cents, reason: document.getElementById("why").value, shipmentId: ship, stepId: step, doc: { name: "Cost record", type: "note", size: 0 } };
+          var body = { cents: money.cents, reason: document.getElementById("why").value, shipmentId: ship, stepId: step };
+          if (kind === "step-cost") body.doc = { name: "Cost record", type: "note", size: 0 };
           var done = Store.opsMoney(params.id, kind, body);
           if (!done.ok) { document.getElementById("amount").insertAdjacentHTML("afterend", "<span class=\"err\">" + UI.esc(done.error) + "</span>"); return; }
           UI.closeSheet();
@@ -260,7 +261,9 @@
           return;
         }
         if (act === "back-send") {
-          var returned = Store.approveSettlement(params.id, document.getElementById("why").value);
+          var why = document.getElementById("why").value.trim();
+          if (!why) { document.getElementById("why").insertAdjacentHTML("afterend", "<span class=\"err\">Error: a rejection needs a reason.</span>"); return; }
+          var returned = Store.approveSettlement(params.id, why);
           if (!returned.ok) { document.getElementById("why").insertAdjacentHTML("afterend", "<span class=\"err\">" + UI.esc(returned.error) + "</span>"); return; }
           UI.closeSheet();
           UI.go("#/settlement/" + params.id);

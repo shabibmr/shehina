@@ -265,6 +265,7 @@
         if (act === "waive") {
           var fields = body();
           fields.waiver = true;
+          fields.waiverOnly = true;
           var waived = Store.reviewListing(params.id, "approve", fields);
           if (!waived.ok) UI.toast(waived.error);
           else UI.go("#/queue-listing/" + params.id);
@@ -321,16 +322,20 @@
         if (act !== "send") return;
         var l = Store.listing(params.id);
         var minimum = L.usdToCents(document.getElementById("minimum").value);
-        var shipments = (l.shipments || []).map(function (sh) {
-          return {
-            id: sh.id,
-            steps: (sh.steps || []).map(function (st) {
-              var input = document.querySelector("[data-step=\"" + st.id + "\"]");
-              var cost = input ? L.usdToCents(input.value) : { ok: true, cents: st.cost || 0 };
-              return { id: st.id, cost: cost.ok ? cost.cents : st.cost || 0 };
-            })
-          };
+        if (!minimum.ok) { document.getElementById("revise-err").textContent = minimum.error; return; }
+        var shipments = [];
+        var badCost = "";
+        (l.shipments || []).forEach(function (sh) {
+          var steps = [];
+          (sh.steps || []).forEach(function (st) {
+            var input = document.querySelector("[data-step=\"" + UI.esc(st.id) + "\"]");
+            var cost = input ? L.usdToCents(input.value) : { ok: true, cents: st.cost || 0 };
+            if (!cost.ok) badCost = cost.error;
+            steps.push({ id: st.id, cost: cost.ok ? cost.cents : 0 });
+          });
+          shipments.push({ id: sh.id, steps: steps });
         });
+        if (badCost) { document.getElementById("revise-err").textContent = badCost; return; }
         var sent = Store.reviewListing(params.id, "revise", {
           terms: {
             investorShare: Number(document.getElementById("investorShare").value),
@@ -596,7 +601,7 @@
         var rows = people.map(function (u) {
           var exposure = "";
           if (actor.role === "owner" && u.role === "manager") {
-            exposure = "<label class=\"field\"><span>Exposure limit</span><input class=\"num\" id=\"exp-" + u.id + "\" value=\"" + ((u.exposureLimit || Store.state.settings.exposureDefault) / 100).toFixed(2) + "\"></label><button class=\"btn btn-secondary\" type=\"button\" data-act=\"exposure\" data-id=\"" + u.id + "\">Save exposure</button>";
+            exposure = "<label class=\"field\"><span>Exposure limit</span><input class=\"num\" id=\"exp-" + u.id + "\" value=\"" + ((u.exposureLimit != null ? u.exposureLimit : Store.state.settings.exposureDefault) / 100).toFixed(2) + "\"></label><button class=\"btn btn-secondary\" type=\"button\" data-act=\"exposure\" data-id=\"" + u.id + "\">Save exposure</button>";
           }
           return "<section class=\"panel\"><h2>" + UI.esc(u.name) + "</h2><p class=\"muted\">" + UI.esc(u.role) + (u.suspended ? " · Suspended" : "") + "</p>" +
             "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"suspend\" data-id=\"" + u.id + "\" data-on=\"" + (u.suspended ? "0" : "1") + "\">" + (u.suspended ? "Unsuspend" : "Suspend") + "</button>" +
