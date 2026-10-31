@@ -1,7 +1,13 @@
 /* PROTOTYPE, throwaway. Investor screens I1–I14. */
 (function () {
   var U = Ui;
-  function L(id) { var l = U.byId(id); if (l) Logic.derive(Store.state, l); return l; }
+  // Returns null when this viewer may not see the listing (§6.5).
+  function L(id) {
+    var l = U.byId(id);
+    if (!l || !Logic.canView(Store.state, U.user(), l)) return null;
+    Logic.derive(Store.state, l);
+    return l;
+  }
   function live() { return Store.state.listings.filter(function (l) { Logic.derive(Store.state, l); return l.status === 'live'; }); }
   function mine(u) {
     return Store.state.listings.filter(function (l) {
@@ -82,19 +88,28 @@
     if (!l) return U.empty('This listing is not here.', 'Home', '/i/home');
     var tabName = (Store.proto.tab && Store.proto.tab[id]) || tab;
     var proj = Logic.projection({ target: l.target, expectedProfit: l.expectedProfit, investorSharePct: l.investorSharePct, cycleDays: l.cycle || 1, feeBps: Store.state.settings.feeBps });
+    var fig = Logic.figures(Store.state, l);
     var tabs = ['overview', 'shipments', 'figures', 'timeline'].map(function (t) {
       return '<button type="button" data-act="tab" data-id="' + l.id + '" data-tab="' + t + '" aria-selected="' + (tabName === t ? 'true' : 'false') + '">' + t + '</button>';
     }).join('');
     var body = '';
     if (tabName === 'shipments') body = l.shipments.map(function (sh) {
-      return '<h2>' + U.esc(sh.label) + '</h2><p class="meta">' + U.esc(Logic.STAGES[sh.stage] || '') + (sh.late ? ' · Late' : '') + '</p><ul>' + sh.steps.map(function (st) {
-        return '<li>' + U.esc(st.name) + ' · ' + U.esc(st.status) + (st.late ? ' · revised <span class="num">' + new Date(st.revisedDate).toISOString().slice(0, 10) + '</span>' : '') + '</li>';
+      return '<h2>' + U.esc(sh.label) + '</h2><p class="meta">' + U.esc(Logic.STAGES[sh.stage] || '') + (sh.late ? ' · Late' : '') +
+        ' · Expected cost of goods ' + U.esc(U.usd(sh.expectedCost)) + ' · Expected sale ' + U.esc(U.usd(sh.expectedSale)) +
+        (sh.proceeds ? ' · Proceeds received ' + U.esc(U.usd(sh.proceeds)) : '') + '</p><ul>' + sh.steps.map(function (st) {
+        return '<li>' + U.esc(st.name) + ' · ' + U.esc(st.status) + ' · ' + U.esc(st.owner || '') + ' · ' + st.days + ' days · planned cost ' + U.esc(U.usd(st.cost || 0)) + (st.late ? ' · revised <span class="num">' + new Date(st.revisedDate).toISOString().slice(0, 10) + '</span>' : '') + '</li>';
       }).join('') + '</ul>';
     }).join('');
     else if (tabName === 'figures') {
       body = '<table class="statement"><tr><td>Funding target</td><td class="num">' + U.esc(U.usd(l.target)) + '</td></tr>' +
         '<tr><td>Raised</td><td class="num">' + U.esc(U.usd(l.raised)) + '</td></tr><tr><td>Minimum</td><td class="num">' + U.esc(U.usd(l.minInvest)) + '</td></tr>' +
         '<tr><td>Manager capital</td><td class="num">' + l.companyPct + '%</td></tr><tr><td>Investor share</td><td class="num">' + l.investorSharePct + '%</td></tr>' +
+        '<tr><td>Expected cost of goods</td><td class="num">' + U.esc(U.usd(fig.goods)) + '</td></tr>' +
+        '<tr><td>Planned Step costs</td><td class="num">' + U.esc(U.usd(fig.stepCosts)) + '</td></tr>' +
+        '<tr><td>Expected sale price</td><td class="num">' + U.esc(U.usd(fig.sales)) + '</td></tr>' +
+        '<tr><td>Costs paid so far</td><td class="num">' + U.esc(U.usd(l.costsPaid || 0)) + '</td></tr>' +
+        '<tr><td>Manager deposit</td><td class="num">' + U.esc(U.usd(Math.round(l.target * l.companyPct / 100))) + (l.depositWaiver ? ' (waived)' : '') + '</td></tr>' +
+        '<tr><td>Expected manager share</td><td>' + U.money(proj.manager, 'expected') + '</td></tr>' +
         '<tr><td>Expected profit</td><td>' + U.money(l.expectedProfit, 'expected') + '</td></tr>' +
         '<tr><td>Expected fee</td><td class="num">' + U.esc(U.usd(proj.fee)) + '</td></tr><tr><td>Expected pool</td><td>' + U.money(proj.pool, 'expected') + '</td></tr>' +
         '<tr><td>ROI this cycle</td><td class="num">' + proj.roiCycle + '% expected</td></tr><tr><td>ROI per year</td><td class="num">' + proj.roiYear + '% expected</td></tr>' +
@@ -112,6 +127,7 @@
     },
     render: function (params) {
       var l = L(params.id);
+      if (!l) return U.empty('This listing is not here.', 'Home', '/i/home');
       var left = l.target - l.raised;
       var proj = Logic.projection({ target: l.target, expectedProfit: l.expectedProfit, investorSharePct: l.investorSharePct, cycleDays: l.cycle || 1, feeBps: 100 });
       var why = Logic.denial(Store.state, U.user(), 'invest');
@@ -124,6 +140,7 @@
     action: function (params) { return '<button class="btn btn-primary" type="button" data-go="/i/track/' + params.id + '">Track this shipment</button>'; },
     render: function (params) {
       var l = L(params.id);
+      if (!l) return U.empty('This listing is not here.', 'Home', '/i/home');
       return '<div class="is-fade"><h1>Investment confirmed</h1>' + U.success('Your investment is in escrow') + '<p>' + U.esc(l.name) + '</p><p class="price num">' + U.esc(U.usd(l.raised)) + ' raised</p></div>';
     }
   });
@@ -154,6 +171,7 @@
     id: 'I9', section: 'home', auth: true, roles: ['investor', 'manager', 'staff'], match: function (p) { var m = /^\/i\/track\/([^/]+)$/.exec(p); return m ? { id: m[1] } : null; },
     render: function (params) {
       var l = L(params.id);
+      if (!l) return U.empty('This listing is not here.', 'Home', '/i/home');
       var body = l.shipments.map(function (sh) {
         return '<h2>' + U.esc(sh.label) + '</h2><p>' + U.esc(Logic.STAGES[sh.stage]) + '</p><div class="track" aria-hidden="true"><span style="width:' + (sh.stage * 20) + '%"></span></div><ul>' + sh.steps.map(function (st) {
           return '<li>' + U.esc(st.name) + ' · ' + U.esc(st.status) + (st.late ? ' · Late, revised <span class="num">' + new Date(st.revisedDate).toISOString().slice(0, 10) + '</span>' : '') + '</li>';
@@ -166,6 +184,7 @@
     id: 'I10', section: 'home', auth: true, roles: ['investor', 'manager', 'staff'], match: function (p) { var m = /^\/i\/statement\/([^/]+)$/.exec(p); return m ? { id: m[1] } : null; },
     render: function (params) {
       var l = L(params.id);
+      if (!l) return U.empty('This listing is not here.', 'Home', '/i/home');
       if (!l.result) return '<h1>Settlement</h1>' + U.empty('This listing is not settled.', 'Back to portfolio', '/i/portfolio');
       var r = l.result;
       var u = U.user();

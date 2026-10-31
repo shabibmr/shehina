@@ -52,7 +52,7 @@
       ['ben', 'Ben Carter', 'ben@demo.shehnat', 'investor', '', 'GB', false],
       ['chen', 'Chen Li', 'chen@demo.shehnat', 'investor', '', 'SG', false],
       ['dina', 'Dina Haddad', 'dina@demo.shehnat', 'investor', '', 'JO', false],
-      ['kerala', 'Kerala Spice Traders LLP', 'kerala@demo.shehnat', 'manager', '', 'IN', false],
+      ['barakah', 'Al Barakah General Trading LLC', 'barakah@demo.shehnat', 'manager', '', 'AE', false],
       ['mateo', 'Mateo Rojas', 'mateo@demo.shehnat', 'manager', '', 'CL', false],
       ['omar', 'Omar Al-Said', 'omar@demo.shehnat', 'manager', '', 'OM', true],
       ['layla', 'Layla Nasser', 'layla@demo.shehnat', 'investor', '', 'AE', true],
@@ -69,8 +69,8 @@
           id: p[0], name: p[1], email: p[2], password: PW, role: p[3], staffRole: p[4] || null,
           country: p[5], kyc: p[3] === 'staff' ? 'approved' : 'none', kycReason: '',
           shareholder: p[6], suspended: false, active: true,
-          exposureLimit: p[0] === 'kerala' ? 50000000 : 0,
-          managerType: p[0] === 'kerala' ? 'business' : (p[0] === 'mateo' || p[0] === 'omar' ? 'individual' : ''),
+          exposureLimit: p[0] === 'barakah' ? 50000000 : 0,
+          managerType: p[0] === 'barakah' ? 'business' : (p[0] === 'mateo' || p[0] === 'omar' ? 'individual' : ''),
           attempts: 0, lockedUntil: 0, phone: '', dob: ''
         }
       }, p[0]);
@@ -87,13 +87,13 @@
     kyc('dina', 'JO', '+962791234567');
     kyc('layla', 'AE', '+971501110002');
     s = must(s, {
-      type: 'registerSubmit', actorId: 'kerala', managerType: 'business', country: 'IN', phone: '+919812345678',
+      type: 'registerSubmit', actorId: 'barakah', managerType: 'business', country: 'AE', phone: '+971501234567',
       declare: true, docs: [
         { name: 'trade-licence.pdf', type: 'file', size: 200000 },
         { name: 'owner-id.pdf', type: 'file', size: 120000 },
         { name: 'company-profile.pdf', type: 'file', size: 90000 }
       ]
-    }, 'reg kerala');
+    }, 'reg barakah');
     s = must(s, {
       type: 'registerSubmit', actorId: 'mateo', managerType: 'individual', country: 'CL', phone: '+56912345678',
       declare: true, docs: [
@@ -115,7 +115,7 @@
       var rows = s.applications.filter(function (a) { return a.userId === userId; });
       return rows[rows.length - 1];
     }
-    ['aisha', 'layla', 'kerala', 'omar'].forEach(function (id) {
+    ['aisha', 'layla', 'barakah', 'omar'].forEach(function (id) {
       s = must(s, { type: 'decideApplication', actorId: 'priya', id: latestApp(id).id, decision: 'approve' }, 'approve ' + id);
     });
     s = must(s, { type: 'decideApplication', actorId: 'priya', id: latestApp('dina').id, decision: 'reject', reason: 'Photo ID unreadable' }, 'reject dina');
@@ -123,7 +123,7 @@
     s = must(s, { type: 'assign', actorId: 'priya', kind: 'application', id: latestApp('mateo').id, assignee: 'priya' }, 'assign mateo');
 
     s = must(s, { type: 'treasuryTopup', actorId: 'fatima', amount: 100000000, ref: 'OPEN-1' }, 'treasury');
-    ['aisha', 'layla', 'kerala', 'omar'].forEach(function (id) {
+    ['aisha', 'layla', 'barakah', 'omar'].forEach(function (id) {
       s = must(s, { type: 'topup', actorId: id, amount: 20000000, ref: 'seed' }, 'topup ' + id);
     });
 
@@ -161,7 +161,7 @@
 
     function base(name, extra) {
       var spec = {
-        name: name, category: 'Food', source: 'IN', buyer: 'AE', certificate: '',
+        name: name, category: 'Food', source: 'AE', buyer: 'SA', certificate: '',
         companyPct: 20, investorSharePct: 60, minInvest: 100000,
         shipments: [ship('Shipment 1', 1000000, 1300000, 0)]
       };
@@ -169,16 +169,16 @@
       return spec;
     }
 
-    openListing('kerala', base('Draft tea samples', { leave: 'draft', shipments: [ship('Shipment 1', 1000000, 1400000, 0)] }));
-    openListing('kerala', base('Pepper, Kochi to Jebel Ali', { leave: 'review', assignee: 'priya' }));
-    openListing('kerala', base('Cardamom, revised terms', { leave: 'revise', investorSharePct: 50 }));
-    openListing('kerala', base('Rejected textiles', { leave: 'reject', category: 'Textiles', buyer: 'DE', reason: 'Certificate does not match the goods' }));
-    openListing('kerala', base('Withdrawn copra', { leave: 'withdraw', buyer: 'NL' }));
+    openListing('barakah', base('Dates & Specialty Foods, Dubai to Rotterdam', { leave: 'draft', buyer: 'NL', shipments: [ship('Shipment 1', 1000000, 1400000, 0)] }));
+    openListing('barakah', base('Coffee Re-export, Jebel Ali to Hamburg', { leave: 'review', buyer: 'DE', assignee: 'priya' }));
+    openListing('barakah', base('Specialty Spices, Dubai to Dammam', { leave: 'revise', buyer: 'SA', investorSharePct: 50 }));
+    openListing('barakah', base('Rejected textiles, UAE to Germany', { leave: 'reject', category: 'Textiles', buyer: 'DE', reason: 'Certificate does not match the goods' }));
+    openListing('barakah', base('Withdrawn animal feed', { leave: 'withdraw', buyer: 'NL' }));
 
     s = must(s, { type: 'clock', at: ago(12) }, 'clock 12');
-    openListing('kerala', base('Cloves, deposit due', { buyer: 'QA' }));
+    openListing('barakah', base('Foodstuffs, deposit due', { buyer: 'QA' }));
     s = must(s, { type: 'clock', at: ago(14) }, 'clock 14');
-    openListing('kerala', base('Unpaid deposit, auto-withdrawn', { buyer: 'KW' }));
+    openListing('barakah', base('Unpaid deposit, auto-withdrawn', { buyer: 'KW' }));
     s = must(s, { type: 'clock', at: TODAY }, 'clock today');
 
     function fund(name, mgr) {
@@ -191,24 +191,24 @@
     }
 
     s = must(s, { type: 'clock', at: ago(1) }, 'clock fresh');
-    openListing('kerala', base('Brazil coffee to Kobe', {
+    openListing('barakah', base('Brazil coffee to Kobe', {
       source: 'BR', buyer: 'JP', certificate: 'Organic BR-204',
       shipments: [ship('Container 1', 800000, 1100000, 0)], minInvest: 100000
     }));
-    fund('Brazil coffee to Kobe', 'kerala');
+    fund('Brazil coffee to Kobe', 'barakah');
 
     s = must(s, { type: 'clock', at: ago(6) }, 'clock overdue');
-    openListing('kerala', base('Overdue sesame', { buyer: 'EG', shipments: [ship('Shipment 1', 1000000, 1250000, 0)] }));
-    fund('Overdue sesame', 'kerala');
+    openListing('barakah', base('Overdue sesame', { buyer: 'EG', shipments: [ship('Shipment 1', 1000000, 1250000, 0)] }));
+    fund('Overdue sesame', 'barakah');
     invest('Overdue sesame', 'layla', 300000);
 
     s = must(s, { type: 'clock', at: ago(40) }, 'clock twin');
-    openListing('kerala', base('Twin cashew', {
+    openListing('barakah', base('Twin cashew', {
       buyer: 'US',
       shipments: [ship('Shipment 1', 500000, 700000, 0), ship('Shipment 2', 500000, 720000, 5)],
       requiredDocs: { Receipts: ['Packing list'] }
     }));
-    fund('Twin cashew', 'kerala');
+    fund('Twin cashew', 'barakah');
     invest('Twin cashew', 'aisha', 500000);
     invest('Twin cashew', 'layla', 300000);
     s = must(s, { type: 'clock', at: TODAY }, 'clock after twin');
@@ -216,7 +216,7 @@
       var l = byName(s, 'Twin cashew');
       var sh = l.shipments[0];
       sh.steps.forEach(function (st) {
-        var who = st.owner === 'manager' ? 'kerala' : 'sam';
+        var who = st.owner === 'manager' ? 'barakah' : 'sam';
         if (st.requiredDocs && st.requiredDocs.length) {
           s = must(s, { type: 'stepDoc', actorId: who, listingId: l.id, shipmentId: sh.id, stepId: st.id, name: 'packing-list.pdf', fileType: 'pdf', size: 40000 }, 'doc');
         }
@@ -224,14 +224,14 @@
         if (st.needsVerify) s = must(s, { type: 'verifyStep', actorId: 'wei', listingId: l.id, shipmentId: sh.id, stepId: st.id }, 'verify');
       });
       var late = byName(s, 'Twin cashew').shipments[1].steps.filter(function (st) { return st.name === 'Receipts'; })[0];
-      s = must(s, { type: 'stepSet', actorId: 'kerala', listingId: l.id, shipmentId: byName(s, 'Twin cashew').shipments[1].id, stepId: late.id, status: 'in_progress' }, 'late step');
+      s = must(s, { type: 'stepSet', actorId: 'barakah', listingId: l.id, shipmentId: byName(s, 'Twin cashew').shipments[1].id, stepId: late.id, status: 'in_progress' }, 'late step');
     })();
 
-    openListing('kerala', base('Rejected mango', {
+    openListing('barakah', base('Rejected mango', {
       source: 'KE', buyer: 'FR',
       shipments: [ship('Shipment 1', 600000, 800000, 0), ship('Shipment 2', 600000, 820000, 2)]
     }));
-    fund('Rejected mango', 'kerala');
+    fund('Rejected mango', 'barakah');
     invest('Rejected mango', 'layla', 960000);
     (function () {
       var l = byName(s, 'Rejected mango');
@@ -259,37 +259,37 @@
     }
 
     s = must(s, { type: 'clock', at: TODAY }, 'clock profit');
-    openListing('kerala', {
-      name: 'Completed cardamom', category: 'Food', source: 'IN', buyer: 'NL', certificate: 'ISO 22000',
+    openListing('barakah', {
+      name: 'Completed cardamom', category: 'Food', source: 'AE', buyer: 'NL', certificate: 'ISO 22000',
       companyPct: 20, investorSharePct: 60, minInvest: 100000,
       shipments: [{ label: 'Shipment 1', expectedCost: 1800000, expectedSale: 2400000, plannedStart: 0, steps: steps(200000) }]
     });
-    fund('Completed cardamom', 'kerala');
+    fund('Completed cardamom', 'barakah');
     invest('Completed cardamom', 'aisha', 1600000);
-    sell('Completed cardamom', 'kerala', true);
+    sell('Completed cardamom', 'barakah', true);
     s = must(s, { type: 'proposeSettlement', actorId: 'hadi', listingId: byName(s, 'Completed cardamom').id }, 'propose cardamom');
     var card = s.approvals.filter(function (a) { return a.listingId === byName(s, 'Completed cardamom').id && a.type === 'settlement'; })[0];
     s = must(s, { type: 'decideApproval', actorId: 'fatima', id: card.id, decision: 'approve' }, 'settle cardamom');
 
-    openListing('kerala', base('Completed loss cotton', {
+    openListing('barakah', base('Completed loss cotton', {
       category: 'Textiles', buyer: 'DE', shipments: [ship('Shipment 1', 1000000, 700000, 0)]
     }));
-    fund('Completed loss cotton', 'kerala');
+    fund('Completed loss cotton', 'barakah');
     invest('Completed loss cotton', 'aisha', 800000);
-    sell('Completed loss cotton', 'kerala', true);
+    sell('Completed loss cotton', 'barakah', true);
     s = must(s, { type: 'proposeSettlement', actorId: 'sam', listingId: byName(s, 'Completed loss cotton').id }, 'propose loss');
     var loss = s.approvals.filter(function (a) { return a.listingId === byName(s, 'Completed loss cotton').id && a.status === 'open'; })[0];
     s = must(s, { type: 'decideApproval', actorId: 'fatima', id: loss.id, decision: 'approve' }, 'settle loss');
 
-    openListing('kerala', base('Cancelled rice', { buyer: 'BH', shipments: [ship('Shipment 1', 500000, 650000, 0)] }));
-    fund('Cancelled rice', 'kerala');
+    openListing('barakah', base('Cancelled rice', { buyer: 'BH', shipments: [ship('Shipment 1', 500000, 650000, 0)] }));
+    fund('Cancelled rice', 'barakah');
     invest('Cancelled rice', 'layla', 400000);
     s = must(s, { type: 'cancelListing', actorId: 'sam', listingId: byName(s, 'Cancelled rice').id, reason: 'Buyer cancelled before the goods were bought' }, 'cancel rice');
 
-    openListing('kerala', base('Nutmeg ready to settle', { buyer: 'SA', shipments: [ship('Shipment 1', 1000000, 1400000, 0)] }));
-    fund('Nutmeg ready to settle', 'kerala');
+    openListing('barakah', base('Nutmeg ready to settle', { buyer: 'SA', shipments: [ship('Shipment 1', 1000000, 1400000, 0)] }));
+    fund('Nutmeg ready to settle', 'barakah');
     invest('Nutmeg ready to settle', 'layla', 800000);
-    sell('Nutmeg ready to settle', 'kerala', true);
+    sell('Nutmeg ready to settle', 'barakah', true);
     s = must(s, { type: 'proposeSettlement', actorId: 'hadi', listingId: byName(s, 'Nutmeg ready to settle').id }, 'propose nutmeg');
 
     openListing('omar', base('Shareholder dates', {
@@ -314,7 +314,7 @@
       if (diff) s = must(s, { type: 'seedAdjust', account: account, amount: diff }, 'adjust ' + account);
     }
     adjust(Logic.walletOf('aisha'), 2500000);
-    adjust(Logic.walletOf('kerala'), 6000000);
+    adjust(Logic.walletOf('barakah'), 6000000);
     adjust(Logic.walletOf('layla'), 1500000);
     adjust(Logic.walletOf('omar'), 2000000);
     adjust('platform:treasury', 25000000);

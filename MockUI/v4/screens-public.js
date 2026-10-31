@@ -29,7 +29,34 @@
         U.field('Email', 'email', '', 'email') + U.field('Password', 'password', '', 'password') +
         '<button class="btn btn-primary" type="button" data-act="signin">Sign in</button></form>' +
         '<p><button class="link" type="button" data-go="/p/join">Create account</button></p><p><button class="link" type="button" data-go="/p/forgot">Forgot password</button></p>' +
-        '<p class="meta">Demo password ' + U.esc(Seed.password) + '</p>';
+        '<p class="meta">Demo password ' + U.esc(Seed.password) + '</p>' +
+        '<div style="margin-block-start:var(--space-6);padding-block-start:var(--space-4);border-block-start:var(--line-hair) solid var(--color-rule)">' +
+          '<h2 style="font-size:var(--font-size-body);font-family:var(--font-sans);font-weight:600;margin-block-end:var(--space-2)">1-Tap Demo Logins</h2>' +
+          '<p class="meta" style="margin-block-end:var(--space-2)">Select any persona to sign in instantly:</p>' +
+          '<p class="meta" style="font-weight:600;margin-block-start:var(--space-2)">Investors</p>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-block-end:var(--space-2)">' +
+            '<button class="btn btn-secondary" type="button" data-act="quickLogin" data-email="aisha@demo.shehnat">Aisha Rahman (UAE · Approved)</button>' +
+            '<button class="btn btn-secondary" type="button" data-act="quickLogin" data-email="ben@demo.shehnat">Ben Carter (UK · New)</button>' +
+            '<button class="btn btn-secondary" type="button" data-act="quickLogin" data-email="dina@demo.shehnat">Dina Haddad (Jordan · Rejected)</button>' +
+          '</div>' +
+          '<p class="meta" style="font-weight:600;margin-block-start:var(--space-2)">Managers (Trade Exporters)</p>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-block-end:var(--space-2)">' +
+            '<button class="btn btn-secondary" type="button" data-act="quickLogin" data-email="barakah@demo.shehnat">Al Barakah Trading LLC (Dubai, UAE)</button>' +
+            '<button class="btn btn-secondary" type="button" data-act="quickLogin" data-email="mateo@demo.shehnat">Mateo Rojas (Individual Trader)</button>' +
+          '</div>' +
+          '<p class="meta" style="font-weight:600;margin-block-start:var(--space-2)">Shareholders (Equity Partners)</p>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-block-end:var(--space-2)">' +
+            '<button class="btn btn-secondary" type="button" data-act="quickLogin" data-email="layla@demo.shehnat">Layla Nasser (Abu Dhabi · Buyer Shareholder)</button>' +
+            '<button class="btn btn-secondary" type="button" data-act="quickLogin" data-email="omar@demo.shehnat">Omar Al-Said (Oman · Manager Shareholder)</button>' +
+          '</div>' +
+          '<p class="meta" style="font-weight:600;margin-block-start:var(--space-2)">Staff Console</p>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">' +
+            '<button class="btn btn-secondary" type="button" data-act="quickLogin" data-email="priya@demo.shehnat">Priya Nair (Reviewer)</button>' +
+            '<button class="btn btn-secondary" type="button" data-act="quickLogin" data-email="sam@demo.shehnat">Sam Okafor (Ops Lead)</button>' +
+            '<button class="btn btn-secondary" type="button" data-act="quickLogin" data-email="fatima@demo.shehnat">Fatima Zaid (Finance)</button>' +
+            '<button class="btn btn-secondary" type="button" data-act="quickLogin" data-email="hadi@demo.shehnat">Hadi Karim (Platform Owner)</button>' +
+          '</div>' +
+        '</div>';
     }
   });
   U.add({
@@ -81,7 +108,10 @@
     id: 'search', section: '', auth: true, roles: ['investor', 'manager', 'staff'], match: function (p) { return p === '/search' ? {} : null; },
     render: function () {
       var q = (Store.proto.q || '').toLowerCase();
-      var rows = Store.state.listings.filter(function (l) { return !q || l.name.toLowerCase().indexOf(q) >= 0; });
+      var viewer = U.user();
+      var rows = Store.state.listings.filter(function (l) {
+        return Logic.canView(Store.state, viewer, l) && (!q || l.name.toLowerCase().indexOf(q) >= 0);
+      });
       return '<h1>Search</h1><form><label class="field"><span>Search listings</span><input name="q" value="' + U.esc(Store.proto.q || '') + '"></label><button class="btn btn-secondary" type="button" data-act="search">Search</button></form>' +
         (rows.length ? rows.map(function (l) { return U.listingRow(l, (U.user().role === 'staff' ? '/s/ops/' : U.user().role === 'manager' ? '/m/listing/' : '/i/listing/') + l.id); }).join('') : U.empty('No listing matches that search.', 'Clear search', '/search'));
     }

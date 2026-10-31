@@ -53,6 +53,8 @@
   function user(s, id) { return s.users.filter(function (u) { return u.id === id; })[0] || null; }
   function listing(s, id) { return s.listings.filter(function (l) { return l.id === id; })[0] || null; }
   function fail(m) { var e = new Error(m); e.expose = true; throw e; }
+  // A failure whose state change must survive, such as counting a wrong password.
+  function failKeep(m) { var e = new Error(m); e.expose = true; e.keepState = true; throw e; }
   function centsOk(n) { return typeof n === 'number' && Number.isFinite(n) && Math.round(n) === n; }
 
   function allocate(total, weights) {
@@ -550,16 +552,13 @@
     if (a.type === 'signin') {
       email = String(a.email || '').trim().toLowerCase();
       u = s.users.filter(function (x) { return x.email === email; })[0];
-      if (!u) fail('Error: Wrong email or password. 4 attempts left');
+      if (!u) fail('Error: Wrong email or password');
       if (u.lockedUntil && u.lockedUntil > s.clock) fail('Error: Locked for 15 minutes');
       if (u.password !== a.password || u.active === false) {
         u.attempts = (u.attempts || 0) + 1;
-        if (u.active === false && u.password === a.password) {
-          if (u.attempts >= 5) { u.lockedUntil = s.clock + 15 * 60 * 1000; u.attempts = 0; fail('Error: Locked for 15 minutes'); }
-          fail('Error: This account is deactivated');
-        }
-        if (u.attempts >= 5) { u.lockedUntil = s.clock + 15 * 60 * 1000; u.attempts = 0; fail('Error: Locked for 15 minutes'); }
-        fail('Error: Wrong password. ' + (5 - u.attempts) + ' attempts left');
+        if (u.attempts >= 5) { u.lockedUntil = s.clock + 15 * 60 * 1000; u.attempts = 0; failKeep('Error: Locked for 15 minutes'); }
+        if (u.active === false && u.password === a.password) failKeep('Error: This account is deactivated');
+        failKeep('Error: Wrong password. ' + (5 - u.attempts) + ' attempts left');
       }
       u.attempts = 0;
       u.lockedUntil = 0;
@@ -585,6 +584,7 @@
       msg = emailMsg(u.email);
       if (isKyc) {
         msg = msg || dobMsg(a.dob, s.clock) || phoneMsg(a.phone);
+        if (msg) fail(msg);
         var res = countryCode(a.country);
         if (!res) fail('Error: Choose a country of residence');
         if (blocked(s, res)) fail('Error: This country of residence is not available');
@@ -592,6 +592,8 @@
         if (!a.declare) fail('Error: Confirm the declaration');
         u.country = res; u.dob = a.dob; u.phone = a.phone;
       } else {
+        if (msg) fail(msg);
+        if (a.phone && phoneMsg(a.phone)) fail(phoneMsg(a.phone));
         if (a.managerType !== 'business' && a.managerType !== 'individual') fail('Error: Choose business or individual');
         res = countryCode(a.country);
         if (!res) fail('Error: Choose a country of registration');
@@ -698,7 +700,7 @@
     if (a.type === 'markListing') {
       u = actor(s, a);
       l = listing(s, a.id);
-      if (!l || (l.status !== 'in_review' && l.status !== 'awaiting_terms' && l.status !== 'approved')) fail('Error: This listing is not in review');
+      if (!l || (l.status !== 'in_review' && l.status !== 'awaiting_terms')) fail('Error: This listing is not in review');
       if (a.buyerShareholderId) {
         if (!can(u, 'review')) fail('Error: A reviewer or the owner records the buyer');
         var marked = user(s, a.buyerShareholderId);
@@ -806,8 +808,16 @@
       msg = listingMsg(s, applied);
       if (msg) fail(msg);
       Object.keys(applied).forEach(function (k) { l[k] = applied[k]; });
+      l.target = figures(s, l).target;
+      l.shareholderPct = s.settings.shareholderPct;
       history(l, s, u.id, 'accepted_terms', '');
       audit(s, u.id, 'accept_terms', l.id, '');
+      // A deposit waiver set during the review goes live now, as it does on approval.
+      if (l.depositWaiver) {
+        goLive(s, l, u, true);
+        notify(s, u.id, 'Revised terms accepted and your listing is live');
+        return { toast: 'Terms accepted and live' };
+      }
       notify(s, u.id, 'Revised terms accepted. Pay the deposit to go live');
       return { toast: 'Terms accepted' };
     }
@@ -1002,6 +1012,7 @@
       if (!can(u, 'ops') && a.type !== 'proposePlan' && a.type !== 'requestSkip') fail('Error: Only operations or the owner can do this');
       l = listing(s, a.listingId || a.id);
       if (!l) fail('Error: Listing not found');
+      if (a.type === 'proposePlan' && !can(u, 'ops') && l.managerId !== u.id) fail('Error: Only the listing manager or operations proposes a plan change');
     }
 
     if (a.type === 'requestSkip') {
@@ -1030,7 +1041,7 @@
     }
 
     if (a.type === 'proposeUnplanned' || a.type === 'proposeUseProceeds' || a.type === 'proposeOverrun' || a.type === 'proposeWriteoff' || a.type === 'proposeResale' || a.type === 'proposePlan' || a.type === 'proposeSettlement') {
-      if (l.status !== 'live' && a.type !== 'proposeSettlement') fail('Error: This listing is not live');
+      if (l.status !== 'live') fail('Error: This listing is not live');
       var type = a.type.replace('propose', '').replace(/^./, function (c) { return c.toLowerCase(); });
       if (a.type === 'proposeSettlement') {
         derive(s, l);
@@ -1049,6 +1060,34 @@
       if ((a.type === 'proposeWriteoff' || a.type === 'proposeResale' || a.type === 'proposePlan') && !a.reason && a.type !== 'proposePlan') fail('Error: A reason is required');
       if (a.type === 'proposeResale') {
         if (blocked(s, countryCode(a.buyer))) fail('Error: The new buyer country is not available');
+      }
+      if (a.type === 'proposePlan') {
+        if (!a.plan || !Array.isArray(a.plan.steps)) fail('Error: Send the plan with the change');
+        var first = l.shipments[0];
+        var kept = first.steps.filter(function (st) { return st.status !== 'todo'; });
+        var old = first.steps.filter(function (st) { return st.status === 'todo'; });
+        var seen = {};
+        var tagged = {};
+        kept.forEach(function (st) { seen[st.name.toLowerCase()] = true; if (st.tag) tagged[st.tag] = true; });
+        a.plan.steps.forEach(function (st) {
+          var nm = String(st.name || '').trim();
+          if (!nm || nm.length > 60) fail('Error: Each Step needs a name of 1 to 60 characters');
+          if (seen[nm.toLowerCase()]) fail('Error: Two Steps are called ' + nm);
+          seen[nm.toLowerCase()] = true;
+          if (st.owner !== 'manager' && st.owner !== 'staff') fail('Error: A Step is owned by the manager or Shehnat staff');
+          if (!Number.isInteger(st.days) || st.days < 1 || st.days > 365) fail('Error: ' + nm + ' needs a whole number of days from 1 to 365');
+          if (!centsOk(st.cost) || st.cost < 0) fail('Error: ' + nm + ' needs a cost of zero or more');
+          if ([0, 1, 2, 3, 4, 5].indexOf(Number(st.tag || 0)) < 0) fail('Error: ' + nm + ' has an unknown Stage tag');
+          if (st.tag) tagged[st.tag] = true;
+        });
+        for (var tg = 1; tg <= 5; tg++) if (!tagged[tg]) fail('Error: Every Stage from Goods purchased to Goods sold needs a tagged Step');
+        // The client does not decide this: a cost change also needs finance.
+        var oldCost = old.reduce(function (acc, st) { return acc + (st.cost || 0); }, 0);
+        var newCost = a.plan.steps.reduce(function (acc, st) { return acc + st.cost; }, 0);
+        a.plan.costChange = oldCost !== newCost || a.plan.steps.some(function (st) {
+          var was = old.filter(function (o) { return o.name === st.name; })[0];
+          return was && was.cost !== st.cost;
+        });
       }
       row = pushApproval(s, type, l.id, u.id, {
         amount: a.amount || 0, reason: a.reason || '', shipmentId: a.shipmentId, stepId: a.stepId,
@@ -1096,6 +1135,15 @@
       if (!row || row.status !== 'open') fail('Error: This item is not waiting');
       if (u.id === row.proposerId) fail('Needs another staff member to approve');
       l = listing(s, row.listingId);
+      // Sending back needs the same authority as approving.
+      if (u.role !== 'staff') fail('Error: Staff only');
+      if (row.type === 'resale_shareholder') {
+        if (u.staffRole !== 'owner') fail('Error: A resale to a Shareholder needs the owner');
+      } else if (row.type === 'settlement' || row.type === 'overrun' || row.type === 'unplanned' || row.type === 'proceeds' || row.type === 'useProceeds') {
+        if (!can(u, 'deposit') && u.staffRole !== 'owner') fail('Error: Finance or the owner approves this');
+      } else if (row.type === 'skip' || row.type === 'plan') {
+        if (!can(u, 'review') && u.staffRole !== 'owner') fail('Error: A reviewer or the owner approves this');
+      }
       if (a.decision === 'send_back') {
         if (!a.reason) fail('Error: Sending back needs a reason');
         row.status = 'sent_back'; row.reason = a.reason;
@@ -1104,17 +1152,8 @@
         notify(s, row.proposerId, 'An approval was sent back: ' + a.reason);
         return { toast: 'Sent back' };
       }
-      if (row.type === 'resale_shareholder') {
-        if (u.staffRole !== 'owner') fail('Error: A resale to a Shareholder needs the owner');
-        if (!a.marketNote && !row.payload.marketNote) fail('Error: A market check is required');
-      } else if (row.type === 'settlement' || row.type === 'overrun' || row.type === 'unplanned' || row.type === 'proceeds' || row.type === 'useProceeds') {
-        if (!can(u, 'deposit') && u.staffRole !== 'owner') fail('Error: Finance or the owner approves this');
-      } else if (row.type === 'skip' || row.type === 'plan') {
-        if (!can(u, 'review') && u.staffRole !== 'owner') fail('Error: A reviewer or the owner approves this');
-        if (row.payload.plan && row.payload.plan.costChange && !can(u, 'deposit') && u.staffRole !== 'owner') fail('Error: A cost change also needs finance');
-      } else if (row.type === 'writeoff' || row.type === 'resale') {
-        if (u.role !== 'staff') fail('Error: Staff only');
-      }
+      if (row.type === 'resale_shareholder' && !a.marketNote && !row.payload.marketNote) fail('Error: A market check is required');
+      if (row.type === 'plan' && row.payload.plan && row.payload.plan.costChange && !can(u, 'deposit') && u.staffRole !== 'owner') fail('Error: A cost change also needs finance');
       applyApproval(s, u, l, row);
       row.status = 'approved';
       audit(s, u.id, 'approve_' + row.type, row.id, '');
@@ -1196,7 +1235,9 @@
       u = actor(s, a);
       if (u.staffRole !== 'owner') fail('Error: Only the owner changes settings');
       var st = a.settings || {};
-      if (st.overdueDays < 1 || st.autoWithdrawDays < 1) fail('Error: Day counts must be at least 1');
+      if (!Number.isInteger(st.overdueDays) || !Number.isInteger(st.autoWithdrawDays) || st.overdueDays < 1 || st.autoWithdrawDays < 1) fail('Error: Day counts must be whole numbers of at least 1');
+      if (!Number.isInteger(st.waiverPct) || !Number.isInteger(st.shareholderPct)) fail('Error: Percentages must be whole numbers');
+      if (!centsOk(st.exposureDefault) || st.exposureDefault < 100) fail('Error: Enter the default exposure limit in dollars');
       if (st.waiverPct < 1 || st.waiverPct > 90) fail('Error: Waiver stand-in must be between 1% and 90%');
       if (st.shareholderPct < 1 || st.shareholderPct > 100) fail('Error: Shareholder share must be between 1% and 100%');
       s.settings.overdueDays = Number(st.overdueDays);
@@ -1287,7 +1328,15 @@
     } else if (row.type === 'plan') {
       if (p.plan && p.plan.steps) {
         l.shipments.forEach(function (shp) {
-          shp.steps = shp.steps.filter(function (st) { return st.status !== 'todo'; }).concat(cloneSteps(s, p.plan.steps, []));
+          // Keep every Step that has started. A not-yet-started Step takes its new values from the plan.
+          var started = shp.steps.filter(function (st) { return st.status !== 'todo'; });
+          var names = started.map(function (st) { return st.name; });
+          var old = {};
+          shp.steps.forEach(function (st) { old[st.name] = st; });
+          var added = p.plan.steps.filter(function (st) { return names.indexOf(st.name) < 0; });
+          var fresh = cloneSteps(s, added, []);
+          fresh.forEach(function (st) { if (old[st.name]) st.requiredDocs = old[st.name].requiredDocs.slice(); });
+          shp.steps = started.concat(fresh);
         });
       }
     } else if (row.type === 'settlement') {
@@ -1364,7 +1413,7 @@
       tick(s);
       return { ok: true, state: s, notice: r.notice || '', toast: r.toast || '', id: r.id || '' };
     } catch (e) {
-      return { ok: false, error: e.message || String(e), state: state };
+      return { ok: false, error: e.message || String(e), state: e.keepState ? s : state };
     }
   }
 
@@ -1435,7 +1484,21 @@
     return can(u, action) ? '' : 'Your role cannot do this';
   }
 
+  // Who may open a listing (§6.5): a draft is private to its manager, a manager sees only their own,
+  // an investor sees live listings and any listing they invested in, and staff see everything submitted.
+  function canView(s, u, l) {
+    if (!u || !l) return false;
+    if (u.role === 'staff') return l.status !== 'draft';
+    if (u.role === 'manager') return l.managerId === u.id;
+    if (u.role === 'investor') {
+      if (l.status === 'live') return true;
+      return (l.contributions || []).some(function (c) { return c.userId === u.id; });
+    }
+    return false;
+  }
+
   g.Logic = {
+    canView: canView,
     STAGES: STAGES, CATEGORIES: CATEGORIES, COUNTRIES: COUNTRIES, COUNTRY: COUNTRY, DAY: DAY,
     blank: blank, apply: apply, selfCheck: selfCheck, verify: verify, balance: balance,
     figures: figures, derive: derive, compute: compute, projection: projection,

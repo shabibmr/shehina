@@ -5,7 +5,8 @@
 
   function L(id) {
     var l = U.byId(id);
-    if (l) Logic.derive(Store.state, l);
+    if (!l || !Logic.canView(Store.state, U.user(), l)) return null;
+    Logic.derive(Store.state, l);
     return l;
   }
 
@@ -220,7 +221,7 @@
           '<tr><td>Funding target</td><td class="num">' + U.esc(U.usd(l.target)) + '</td></tr>' +
           '<tr><td>Raised from investors</td><td class="num">' + U.esc(U.usd(l.raised)) + '</td></tr>' +
           '<tr><td>Manager capital (' + l.companyPct + '%)</td><td class="num">' + U.esc(U.usd(Math.round(l.target * l.companyPct / 100))) + '</td></tr>' +
-          '<tr><td>Deposit status</td><td>' + (l.depositPaid ? 'Paid' : (l.depositWaiver ? 'Waived (Shareholder link)' : 'Pending')) + '</td></tr>' +
+          '<tr><td>Deposit status</td><td>' + ((l.contributions || []).some(function (c) { return c.kind === 'manager'; }) ? 'Paid' : (l.depositWaiver ? 'Waived (Shareholder link)' : 'Pending')) + '</td></tr>' +
           '<tr><td>Expected gross sale</td><td class="num">' + U.esc(U.usd((l.shipments || []).reduce(function (a, s) { return a + (s.expectedSale || 0); }, 0))) + '</td></tr>' +
           '<tr><td>Expected profit</td><td>' + U.money(l.expectedProfit, 'expected') + '</td></tr>' +
           '<tr><td>Manager profit share</td><td>' + U.money(proj.manager, 'expected') + '</td></tr>' +
@@ -256,8 +257,19 @@
       var reason = l.pendingTerms.reason || '';
 
       var diffs = [];
-      if (pt.target !== l.target) diffs.push(['Funding target', U.usd(l.target), U.usd(pt.target)]);
-      if (pt.cycle !== l.cycle) diffs.push(['Cycle duration', (l.cycle || 60) + ' days', (pt.cycle || 60) + ' days']);
+      var total = function (shipments, key) {
+        return shipments.reduce(function (sum, sh) { return sum + Number(sh[key]); }, 0);
+      };
+      var stepCosts = function (shipments) {
+        return shipments.reduce(function (sum, sh) {
+          return sum + sh.steps.reduce(function (a, st) { return a + st.cost; }, 0);
+        }, 0);
+      };
+      var newTarget = total(pt.shipments, 'expectedCost') + stepCosts(pt.shipments);
+      var oldTarget = total(l.shipments, 'expectedCost') + stepCosts(l.shipments);
+      if (newTarget !== oldTarget) diffs.push(['Funding target (calculated)', U.usd(oldTarget), U.usd(newTarget)]);
+      var newSale = total(pt.shipments, 'expectedSale'), oldSale = total(l.shipments, 'expectedSale');
+      if (newSale !== oldSale) diffs.push(['Expected sale price', U.usd(oldSale), U.usd(newSale)]);
       if (pt.companyPct !== l.companyPct) diffs.push(['Manager capital', l.companyPct + '%', pt.companyPct + '%']);
       if (pt.investorSharePct !== l.investorSharePct) diffs.push(['Investor profit share', l.investorSharePct + '%', pt.investorSharePct + '%']);
       if (pt.minInvest !== l.minInvest) diffs.push(['Minimum ticket', U.usd(l.minInvest), U.usd(pt.minInvest)]);
@@ -328,6 +340,34 @@
     }
   });
 
+  // The Steps of the first Shipment that have not started; every Shipment shares the same plan.
+  function planSteps(l) {
+    var first = (l.shipments || [])[0];
+    if (!first) return [];
+    return first.steps.map(function (st, i) { return { index: i, name: st.name, owner: st.owner, days: st.days, cost: st.cost || 0, tag: st.tag || 0, status: st.status }; })
+      .filter(function (st) { return st.status === 'todo'; });
+  }
+
+  var NEW_STEP_ROWS = 2;
+
+  function stepFields(key, st, isNew) {
+    var tagOpts = '<option value="0"' + (!st.tag ? ' selected' : '') + '>No Stage tag</option>' + [1, 2, 3, 4, 5].map(function (n) {
+      return '<option value="' + n + '"' + (st.tag === n ? ' selected' : '') + '>Completes: ' + U.esc(Logic.STAGES[n]) + '</option>';
+    }).join('');
+    var ownerOpts = ['manager', 'staff'].map(function (o) {
+      return '<option value="' + o + '"' + (st.owner === o ? ' selected' : '') + '>' + (o === 'manager' ? 'Manager' : 'Shehnat staff') + '</option>';
+    }).join('');
+    return '<div class="card">' +
+      (isNew ? U.field('New Step name (leave empty to skip)', 'name' + key, '') : '<b>' + U.esc(st.name) + '</b>') +
+      '<label class="field"><span>Order</span><input name="ord' + key + '" type="number" min="1" value="' + (st.order || '') + '"></label>' +
+      '<label class="field"><span>Owner</span><select name="own' + key + '">' + ownerOpts + '</select></label>' +
+      '<label class="field"><span>Planned duration (days)</span><input name="days' + key + '" type="number" min="1" max="365" value="' + (st.days || '') + '"></label>' +
+      '<label class="field"><span>Stage tag</span><select name="tag' + key + '">' + tagOpts + '</select></label>' +
+      U.dollarsField('Planned Step cost', 'cost' + key, st.cost == null ? 0 : st.cost) +
+      (isNew ? '' : '<label class="field"><span><input type="checkbox" name="rm' + key + '"> Remove this Step</span></label>') +
+      '</div>';
+  }
+
   // M12: Propose plan change
   U.add({
     id: 'M12', section: 'listings', auth: true, roles: ['manager'],
@@ -335,11 +375,18 @@
     render: function (params) {
       var l = L(params.id);
       if (!l) return U.empty('Listing not found.', 'Listings', '/m/listings');
+      var existing = planSteps(l).map(function (st, pos) {
+        st.order = pos + 1;
+        return stepFields('e' + st.index, st, false);
+      }).join('');
+      var added = '';
+      for (var k = 0; k < NEW_STEP_ROWS; k++) added += stepFields('n' + k, { owner: 'manager', days: '', cost: 0, tag: 0 }, true);
       return '<h1>Propose plan change</h1>' +
         '<p class="meta">' + U.esc(l.name) + '</p>' +
+        '<p class="meta">A reviewer approves the change, and a cost change also needs the owner. The cycle is calculated from the Step durations. Steps already started cannot change. Every Stage from Goods purchased to Goods sold must keep at least one tagged Step.</p>' +
         '<form>' +
         '<label class="field"><span>Reason for change</span><textarea name="reason" rows="3" placeholder="Explain schedule or logistical changes..."></textarea></label>' +
-        '<label class="field"><span>New cycle duration (days)</span><input name="cycle" type="number" value="' + (l.cycle || 60) + '"></label>' +
+        existing + added +
         '<button class="btn btn-primary" type="button" data-act="submitPlanChange" data-id="' + l.id + '">Submit change request</button>' +
         '</form>';
     }
@@ -451,7 +498,43 @@
 
   U.acts.submitPlanChange = function (node, data) {
     var id = node.getAttribute('data-id');
-    var r = U.dispatch({ type: 'proposePlan', actorId: U.user().id, listingId: id, reason: data.reason || 'Logistics schedule adjustment' });
+    var l = L(id);
+    if (!l) return;
+    var back = '/m/change/' + id;
+    function bad(msg) { Store.proto.error = 'Error: ' + msg; U.go(back); }
+    function money(raw, label) {
+      var s = String(raw == null ? '' : raw).trim();
+      if (s === '') return 0;
+      var n = U.centsOf(s);
+      if (n == null) { bad(label + ' needs an amount with at most 2 decimals'); return null; }
+      return n;
+    }
+    var rows = [];
+    var keys = planSteps(l).map(function (st) { return { key: 'e' + st.index, base: l.shipments[0].steps[st.index], isNew: false }; });
+    for (var k = 0; k < NEW_STEP_ROWS; k++) keys.push({ key: 'n' + k, base: null, isNew: true });
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i].key, base = keys[i].base;
+      if (keys[i].isNew) {
+        if (!String(data['name' + key] || '').trim()) continue;
+      } else if (data['rm' + key]) continue;
+      var name = keys[i].isNew ? String(data['name' + key]).trim() : base.name;
+      var days = Number(data['days' + key]);
+      if (!Number.isInteger(days) || days < 1 || days > 365) { bad(name + ' needs a whole number of days from 1 to 365'); return; }
+      var cost = money(data['cost' + key], name + ' cost');
+      if (cost == null) return;
+      var order = Number(data['ord' + key]);
+      rows.push({
+        order: Number.isFinite(order) && order > 0 ? order : 100000 + i,
+        pos: i,
+        step: {
+          name: name, owner: data['own' + key] === 'staff' ? 'staff' : 'manager', days: days, cost: cost,
+          tag: Number(data['tag' + key]) || 0,
+          needsVerify: base ? base.needsVerify : false, kind: base ? base.kind : ''
+        }
+      });
+    }
+    rows.sort(function (a, b) { return a.order - b.order || a.pos - b.pos; });
+    var r = U.dispatch({ type: 'proposePlan', actorId: U.user().id, listingId: id, plan: { steps: rows.map(function (x) { return x.step; }) }, reason: data.reason || 'Logistics schedule adjustment' });
     if (r.ok) U.go('/m/listing/' + id);
   };
 

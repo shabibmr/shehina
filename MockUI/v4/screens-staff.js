@@ -5,7 +5,8 @@
 
   function L(id) {
     var l = U.byId(id);
-    if (l) Logic.derive(Store.state, l);
+    if (!l || !Logic.canView(Store.state, U.user(), l)) return null;
+    Logic.derive(Store.state, l);
     return l;
   }
 
@@ -218,11 +219,14 @@
         '<form>' +
         '<label class="field"><span>Required explanation for manager</span>' +
         '<textarea name="reason" rows="2" placeholder="Explain why terms are adjusted (e.g. market risk, margin adjustment)..." required></textarea></label>' +
-        U.dollarsField('New funding target', 'target') +
-        '<label class="field"><span>Cycle duration (days)</span><input name="cycle" type="number" value="' + (l.cycle || 60) + '"></label>' +
-        '<label class="field"><span>Manager capital contribution (%)</span><input name="companyPct" type="number" min="5" max="50" value="' + (l.companyPct || 20) + '"></label>' +
-        '<label class="field"><span>Investor profit share (%)</span><input name="investorSharePct" type="number" min="20" max="80" value="' + (l.investorSharePct || 60) + '"></label>' +
-        U.dollarsField('Minimum ticket', 'minInvest') +
+        '<p class="meta">The funding target and cycle are calculated from the shipments and the step plan, so they follow from the figures below.</p>' +
+        l.shipments.map(function (sh, i) {
+          return U.dollarsField((sh.label || 'Shipment ' + (i + 1)) + ': expected cost of goods', 'cost' + i, sh.expectedCost) +
+            U.dollarsField((sh.label || 'Shipment ' + (i + 1)) + ': expected sale price', 'sale' + i, sh.expectedSale);
+        }).join('') +
+        '<label class="field"><span>Manager capital contribution (%)</span><input name="companyPct" type="number" min="20" max="90" value="' + (l.companyPct || 20) + '"></label>' +
+        '<label class="field"><span>Investor profit share (%)</span><input name="investorSharePct" type="number" min="40" max="95" value="' + (l.investorSharePct || 60) + '"></label>' +
+        U.dollarsField('Minimum ticket', 'minInvest', l.minInvest) +
         '<p><button class="btn btn-primary" type="button" data-act="sendRevisedTerms" data-id="' + l.id + '">Send revised terms to manager</button> ' +
         '<button class="btn btn-secondary" type="button" data-go="/s/review/' + l.id + '">Cancel</button></p>' +
         '</form>';
@@ -254,7 +258,7 @@
     id: 'S7', section: 'listings', auth: true, roles: ['staff'],
     match: function (p) { return p === '/s/listings' ? {} : null; },
     render: function () {
-      var listings = Store.state.listings;
+      var listings = Store.state.listings.filter(function (l) { return l.status !== 'draft'; });
       var rows = listings.map(function (l) {
         var path = (l.status === 'in_review' || l.status === 'awaiting_terms') ? ('/s/review/' + l.id) : ('/s/ops/' + l.id);
         return U.listingRow(l, path);
@@ -318,6 +322,7 @@
         '<button class="btn btn-secondary" type="button" data-act="unplannedCostSheet" data-id="' + l.id + '">Unplanned cost</button> ' +
         '<button class="btn btn-secondary" type="button" data-act="overrunSheet" data-id="' + l.id + '">Request overrun</button> ' +
         '<button class="btn btn-secondary" type="button" data-act="resaleSheet" data-id="' + l.id + '">Propose resale</button> ' +
+        '<button class="btn btn-danger" type="button" data-act="writeoffSheet" data-id="' + l.id + '">Propose write-off</button> ' +
         '<button class="btn btn-danger" type="button" data-act="cancelListingSheet" data-id="' + l.id + '">Cancel listing</button></p>' +
         shipmentsHtml;
     }
@@ -378,14 +383,16 @@
       var u = U.user();
       var approval = Store.state.approvals.filter(function (a) { return a.listingId === l.id && a.type === 'settlement' && a.status === 'open'; })[0];
 
-      var shTotalCost = (l.shipments || []).reduce(function (a, s) { return a + (s.expectedCost || 0); }, 0);
-      var shTotalSale = (l.shipments || []).reduce(function (a, s) { return a + (s.proceeds || s.expectedSale || 0); }, 0);
+      // Same inputs as settle(): costs actually paid (goods and Step costs) and proceeds actually received.
+      var paidCosts = l.costsPaid || 0;
+      var receivedSale = (l.shipments || []).reduce(function (a, s) { return a + (s.proceeds || 0); }, 0);
+      var feeBps = Store.state.settings.feeBps;
       var calc = Logic.compute({
         contributions: l.contributions || [],
-        cost: shTotalCost,
-        revenue: shTotalSale,
-        investorSharePct: l.investorSharePct || 60,
-        feeBps: Store.state.settings.feeBps || 100
+        cost: paidCosts,
+        revenue: receivedSale,
+        investorSharePct: l.investorSharePct,
+        feeBps: feeBps
       });
 
       var investorRows = (calc.lines || []).map(function (line) {
@@ -400,10 +407,10 @@
       return '<h1>Settlement calculation</h1>' +
         '<p class="meta">' + U.esc(l.name) + '</p>' +
         '<table class="statement">' +
-        '<tr><td>Gross sale revenue</td><td class="num">' + U.esc(U.usd(calc.revenue)) + '</td></tr>' +
-        '<tr><td>Total shipment costs</td><td class="num">' + U.esc(U.usd(calc.cost)) + '</td></tr>' +
+        '<tr><td>Sale proceeds received</td><td class="num">' + U.esc(U.usd(calc.revenue)) + '</td></tr>' +
+        '<tr><td>Costs paid (goods and Step costs)</td><td class="num">' + U.esc(U.usd(calc.cost)) + '</td></tr>' +
         '<tr><td>Gross profit</td><td>' + U.money(calc.gross, 'result') + '</td></tr>' +
-        '<tr><td>Platform fee (1%)</td><td class="num">' + U.esc(U.usd(calc.fee)) + '</td></tr>' +
+        '<tr><td>Platform fee (' + (feeBps / 100) + '%)</td><td class="num">' + U.esc(U.usd(calc.fee)) + '</td></tr>' +
         '<tr><td>Net distributable profit</td><td>' + U.money(calc.net, 'result') + '</td></tr>' +
         '<tr><td>Manager profit share (' + (100 - l.investorSharePct) + '%)</td><td class="num">' + U.esc(U.usd(calc.manager)) + '</td></tr>' +
         '<tr><td>Investor profit pool (' + l.investorSharePct + '%)</td><td class="num">' + U.esc(U.usd(calc.pool)) + '</td></tr>' +
@@ -575,7 +582,7 @@
         '<label class="field"><span>Auto-withdrawal period (days)</span><input name="autoWithdrawDays" type="number" value="' + st.autoWithdrawDays + '"></label>' +
         '<label class="field"><span>Deposit waiver platform stand-in (%)</span><input name="waiverPct" type="number" value="' + st.waiverPct + '"></label>' +
         '<label class="field"><span>Shareholder profit allocation (%)</span><input name="shareholderPct" type="number" value="' + st.shareholderPct + '"></label>' +
-        U.dollarsField('Default manager exposure limit', 'exposureDefault') +
+        U.dollarsField('Default manager exposure limit', 'exposureDefault', st.exposureDefault) +
         '<label class="field"><span>Blocked countries (comma separated codes)</span><input name="blocked" value="' + st.blocked.join(', ') + '"></label>' +
         '<button class="btn btn-primary" type="button" data-act="saveSettings">Save settings</button>' +
         '</form>';
@@ -589,7 +596,7 @@
     render: function () {
       var log = Store.state.audit.slice().reverse();
       var rows = log.map(function (a) {
-        return '<tr><td><span class="num">' + new Date(a.at).toISOString().slice(0, 19).replace('T', ' ') + '</span></td><td><b>' + U.esc(a.actorId) + '</b></td><td>' + U.esc(a.action) + '</td><td>' + U.esc(a.entity || '') + '</td><td>' + U.esc(a.detail || '') + '</td></tr>';
+        return '<tr><td><span class="num">' + new Date(a.at).toISOString().slice(0, 19).replace('T', ' ') + '</span></td><td><b>' + U.esc(a.actorId) + '</b></td><td>' + U.esc(a.action) + '</td><td>' + U.esc(a.entity || '') + '</td><td>' + U.esc(a.reason || '') + '</td></tr>';
       }).join('');
 
       return '<h1>Audit log</h1>' +
@@ -607,9 +614,10 @@
       var s = Store.state;
       var check = Logic.verify(s);
 
-      var entries = (s.ledger || []).slice(-30).reverse();
+      // One row per leg of a transaction: a negative amount leaves the account, a positive one enters it.
+      var entries = (s.ledger || []).slice(-40).reverse();
       var rows = entries.map(function (e) {
-        return '<tr><td><span class="num">' + new Date(e.at).toISOString().slice(0, 10) + '</span></td><td>' + U.esc(e.from) + '</td><td>' + U.esc(e.to) + '</td><td class="num">' + U.esc(U.usd(e.amount)) + '</td><td>' + U.esc(e.desc || '') + '</td></tr>';
+        return '<tr><td><span class="num">' + new Date(e.at).toISOString().slice(0, 10) + '</span></td><td><span class="num">' + U.esc(e.txn) + '</span></td><td>' + U.esc(e.account) + '</td><td class="num">' + (e.amount < 0 ? '−' : '+') + ' ' + U.esc(U.usd(Math.abs(e.amount))) + '</td><td>' + U.esc(e.memo || '') + '</td></tr>';
       }).join('');
 
       return '<h1>Double-entry ledger</h1>' +
@@ -619,7 +627,7 @@
         '<p class="meta">Every financial transaction across wallets, treasury, revenue, and escrow is balanced.</p>' +
         '</section>' +
         '<h2>Recent ledger journal</h2>' +
-        '<div class="table-wrap"><table class="data"><thead><tr><th>Date</th><th>Debit (From)</th><th>Credit (To)</th><th class="num">Amount</th><th>Description</th></tr></thead><tbody>' +
+        '<div class="table-wrap"><table class="data"><thead><tr><th>Date</th><th>Transaction</th><th>Account</th><th class="num">Amount</th><th>Memo</th></tr></thead><tbody>' +
         (rows || '<tr><td colspan="5">No ledger transactions recorded yet.</td></tr>') +
         '</tbody></table></div>';
     }
@@ -710,22 +718,30 @@
 
   U.acts.sendRevisedTerms = function (node, data) {
     var id = node.getAttribute('data-id');
-    var target = needMoney(data.target, '/s/revised/' + id);
-    var minInvest = needMoney(data.minInvest, '/s/revised/' + id);
-    if (target == null || minInvest == null) return;
+    var l = U.byId(id);
+    if (!l) return;
+    var back = '/s/revised/' + id;
+    var minInvest = needMoney(data.minInvest, back);
+    if (minInvest == null) return;
+    // Send the whole listing with the reviewer's changes applied, so it passes the same checks as a submission.
+    var edited = JSON.parse(JSON.stringify(l));
+    for (var i = 0; i < edited.shipments.length; i++) {
+      var cost = needMoney(data['cost' + i], back);
+      var sale = needMoney(data['sale' + i], back);
+      if (cost == null || sale == null) return;
+      edited.shipments[i].expectedCost = cost;
+      edited.shipments[i].expectedSale = sale;
+    }
+    edited.companyPct = Number(data.companyPct);
+    edited.investorSharePct = Number(data.investorSharePct);
+    edited.minInvest = minInvest;
     var r = U.dispatch({
       type: 'reviewListing',
       actorId: U.user().id,
       id: id,
       decision: 'revise',
       reason: data.reason || 'Adjusted terms per compliance assessment',
-      listing: {
-        target: target,
-        cycle: Number(data.cycle || 60),
-        companyPct: Number(data.companyPct || 20),
-        investorSharePct: Number(data.investorSharePct || 60),
-        minInvest: minInvest
-      }
+      listing: edited
     });
     if (r.ok) U.go('/s/queue');
   };
@@ -836,24 +852,56 @@
     if (r.ok) U.go('/s/approvals');
   };
 
+  // Proceeds, resale and write-off each belong to one shipment, so the sheet asks which.
+  function shipmentPicker(l) {
+    var opts = (l.shipments || []).map(function (sh, i) {
+      var tag = sh.writtenOff ? ' (written off)' : sh.proceeds > 0 ? ' (proceeds in)' : '';
+      return '<option value="' + U.esc(sh.id) + '">' + U.esc(sh.label || 'Shipment ' + (i + 1)) + U.esc(tag) + '</option>';
+    }).join('');
+    return '<label class="field"><span>Shipment</span><select name="shipmentId">' + opts + '</select></label>';
+  }
+
   U.acts.recordProceedsSheet = function (node) {
     var id = node.getAttribute('data-id');
     var l = L(id);
-    var sh = l && l.shipments && l.shipments[0];
-    var sid = sh ? sh.id : '';
+    if (!l) return;
     U.openSheet('<h2>Record buyer sale proceeds</h2>' +
-      '<form>' + U.dollarsField('Proceeds amount', 'proceedsAmount') +
+      '<form>' + shipmentPicker(l) + U.dollarsField('Proceeds amount', 'proceedsAmount') +
       U.field('Buyer receipt / bank statement', 'proceedsDoc', 'bank-proceeds.pdf') +
-      '<p><button class="btn btn-primary" type="button" data-act="confirmRecordProceeds" data-lid="' + id + '" data-sid="' + sid + '">Record proceeds</button></p></form>');
+      U.field('Reason, if less than the expected sale price', 'shortfallReason', '') +
+      '<p><button class="btn btn-primary" type="button" data-act="confirmRecordProceeds" data-lid="' + id + '">Record proceeds</button></p></form>');
+  };
+
+  U.acts.writeoffSheet = function (node) {
+    var id = node.getAttribute('data-id');
+    var l = L(id);
+    if (!l) return;
+    U.openSheet('<h2>Propose write-off</h2>' +
+      '<p class="meta">For a shipment that is lost, seized, rejected or unpaid. A different staff member approves it.</p>' +
+      '<form>' + shipmentPicker(l) +
+      U.field('Reason', 'writeoffReason', 'Container seized at port') +
+      U.dollarsField('Insurance or salvage proceeds (if any)', 'salvageAmount') +
+      '<p><button class="btn btn-danger" type="button" data-act="confirmWriteoff" data-lid="' + id + '">Submit for approval</button></p></form>');
+  };
+
+  U.acts.confirmWriteoff = function (node, data) {
+    var lid = node.getAttribute('data-lid');
+    var back = '/s/ops/' + lid;
+    var salvage = String(data.salvageAmount || '').trim() === '' ? 0 : needMoney(data.salvageAmount, back);
+    if (salvage == null) return;
+    if (!data.writeoffReason) { Store.proto.error = 'Error: A reason is required'; U.go(back); return; }
+    U.closeSheet();
+    var r = U.dispatch({ type: 'proposeWriteoff', actorId: U.user().id, listingId: lid, shipmentId: data.shipmentId, amount: salvage, reason: data.writeoffReason });
+    if (r.ok) U.go('/s/approvals');
   };
 
   U.acts.confirmRecordProceeds = function (node, data) {
     var lid = node.getAttribute('data-lid');
-    var sid = node.getAttribute('data-sid');
+    var sid = data.shipmentId;
     var amt = U.centsOf(data.proceedsAmount);
     if (amt == null) { Store.proto.error = 'Error: Enter the sale proceeds, with at most 2 decimals'; U.go('/s/ops/' + lid); return; }
     U.closeSheet();
-    var r = U.dispatch({ type: 'recordProceeds', actorId: U.user().id, listingId: lid, shipmentId: sid, amount: amt, doc: data.proceedsDoc || 'receipt.pdf' });
+    var r = U.dispatch({ type: 'recordProceeds', actorId: U.user().id, listingId: lid, shipmentId: sid, amount: amt, doc: data.proceedsDoc || 'receipt.pdf', reason: data.shortfallReason || '' });
     if (r.ok) U.go('/s/ops/' + lid);
   };
 
@@ -894,19 +942,19 @@
   U.acts.resaleSheet = function (node) {
     var id = node.getAttribute('data-id');
     var l = L(id);
-    var sid = l && l.shipments && l.shipments[0] ? l.shipments[0].id : '';
+    if (!l) return;
     U.openSheet('<h2>Propose resale to new buyer</h2>' +
-      '<form>' +
+      '<form>' + shipmentPicker(l) +
       '<label class="field"><span>New buyer country</span><select name="buyerCountry">' + U.countries(false) + '</select></label>' +
       U.dollarsField('Resale price', 'resalePrice') +
       '<label class="field"><span><input type="checkbox" name="resaleShareholder"> Resale to a Shareholder (requires Owner approval)</span></label>' +
       U.field('Market valuation note', 'marketNote', 'Verified market resale price') +
-      '<p><button class="btn btn-primary" type="button" data-act="confirmResale" data-lid="' + id + '" data-sid="' + sid + '">Submit resale</button></p></form>');
+      '<p><button class="btn btn-primary" type="button" data-act="confirmResale" data-lid="' + id + '">Submit resale</button></p></form>');
   };
 
   U.acts.confirmResale = function (node, data) {
     var lid = node.getAttribute('data-lid');
-    var sid = node.getAttribute('data-sid');
+    var sid = data.shipmentId;
     var price = needMoney(data.resalePrice, '/s/ops/' + lid);
     if (price == null) return;
     U.closeSheet();
@@ -947,9 +995,10 @@
 
   U.acts.confirmPayWithdrawal = function (node, data) {
     var id = node.getAttribute('data-id');
-    var ref = data.bankRef || 'WIRE-REF';
+    var ref = String(data.bankRef || '').trim();
+    if (!ref) { Store.proto.error = 'Error: A bank reference is required'; U.go('/s/money'); return; }
     U.closeSheet();
-    var r = U.dispatch({ type: 'decideWithdrawal', actorId: U.user().id, id: id, decision: 'paid', ref: ref });
+    var r = U.dispatch({ type: 'decideWithdrawal', actorId: U.user().id, id: id, decision: 'approve', ref: ref });
     if (r.ok) U.go('/s/money');
   };
 
@@ -962,21 +1011,26 @@
 
   U.acts.confirmDeclineWithdrawal = function (node) {
     var id = node.getAttribute('data-id');
-    var reason = document.getElementById('decReason') ? document.getElementById('decReason').value : 'Declined by compliance';
+    var reason = document.getElementById('decReason') ? document.getElementById('decReason').value.trim() : '';
+    if (!reason) { Store.proto.error = 'Error: A decline needs a reason'; U.go('/s/money'); return; }
     U.closeSheet();
     var r = U.dispatch({ type: 'decideWithdrawal', actorId: U.user().id, id: id, decision: 'declined', reason: reason });
     if (r.ok) U.go('/s/money');
   };
 
   U.acts.treasuryTopup = function (node, data) {
-    var amt = U.centsOf(data.treasuryAmount) || 5000000;
-    var r = U.dispatch({ type: 'treasuryTopup', actorId: U.user().id, amount: amt, ref: data.treasuryRef || 'BANK-TOPUP' });
+    var amt = needMoney(data.treasuryAmount, '/s/money');
+    if (amt == null) return;
+    if (!String(data.treasuryRef || '').trim()) { Store.proto.error = 'Error: A bank reference is required'; U.go('/s/money'); return; }
+    var r = U.dispatch({ type: 'treasuryTopup', actorId: U.user().id, amount: amt, ref: data.treasuryRef.trim() });
     if (r.ok) U.go('/s/money');
   };
 
   U.acts.reserveOut = function (node, data) {
-    var amt = U.centsOf(data.reserveAmount) || 100000;
-    var r = U.dispatch({ type: 'reserveOut', actorId: U.user().id, amount: amt, reason: data.reserveReason || 'Reserve deployment' });
+    var amt = needMoney(data.reserveAmount, '/s/money');
+    if (amt == null) return;
+    if (!String(data.reserveReason || '').trim()) { Store.proto.error = 'Error: Give the purpose for this move'; U.go('/s/money'); return; }
+    var r = U.dispatch({ type: 'reserveOut', actorId: U.user().id, amount: amt, reason: data.reserveReason.trim() });
     if (r.ok) U.go('/s/money');
   };
 
@@ -1030,22 +1084,24 @@
 
   U.acts.setExposureLimit = function (node, data) {
     var id = node.getAttribute('data-id');
-    var amt = U.centsOf(data.exposureLimit) || 10000000;
+    var amt = needMoney(data.exposureLimit, '/s/users');
+    if (amt == null) return;
     var r = U.dispatch({ type: 'setExposure', actorId: U.user().id, userId: id, amount: amt });
     if (r.ok) U.go('/s/users');
   };
 
   U.acts.saveSettings = function (node, data) {
-    var exp = U.centsOf(data.exposureDefault) || 5000000;
+    var exp = needMoney(data.exposureDefault, '/s/settings');
+    if (exp == null) return;
     var blocked = (data.blocked || '').split(',').map(function (c) { return c.trim().toUpperCase(); }).filter(Boolean);
     var r = U.dispatch({
       type: 'updateSettings',
       actorId: U.user().id,
       settings: {
-        overdueDays: Number(data.overdueDays || 5),
-        autoWithdrawDays: Number(data.autoWithdrawDays || 14),
-        waiverPct: Number(data.waiverPct || 20),
-        shareholderPct: Number(data.shareholderPct || 75),
+        overdueDays: Number(data.overdueDays),
+        autoWithdrawDays: Number(data.autoWithdrawDays),
+        waiverPct: Number(data.waiverPct),
+        shareholderPct: Number(data.shareholderPct),
         exposureDefault: exp,
         blocked: blocked
       }
