@@ -561,6 +561,7 @@ a.bento:focus-visible { outline: 3px solid var(--color-ring); outline-offset: 2p
 .dash-value { font-size: var(--font-size-title-sm); font-weight: 600; color: var(--dash); overflow-wrap: anywhere; }
 .dash-sub { font-size: var(--font-size-meta); color: var(--color-muted-foreground); }
 .dash-card { background: var(--color-surface); box-shadow: inset 0 0 0 var(--line-hair) var(--color-border); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+.dash-card .row:last-child { border-bottom: 0; padding-bottom: 0; }
 .dash-row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
 .dash-bar { display: flex; height: 12px; overflow: hidden; background: var(--color-surface-sunken); }
 .dash-bar i { display: block; background: var(--dash); }

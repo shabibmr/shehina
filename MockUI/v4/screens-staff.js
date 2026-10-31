@@ -24,6 +24,14 @@
         (end ? "<span class=\"end status\">" + UI.esc(end) + "</span>" : "") + close;
     }
 
+    /* Sale, costs and profit for a listing: final once settlement is approved, otherwise projected from what is booked so far. */
+    function figures(l) {
+      var done = l.status === "completed" || !!(l.settlement && l.settlement.status === "approved");
+      var r = (done && l.settlement && l.settlement.result) || Store.settlementInput(l);
+      var any = r.sale || r.costs;
+      return { done: done, any: !!any, sale: r.sale, costs: r.costs, profit: r.gross, text: any ? (done ? "Final" : "So far") + " · Sale " + L.formatUsd(r.sale) + " · Costs " + L.formatUsd(r.costs) + " · Profit " + L.formatUsd(r.gross) : "No sale or costs booked yet" };
+    }
+
     function listingLate(l) {
       return (l.shipments || []).some(function (sh) {
         return (sh.steps || []).some(function (st, i) { return L.isLate(l, sh, i, Store.state.now); });
@@ -442,7 +450,9 @@
           var href = "";
           if (actor.role === "ops" || actor.role === "owner") href = "#/ops/" + l.id;
           else if (actor.role === "reviewer" && (l.status === "in_review" || l.status === "awaiting_terms")) href = "#/queue-listing/" + l.id;
-          return rowLink(href, l.name, L.STAGES[L.listingStage(l)] + " · " + l.status, l.shareholderListing ? "Shareholder" : "");
+          var fg = figures(l);
+          if (!href && (fg.done || fg.any)) href = "#/settlement/" + l.id;
+          return rowLink(href, l.name, L.STAGES[L.listingStage(l)] + " · " + l.status + " · " + fg.text, l.shareholderListing ? "Shareholder" : "");
         }).join("");
         var nActive = ["status", "stage", "late", "share", "q"].filter(function (k) { return listFilter[k]; }).length;
         stage.innerHTML = "<div class=\"column\"><h1>Listings</h1><details class=\"fold\"" + (nActive ? " open" : "") + "><summary>Filters" + (nActive ? " (" + nActive + ")" : "") + "</summary><form class=\"fold-body stack\">" +
@@ -752,10 +762,41 @@
       title: "Ledger",
       test: function (h) { return h === "#/ledger" ? {} : null; },
       render: function (stage) {
+        var D = root.ShehnatDash;
         var check = L.verify(Store.state.entries);
-        if (!check.ok) { stage.innerHTML = "<div class=\"column\"><h1>Ledger</h1><p>Ledger does not balance.</p></div>"; return; }
+        if (!check.ok) {
+          var detail = "";
+          if (check.txn != null) detail = "<p>Transaction " + UI.esc(String(check.txn)) + " is off by " + L.formatUsd(check.diff) + "</p>";
+          else if (check.account) detail = "<p>" + UI.esc(check.account) + " is off by " + L.formatUsd(check.diff) + "</p>";
+          stage.innerHTML = "<div class=\"column\"><h1>Ledger</h1><div class=\"banner banner-warning\" role=\"status\"><strong>Ledger does not balance.</strong>" + detail + "</div></div>";
+          return;
+        }
+        function label(account) {
+          var user = /^user:([^:]+):wallet$/.exec(account);
+          if (user) {
+            var person = Store.byId(user[1]);
+            return { title: person ? person.name : user[1], meta: "Wallet · " + account };
+          }
+          var ship = /^escrow:(.+)$/.exec(account);
+          if (ship) {
+            var listing = Store.listing(ship[1]);
+            return { title: listing ? listing.name : ship[1], meta: "Escrow · " + account };
+          }
+          var named = { "platform:treasury": "Treasury", "platform:revenue": "Revenue", "platform:reserve": "Reserve", "withdrawals:hold": "Withdrawals on hold" };
+          if (named[account]) return { title: named[account], meta: "Platform · " + account };
+          return { title: account, meta: "Account" };
+        }
+        var order = [
+          ["wallet", "Wallets", "wallet", "green"],
+          ["escrow", "Escrow", "ship", "blue"],
+          ["treasury", "Treasury", "bank", "green"],
+          ["revenue", "Revenue", "receipt", "amber"],
+          ["reserve", "Reserve", "flag", "blue"],
+          ["hold", "Hold", "lock", "amber"]
+        ];
         var groups = { wallet: [], escrow: [], treasury: [], revenue: [], reserve: [], hold: [] };
-        Object.keys(check.balances).sort().forEach(function (account) {
+        var sums = { wallet: 0, escrow: 0, treasury: 0, revenue: 0, reserve: 0, hold: 0 };
+        Object.keys(check.balances).forEach(function (account) {
           var bucket = "";
           if (/^user:/.test(account)) bucket = "wallet";
           else if (/^escrow:/.test(account)) bucket = "escrow";
@@ -764,13 +805,57 @@
           else if (account === "platform:reserve") bucket = "reserve";
           else if (account === "withdrawals:hold") bucket = "hold";
           if (!bucket) return;
-          groups[bucket].push("<div class=\"kpi\"><span>" + UI.esc(account) + "</span><b class=\"num\">" + L.formatUsd(check.balances[account]) + "</b></div>");
+          groups[bucket].push({ account: account, amount: check.balances[account], label: label(account) });
+          sums[bucket] += check.balances[account];
         });
-        var order = [["wallet", "Wallets"], ["escrow", "Escrow"], ["treasury", "Treasury"], ["revenue", "Revenue"], ["reserve", "Reserve"], ["hold", "Hold"]];
-        var body = order.map(function (g) {
-          return "<section class=\"panel\"><h2>" + g[1] + "</h2>" + (groups[g[0]].join("") || "<p class=\"muted\">No balance.</p>") + "</section>";
+        order.forEach(function (g) {
+          groups[g[0]].sort(function (a, b) { return Math.abs(b.amount) - Math.abs(a.amount) || a.label.title.localeCompare(b.label.title); });
+        });
+        var held = sums.wallet + sums.escrow + sums.hold;
+        var platform = sums.treasury + sums.revenue + sums.reserve;
+        var books = held + platform;
+        var bank = check.balances["bank:external"] || 0;
+        var tiles = order.map(function (g) {
+          var n = groups[g[0]].length;
+          return D.tile({ label: g[1], value: L.formatUsd(sums[g[0]]), sub: n + (n === 1 ? " account" : " accounts"), tone: g[3], icon: g[2] });
         }).join("");
-        stage.innerHTML = "<div class=\"column\"><h1>Ledger</h1><div class=\"stack\">" + body + "</div></div>";
+        var sections = order.map(function (g) {
+          var rows = groups[g[0]].map(function (a) {
+            return "<div class=\"row\"><span class=\"title\">" + UI.esc(a.label.title) + "</span><span class=\"meta\">" + UI.esc(a.label.meta) + "</span><span class=\"end num\">" + L.formatUsd(a.amount) + "</span></div>";
+          }).join("");
+          return "<section class=\"dash-card\"><div class=\"dash-row\"><h2>" + g[1] + "</h2><b class=\"num\">" + L.formatUsd(sums[g[0]]) + "</b></div>" + (rows || "<p class=\"muted\">No balance.</p>") + "</section>";
+        }).join("");
+        var bankRow = Object.prototype.hasOwnProperty.call(check.balances, "bank:external")
+          ? "<section class=\"dash-card\"><div class=\"row\"><span class=\"title\">Bank</span><span class=\"meta\">The other side of these accounts · bank:external</span><span class=\"end num\">" + L.formatUsd(bank) + "</span></div></section>"
+          : "";
+        var byTxn = {};
+        Store.state.entries.forEach(function (e) { (byTxn[e.txn] = byTxn[e.txn] || []).push(e); });
+        var journal = Object.keys(byTxn).map(Number).sort(function (a, b) { return b - a; }).slice(0, 10).map(function (id) {
+          var lines = byTxn[id];
+          var moved = lines.reduce(function (s, e) { return s + (e.amount > 0 ? e.amount : 0); }, 0);
+          var memos = lines.map(function (e) { return e.memo; }).filter(function (m, i, a) { return m && a.indexOf(m) === i; });
+          var accts = lines.length + " lines · " + lines.slice(0, 2).map(function (e) { return label(e.account).title; }).join(", ") + (lines.length > 2 ? "…" : "");
+          return "<div class=\"row\"><span class=\"title\">" + UI.esc(memos.join(" · ") || "Transfer") + "</span><span class=\"meta\">#" + id + " · " + UI.esc(accts) + " · " + UI.when(lines[0].at) + "</span><span class=\"end num\">" + L.formatUsd(moved) + "</span></div>";
+        }).join("");
+        var journalCard = journal ? "<section class=\"dash-card\"><div class=\"dash-row\"><h2>Recent transactions</h2><span class=\"muted\">Latest 10</span></div>" + journal + "</section>" : "";
+        var shipRows = Store.state.listings.map(function (l) { return { l: l, f: figures(l) }; }).filter(function (x) { return x.f.done || x.f.any; }).map(function (x) {
+          var href = "#/settlement/" + x.l.id;
+          return "<a class=\"row\" href=\"" + href + "\" data-go=\"" + href + "\"><span class=\"title\">" + UI.esc(x.l.name) + "</span><span class=\"meta\">" + (x.f.done ? "Settled" : "In progress") + " · Sale " + L.formatUsd(x.f.sale) + " · Costs " + L.formatUsd(x.f.costs) + "</span><span class=\"end num\">" + L.formatUsd(x.f.profit) + "</span></a>";
+        }).join("");
+        var shipCard = shipRows ? "<section class=\"dash-card\"><div class=\"dash-row\"><h2>By shipment</h2><span class=\"muted\">Profit</span></div>" + shipRows + "</section>" : "";
+        stage.innerHTML = "<div class=\"column stack\">" +
+          D.hero({
+            label: "On the books", value: L.formatUsd(books), tone: "green",
+            sub: "Wallets, escrow, and platform accounts",
+            delta: "Ledger balances",
+            split: [
+              { label: "With people", value: held, text: L.formatUsd(held) },
+              { label: "Platform", value: platform, text: L.formatUsd(platform) }
+            ]
+          }) +
+          "<div class=\"dash-grid\">" + tiles + "</div>" +
+          D.bar("Where it sits", order.map(function (g) { return { label: g[1], value: Math.max(sums[g[0]], 0), tone: g[3], text: L.formatUsd(sums[g[0]]) }; })) +
+          shipCard + journalCard + sections + bankRow + "</div>";
       }
     });
   }
