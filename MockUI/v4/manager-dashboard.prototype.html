@@ -758,17 +758,17 @@ html[dir=rtl] .tk .rt b{transform:translate(50%,-50%)}
 <div class="pbar" id="pbar" hidden></div>
 
 <script>
-/* ---------- seed: Emirates Spice Traders LLC, a UAE manager (PLAN section 4 used Kerala; moved to the UAE). Cents, as the real app. ---------- */
+/* ---------- seed: Emirates Spice Traders LLC, a UAE manager (PLAN section 4 used Al Noor; moved to the UAE). Cents, as the real app. ---------- */
 const USD = c => '$' + (c/100).toLocaleString('en-US',{maximumFractionDigits:0});
 const D = n => n*100;
 const KERALA = {
   status:'approved', name:'Emirates Spice Traders LLC', wallet:D(60000), limit:D(500000), notif:4,
   listings:[
-    {id:1,name:'Cardamom to Hamburg',dest:'Hamburg',st:'deposit',target:D(100000),deposit:D(20000),dayLeft:2,flag:'Sourced in India, shipped via Jebel Ali, sold in Germany'},
+    {id:1,name:'Cardamom to Hamburg',dest:'Hamburg',st:'deposit',target:D(100000),deposit:D(20000),dayLeft:2,flag:'Sourced in Egypt, shipped via Jebel Ali, sold in Germany'},
     {id:2,name:'Basmati to Mombasa',dest:'Mombasa',st:'revised',target:D(70000),flag:'Investor share changed from 50% to 55%'},
     {id:3,name:'Dates to Rotterdam',dest:'Rotterdam',st:'funding',target:D(80000),raised:D(51200),flag:'64% funded by 9 investors'},
     {id:4,name:'Black pepper to Genoa',dest:'Genoa',st:'running',target:D(150000),stage:3,stages:6,late:true,myStep:'Upload bill of lading',myStepDue:'Due tomorrow',flag:'Shipment 2 customs clearance is 3 days late'},
-    {id:5,name:'Turmeric to Jeddah',dest:'Jeddah',st:'review',target:D(80000),flag:'With reviewer Priya N.'},
+    {id:5,name:'Turmeric to Jeddah',dest:'Jeddah',st:'review',target:D(80000),flag:'With reviewer Noura A.'},
     {id:6,name:'Tea to London',dest:'London',st:'draft',target:D(60000),flag:'Step plan not finished'},
     {id:7,name:'Cashew to Muscat',dest:'Muscat',st:'done',target:D(70000),result:8.4,flag:'Settled, your share paid to wallet'}
   ]
@@ -776,7 +776,7 @@ const KERALA = {
 const WORLDS = {
   busy:KERALA,
   empty:{...KERALA,name:'Fresh Manager Co.',wallet:0,notif:0,listings:[]},
-  pending:{...KERALA,status:'pending',name:'Mateo Rojas',wallet:0,notif:1,listings:[]}
+  pending:{...KERALA,status:'pending',name:'Tariq Al-Masri',wallet:0,notif:1,listings:[]}
 };
 const ST = {
   draft:['Draft','c-draft'], review:['In review','c-review'], revised:['Action needed','c-action'], deposit:['Deposit due','c-action'],

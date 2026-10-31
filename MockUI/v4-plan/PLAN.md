@@ -6,34 +6,34 @@
 
 ## 1. The question this prototype answers
 
-**Does the agreed Shehnat product hold together end to end, for every role, on a phone, in the new design system with its motion?**
+**Does the agreed Shehnat product hold together end to end, for every role, on a phone, in the paper-column theme?**
 
 v1–v3 tested pieces of the model (listings, step plans) in plain styling. v4 is the first mock that:
 
-- uses the **design system** (`docs/design-system.md`, `Demo/frontend/tokens.css`) and the draft brand assets;
+- uses the **paper-column theme** (`design-system/shehnat/MASTER.md`, `design-system/shehnat/tokens.css`) and the draft brand assets. The production spec (`docs/design-system.md`, `Demo/frontend/tokens.css`) is not the look this mock copies;
 - runs the **agreed workflow** in `business-req/BUSINESS_REQUIREMENTS.md` §5.4 and §11, not the older built one: multiple Shipments, Step plans that drive Stages, Revised terms, the deposit paid from the wallet, four-eyes Settlement, Write-off and Resale, Overrun fill, Shareholder Listings, deposit waiver, Reserve fund, gateway top-ups;
 - lets one person **play every user type** (switching persona in one click) through **every screen**, with **temporary storage** so a journey survives a reload and can be reset;
-- plays the **motion catalogue** in real screens, not in a lab.
+- uses a short fade, and a back move that follows the finger, on the real screens.
 
-What we expect to learn: missing screens or states, actions in the wrong place, flows with too many steps on a phone, figures investors can't understand, rules that feel wrong once clicked through (four-eyes, remainder rule, 14-day auto-withdraw, Overdue), and whether the motion helps or gets in the way.
+What we expect to learn: missing screens or states, actions in the wrong place, flows with too many steps on a phone, figures investors can't understand, rules that feel wrong once clicked through (four-eyes, remainder rule, 14-day auto-withdraw, Overdue), and whether one lead on Home plus the fade helps or hides the work.
 
 ## 2. Shape and how to run it
 
 - **Location:** `MockUI/v4/`, next to v1–v3.
 - **Run:** double-click `MockUI/v4/index.html`. There is no server and no build. It uses classic `<script>` files, not ES modules, so it works from `file://`.
 - **Run on a real phone:** from the repo root, run `python -m http.server 8000` (no dependencies) and open `http://<this computer's LAN IP>:8000/MockUI/v4/` on a phone on the same network. Serving from the root keeps the `../../Demo/frontend/` paths working. `localStorage` is per origin, so the phone and a `file://` session each keep their own state (use export and import to move it).
-- **Reuses the real design system** by relative path: `../../Demo/frontend/tokens.css` and `../../Demo/frontend/brand/*`. Prototype component CSS lives in `v4/proto.css`, starting from the styleguide's reference components.
+- **Uses the paper-column tokens** by relative path: `../v4-plan/design-system/shehnat/tokens.css`. Brand files stay at `../../Demo/frontend/brand/*`. Prototype component CSS lives in `v4/proto.css` and follows `DESIGN-SYSTEM.md`, not the styleguide.
 - **Files:**
 
 | File | Holds |
 |---|---|
-| `index.html` | Shell: header, screen host, tab bar or sidebar, sheet and toast layers, prototype bar |
-| `proto.css` | Components and layouts (from `styleguide.css`, extended) |
+| `index.html` | Shell: masthead (mark and Search), screen host, mode bar or action bar, or the staff side rail from 1024px, sheet and toast layers, prototype bar |
+| `proto.css` | Components and layouts, from `DESIGN-SYSTEM.md` §4 |
 | `logic.js` | **Pure** domain module, with no DOM: money maths (settlement §6.3 and §11.4, projection §6.4), Stage derivation from Steps, validations (IBAN, SWIFT, phone, DOB 18+, blocked countries, listing terms), the permission map, four-eyes checks, and state transitions as `(state, action) → state`. A self-check runs the BR §6.4 and §11.4 worked examples at boot and shows the result in the state inspector. |
 | `store.js` | Temporary storage: load and save the whole state as one JSON object in `localStorage` under the key `shehnat-proto-v4` (*PROTOTYPE, wipe me*). Also seed, reset, export and import, and the simulated clock. |
 | `seed.js` | The demo world: personas, Listings in every status, wallets, history |
-| `motion.js` | The motion catalogue as reusable functions (screen transitions, sheet, count-up, sprout, route, doors, cascade, tab bar, toast), honouring reduced motion. Ported from `styleguide.js`. |
-| `ui.js` | Router, rendering helpers, components (cards, chips, money, forms, sheets, door, route, step board) |
+| `motion.js` | Fade, the back move that follows the finger, and sheet-follow. Reduced motion is a 120ms fade. Not the styleguide catalogue. |
+| `ui.js` | Router, rendering helpers, components (rows, panels, money, forms, sheets, static route, step board) |
 | `screens-public.js`, `screens-investor.js`, `screens-manager.js`, `screens-staff.js` | One file per audience, registering screens |
 | `../v4-plan/PLAN.md`, `../v4-plan/TASKS.md` | This plan and the task register |
 
@@ -52,7 +52,7 @@ A dark floating **prototype bar**, visually distinct from the app, holds:
 | **Fail next action** | The next action that would change state fails instead, so every screen's error state can be seen (loss banner, "Try again"). It resets itself after one failure. |
 | **Skeleton delay** | 400ms (default) or off, so walking the journeys isn't slowed by a skeleton on every screen. |
 | **State inspector** | The drawer described in §2. |
-| **Motion** | System, full or reduced (as in the styleguide). |
+| **Motion** | System, full, or reduced. Reduced is a 120ms fade with no movement. |
 | **Direction** | Left to right or right to left. |
 | **Frame** | A phone frame (390 × 844) on desktop, or full width (so the staff console's ≥1024px layout can be judged). |
 | **Data** | Reset to seed, export JSON, import JSON. |
@@ -89,32 +89,32 @@ Each screen is built with its **loading (skeleton), empty, error and success** s
 
 | ID | Screen | Notes |
 |---|---|---|
-| P1 | Splash | The full logo fades in, then it routes to sign-in or home (no sprout: it is kept for the ceremony moments) |
+| P1 | Splash | The full logo fades in, then it routes to sign-in or home |
 | P2 | Welcome walkthrough (3 slides) | How it works · capital at risk · full transparency. Can be skipped. |
 | P3 | Sign in | Errors: wrong password (attempts left), **locked for 15 minutes**, deactivated |
 | P4 | Create account | "I want to invest" or "I manage shipments". Email, name, password (rules shown as you type) |
 | P5 | Forgot password | Mock only: "a link was sent" |
 | P6 | Notifications centre | Per persona, from state changes (approved, rejected, deposit due, payout, Late…) |
-| P7 | Profile and settings | Personal details (read only after KYC), security, language (Arabic "coming soon"), sign out |
+| P7 | Profile and settings | Opens from You. The title is the person's name. Personal details (read only after KYC), security, language (Arabic "coming soon"), sign out. Notifications (P6) are reached from here |
 | P8 | Risk and legal | Risk disclosure; returns are estimates; operator and country; USD only |
 
 ### Investor (I)
 
 | ID | Screen | Notes |
 |---|---|---|
-| I1 | Home | Wallet panel (count-up), portfolio summary, KYC banner by status, actions due, featured live Listings (cascade) |
+| I1 | Home | One full-bleed lead listing and the top of the next listing, above the bar. KYC banner above the lead when the gate applies. No wallet figure (the balance is I11) |
 | I2 | KYC wizard | Intro → personal → residence (blocked countries left out, with a note) → ID → documents (2 uploads, mock files) → review and declaration → submitted |
 | I3 | KYC status | Pending · rejected (reason + "Fix and resubmit") · approved (success banner). Registration timeline of attempts. |
-| I4 | Explore | Search; filters for category, sourced from, sold in, Shareholder Listing; sort; "almost funded" badge (Overdue is a staff flag and isn't shown to investors) |
-| I5 | Listing detail | Door-opening transition. Tabs: Overview · Shipments and Steps · Figures (every figure, ADR 0004) · Timeline. Shareholder Listing and waiver disclosure. Risk note. |
-| I6 | Invest sheet | Amount; minimum and **exactly-the-remainder** rule; wallet check with a "Top up" shortcut; expected profit (neutral, "expected"); confirm |
-| I7 | Investment confirmed | Sprout ceremony, receipt, "Track this shipment" |
+| I4 | Explore | Inset rows, not cards. Filters for category, sourced from, sold in, Shareholder Listing; sort; "almost funded" as a 14px word (Overdue is a staff flag and isn't shown to investors). Filters do not clip off the row |
+| I5 | Listing detail | Bleed header, then an inset column. No door transition. In-column tabs: Overview · Shipments and Steps · Figures (every figure, ADR 0004) · Timeline. Shareholder Listing and waiver disclosure. Risk note. |
+| I6 | Invest | Task screen: the mode bar leaves. Amount; minimum and **exactly-the-remainder** rule; wallet check with a "Top up" shortcut; expected profit (neutral, "expected"). One action bar: Confirm |
+| I7 | Investment confirmed | Task screen. The receipt fades in. "Track this shipment". No ceremony |
 | I8 | Portfolio | Tabs: active · completed · ended (cancelled, refunded). Per-holding expected or realised result. |
-| I9 | Track a Listing | Route per Shipment (draw and vessel), Stage per Shipment, Late with the revised date, timeline |
+| I9 | Track a Listing | Stage list per Shipment, or a static route with no gold marker and no draw. Late with the revised date, timeline |
 | I10 | Settlement statement | Sale price, costs, gross, fee, net, manager share, pool, **my payout**, other investors anonymised, treasury and Shareholder split where relevant |
-| I11 | Wallet | Balance (count-up), held amount, statement (filter by type), withdrawals list |
-| I12 | Top-up | Amount → mock **payment gateway** sheet → processing → success (credited) or failure. Approved users only. |
-| I13 | Withdraw | Amount; bank country (blocked list), bank name, holder, IBAN or account (checksum and country match), SWIFT (8 or 11 characters, country match); note for ≥ USD 10,000 → held |
+| I11 | Wallet | White panels on paper: balance, held amount, statement (filter by type), withdrawals list. No count-up |
+| I12 | Top-up | Task screen. Amount → mock **payment gateway** sheet → processing → success (credited) or failure. Approved users only. One action bar |
+| I13 | Withdraw | Task screen. Amount; bank country (blocked list), bank name, holder, IBAN or account (checksum and country match), SWIFT (8 or 11 characters, country match); note for ≥ USD 10,000 → held. One action bar |
 | I14 | Withdrawal status | Requested → approved and paid · declined (reason, returned) · payout failed (returned automatically; a hypothesis, see §9) |
 
 ### Manager (M)
@@ -123,14 +123,14 @@ Each screen is built with its **loading (skeleton), empty, error and success** s
 |---|---|---|
 | M1 | Registration wizard | Type (business or individual) → business details → owner or signatory → documents (**differ by type**) → declaration → submitted |
 | M2 | Registration status and gate | "Almost there" gate on every manager screen until approved; pending, rejected (resubmit) or approved |
-| M3 | Overview | Exposure used of the limit (bar), Listings by status, **actions due** (respond to Revised terms, pay deposit by day N, my Steps due, Late), wallet |
+| M3 | Overview | Actions-due list, and one exposure figure in a panel. No ring, no tile scroller, no chart. Listings by status. Actions due: respond to Revised terms, pay deposit by day N, my Steps due, Late |
 | M4 | My Listings | Tabs: drafts · in review · action needed · live · completed · ended |
 | M5 | New Listing wizard | Basics (name, category, sourced from, buyer country (must differ), certificate, **prohibited goods** notice) → Shipments (add or remove; expected cost of goods, expected sale price, planned start) → Step plan → terms (deposit 20–90%, investor share 40–95%, minimum) → preview → save draft or submit |
 | M6 | Step plan editor | Starts from the standard template; add, remove and reorder Steps; owner (manager or staff), duration, planned costs, Stage tag, counterparty; a **Stage coverage check**; copied to each Shipment |
-| M7 | Live preview | Calculated funding target, cycle and expected profit; ROI per cycle and per year; manager's expected share and capital profit; **exposure check** |
+| M7 | Live preview | Calculated funding target, cycle and expected profit; ROI per cycle and per year; manager's expected share and capital profit; **exposure check**. Submit is a task screen: the mode bar leaves |
 | M8 | Listing detail (manager) | A status banner with the next action: edit or delete a draft, withdraw (before live), respond to Revised terms, pay the deposit (days left), funding progress, Shipments and Steps, figures (expected vs actual), settlement result |
 | M9 | Revised terms | Side-by-side **diff** of the reviewer's changes; accept (→ approved) or decline (→ back to edit) |
-| M10 | Pay deposit | Wallet check → top-up shortcut → pay → **goes live** (sprout "Listing is live") |
+| M10 | Pay deposit | Task screen. Wallet check → top-up shortcut → pay → **goes live**, with a fade and a success line. No ceremony |
 | M11 | My Step | A manager-owned Step: counterparty, required documents (upload), mark in progress or done |
 | M12 | Propose a plan change | On a live Listing: add, remove or reorder Steps, durations, owners, tags, costs → sent for approval |
 | M13 | Wallet, top-up, withdraw | Shared with I11–I14 |
@@ -139,16 +139,16 @@ Each screen is built with its **loading (skeleton), empty, error and success** s
 
 | ID | Screen | Notes |
 |---|---|---|
-| S1 | Home | Queues for this role, KPIs (live Listings, raised, treasury, Reserve fund), Overdue and Late counts, the ledger check (owner) |
+| S1 | Home | One next queue item and the start of the next row. The role's figures (live Listings, raised, treasury, Reserve fund, Overdue and Late counts, the owner's ledger check) sit in panels, not a widget grid |
 | S2 | Review queue | Tabs: investors · managers · Listings. Assigned to me, unassigned, all. Assign or clear. |
 | S3 | Application review | Fields, documents (mock viewer, "this view is logged"), blocked-country re-check, history of attempts; approve, or reject with a reason; only the assignee or an owner decides |
 | S4 | Listing review | Terms and calculated figures; **market check** of the expected sale price (required on a Shareholder Listing); the Step plan with **required documents per Step** and Stage coverage; mark the **buyer as a Shareholder** (reviewer or owner); **waive the deposit** (finance or owner); exposure re-check; approve, reject with a reason, or send **Revised terms** |
 | S5 | Revised terms editor | Edit any term or Step, with the diff the manager will see |
 | S6 | Funding overdue | Listings at stage 0 for ≥ 5 days; **fill the remainder from the treasury** or leave it open |
 | S7 | All Listings | Filter by status, Stage, Late, Shareholder; search |
-| S8 | Listing operations | Per Shipment, a **Step board** (to do → in progress → done → verified; blocked; skipped, after a skip request); documents; **pay Step costs from escrow** with proof; **unplanned cost** (→ finance approval); **sale proceeds** (record, shortfall reason); **use proceeds** for a later Shipment (→ finance); **overrun fill** request; **Write-off or Resale** proposal; **cancel** (before goods are bought); **propose settlement** (only when the gate is met) |
+| S8 | Listing operations | Per Shipment, a **Step board** restyled square, with no door colour (to do → in progress → done → verified; blocked; skipped, after a skip request). A column change fades. Documents; **pay Step costs from escrow** with proof; **unplanned cost** (→ finance approval); **sale proceeds** (record, shortfall reason); **use proceeds** for a later Shipment (→ finance); **overrun fill** request; **Write-off or Resale** proposal; **cancel** (before goods are bought); **propose settlement** (only when the gate is met) |
 | S9 | Approvals inbox | Every second-person decision in one place: settlement, overrun fill, unplanned cost, skip a Step, plan change, Write-off or Resale, use of proceeds, Resale to a Shareholder (owner). **The proposer can't approve** (shown, not hidden). |
-| S10 | Settlement approval | The computed breakdown per Contribution; the treasury profit → **Shareholder share and Reserve fund**; approve (payout ceremony across wallets) or send back with a reason |
+| S10 | Settlement approval | The computed breakdown per Contribution; the treasury profit → **Shareholder share and Reserve fund**; approve (payout across wallets, no ceremony) or send back with a reason |
 | S11 | Money | Withdrawals queue (approve with a reference, decline with a reason; **≥ USD 10,000 owner only**), treasury (balance, top-up with reference), platform revenue, **Reserve fund** (owner moves money out, audited) |
 | S12 | Team (owner) | Staff list; add; change role; deactivate (not yourself; can't remove your own owner role) |
 | S13 | Shareholders (owner) | Mark or unmark approved investors and managers; their Shareholder Listings and payouts |
@@ -171,7 +171,7 @@ Each journey must be completable by clicking only, switching persona where the j
 6. **Running the Shipments.** *Sam* moves Steps; *Kerala* completes their own Step with a document; *Wei* verifies the payment Step; Stages advance by themselves; one Step goes Late (clock) → investors see the revised date; *Sam* pays Step costs from escrow; an unplanned cost → *Fatima* approves.
 7. **A problem Shipment.** The buyer rejects Shipment 2 → *Sam* proposes a Resale → *Wei* approves → the new buyer pays the proceeds.
 8. **Overrun.** Costs exceed the capital raised → *Sam* requests an overrun fill → *Fatima* approves → the treasury's Contribution dilutes the others.
-9. **Settlement, four-eyes.** Every Shipment is sold → *Hadi* (owner, who may both propose and approve) proposes settlement → *Hadi* can't approve it ("Needs another staff member to approve") → *Fatima* approves → payout ceremony → Aisha sees her settlement statement and wallet credit.
+9. **Settlement, four-eyes.** Every Shipment is sold → *Hadi* (owner, who may both propose and approve) proposes settlement → *Hadi* can't approve it ("Needs another staff member to approve") → *Fatima* approves → wallets are credited, with no ceremony → Aisha sees her settlement statement and wallet credit.
 10. **Shareholder Listing.** Omar lists with a Shareholder buyer (Layla) → *Priya* records the buyer link and does the market check → *Fatima* waives the deposit → approved → live with a treasury stand-in → … → settlement splits the treasury profit 75% to the Shareholders (shared equally by Omar and Layla, as two different Shareholders) and 25% to the Reserve fund → *Hadi* moves money out of the Reserve fund.
 11. **Withdrawals.** Aisha withdraws USD 2,000 → *Fatima* approves with a reference; Aisha withdraws USD 12,000 → *Fatima* can't → *Hadi* approves; a payout failure (simulated) returns the money.
 12. **Ending early.** A deposit left unpaid for 14 days (clock) → auto-withdrawn; *Sam* cancels a funded Listing before goods are bought → everyone is refunded.
@@ -180,7 +180,7 @@ Each journey must be completable by clicking only, switching persona where the j
 
 ## 7. Motion mapping
 
-The motion map (which of the nine choreographies plays on which screen), the component inventory, navigation per role and the states every screen needs are in [`DESIGN-SYSTEM.md`](DESIGN-SYSTEM.md) §3–§6.
+Navigation, the component inventory, the motion rules, and the states every screen needs are in [`DESIGN-SYSTEM.md`](DESIGN-SYSTEM.md) §3–§6. Motion is a fade and a back move, not a choreography catalogue.
 
 ## 8. Out of scope
 
@@ -199,5 +199,5 @@ Real back-end calls, real payments, a real document viewer (mock files are colou
 These go into `FINDINGS.md` as confirmed or dropped, and only then into BR or the spec.
 
 - **A failed bank payout returns the money to the wallet automatically.** BR §5.6 only has approve and decline.
-- **The sprout plays when a Listing goes live (M10), not when it is approved.** The spec says "Listing approved", but under the agreed workflow approval is followed by paying the deposit, so going live may be the real peak.
-- **The header's end side shows the notifications bell instead of the account.** The spec puts the account there, but the account is already the Profile tab, and notifications have no other home.
+- **One lead on Home is enough to find a listing.** The next listing is only the top of a row. A catalog may still be what people look for.
+- **Notifications under You are findable** without a bell in the masthead. Search is the only masthead action.

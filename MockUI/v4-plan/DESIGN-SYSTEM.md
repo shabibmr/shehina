@@ -1,178 +1,179 @@
 # Mock UI v4: design system
 
-> **PROTOTYPE, throwaway.** This file says how the v4 mock applies the Shehnat design system. The canonical spec is [`docs/design-system.md`](../../docs/design-system.md) (ADR 0005). Where the two disagree, the spec wins. Anything the mock invents here and the walkthrough confirms goes back into the spec.
+> **PROTOTYPE, throwaway.** This file says how the v4 mock applies the paper-column theme. The visual source is [`design-system/shehnat/MASTER.md`](design-system/shehnat/MASTER.md) and [`design-system/shehnat/tokens.css`](design-system/shehnat/tokens.css). [`docs/design-system.md`](../../docs/design-system.md) is the production spec. It still describes the earlier sand, card, and motion system. Where this mock and that spec disagree, the mock follows paper column. Anything the walkthrough confirms goes back as a proposal, not as an automatic edit.
+>
+> **One look.** Investor, manager, and staff use the same paper, ink, and green accent. Staff is denser because the window is wider, not because it has a second theme. There is no Glass look and no look picker.
 >
 > Plan: [`PLAN.md`](PLAN.md) · Tasks: [`TASKS.md`](TASKS.md) (A2 builds these styles, A10 the motion, H1–H3 check them).
 
 ## 1. Sources the mock links or ports
 
-Tokens and brand files are linked in place. Components, motion and icons are ported (copied and adapted), because `styleguide.js` is an ES module and won't load from `file://` next to classic scripts.
+Components and icons are written for this mock. `styleguide.css` and `styleguide.js` are not the visual source. The mock adds no colour, size, radius, or timing of its own. Components use semantic and component tokens (`--color-primary`, `--color-muted-foreground`, `--button-height`), never the primitives (`--color-green-800`, `--color-logo-gold`).
 
 | What | Path from `MockUI/v4/` | Rule |
 |---|---|---|
-| Tokens | `../../Demo/frontend/tokens.css` | Linked first. The mock adds no colour, size, radius, shadow or timing of its own. Components use semantic tokens only (`--action`, `--text-muted`, …), never the primitives (`--green-800`, `--stone-500`, …). |
-| Reference components | `../../Demo/frontend/styleguide.css` | Ported into `proto.css` (button, input, amount input, card, chip, banner, money, shipment card, funding bar, route, sheet, toast, skeleton, empty state, tab bar). |
-| Motion | `../../Demo/frontend/styleguide.js` | `bezier()`, `curve()`, `countUp`, `sprout`, `route`, `openDoor`, `cascade`, `fill`, tab pill and toast are ported into `motion.js`. |
-| Icons | the `ICONS` map in `styleguide.js` | Copied into `ui.js` as inline SVG. New icons are drawn in the same duotone style. |
-| Brand | `../../Demo/frontend/brand/` | `mark.svg` in the header and as the favicon, `logo-full.png` on splash, sign-in and P8 only, `app-icon.svg` as the home-screen icon. |
-| Fonts | Google Fonts: IBM Plex Sans 400/500/600/700, IBM Plex Sans Arabic | The mock works offline with the system font fallback. |
+| Tokens | `../v4-plan/design-system/shehnat/tokens.css` | Linked first. |
+| Rules | `../v4-plan/design-system/shehnat/MASTER.md` | Layout, type, and the six-screen rhythm. This file says which screen uses which rule. |
+| Brand | `../../Demo/frontend/brand/` | `mark.svg` in the masthead and as the favicon. `logo-full.png` on splash, sign-in, and P8 only. `app-icon.svg` as the home-screen icon. Gold inside that artwork stays. It is not an interface colour. |
+| Fonts | Google Fonts: Newsreader 500/600, IBM Plex Sans 400/500/600, IBM Plex Sans Arabic 400/500/600 | The mock works offline with the system font fallback. Arabic, including titles, uses `--font-arabic`. |
 
-If the mock needs a value the tokens don't have, it is a finding: add it to `tokens.css` and the spec, not to `proto.css`. The prototype bar and inspector (§4.3) are exempt, since they are outside the design under test.
+If the mock needs a value the tokens don't have, it is a finding: add it to `design-system/shehnat/tokens.css` and `MASTER.md`, not to `proto.css`. The prototype bar and inspector (§4.3) are exempt, since they are outside the design under test.
 
 ## 2. Decisions the mock must show
 
 | Area | In the mock |
 |---|---|
-| Theme | One light Shehnat theme. No look picker. |
-| Colour | Green `--action` for every primary action, link and focus ring. Gold `--accent` only as decoration (icon second layer, vessel, sprout leaves, glint). Gold text only as `--text-accent` on light or `--text-accent-on-brand` on green. |
-| Surfaces | Sand page, white cards with a 1px `--border`, green `--surface-brand` panels for the wallet and payout hero. Flat: shadows only on sheets, dialogs and toasts. |
-| Money | Realised gain: `--gain`, `+`, ▲ and a word. Realised loss: `--loss`, `−` (U+2212), ▼ and a word. Projections: ink, no arrow, always "expected". Amounts are integer cents in state and formatted on render. |
+| Theme | One light paper-column theme for every role. No look picker, no Glass, no blur, no gradient page. |
+| Colour | Paper page `--color-background`. Ink `--color-foreground`. One accent, `--color-primary` (logo green), for the active section, a text link, the focus ring, and the primary button. `--color-logo-gold` is never used in CSS. Photography may be full colour. |
+| Surfaces | Reading screens are square and flat: no card shadow, no box around the lead. A section rule is 1px `--color-rule`. List rows use the light hairline `--color-border`. Utility panels (wallet, money, a KPI group) are white, 12px radius, no shadow. Do not put a rounded panel on a reading screen. |
+| Money | Realised gain: `--color-gain`, `+`, ▲ and a word. Realised loss: `--color-loss`, `−` (U+2212), ▼ and a word. Projections: ink, no arrow, always "expected". Amounts are integer cents in state and formatted on render. A price is at least 16px. |
 | Numbers | Tabular figures; amounts, percentages, container IDs and IBANs isolated left to right (`.num`, `.money`). |
-| Type | One `h1` per screen; sizes only from `--fs-*`; inputs at 16px or more. |
-| Shape | `--r-md` cards and inputs, `--r-btn` buttons, `--r-lg` sheet tops, `--r-pill` chips only. |
-| Layout | Mobile first at 360px. Investor and manager: one column, max `--w-content` (600px). Staff: one column of cards below 600px, a two-column card grid with the bottom tab bar from 600 to 1023px, and the sidebar plus list and detail (list 360–420px, detail fills the rest, max `--w-console`) from 1024px. |
+| Type | Newsreader for titles, IBM Plex Sans for body, buttons, tabs, and figures. One `h1` per screen. Body is 17px. Nothing a person must read is under 14px. Inputs are 17px. There is no 12px style. |
+| Shape | Reading surfaces and inputs: square. Utility panels and the one primary button: `--radius-panel` (12px). No second radius, no pills on a reading screen. |
+| Layout | Mobile first at 360px. Investor and manager: one inset column, max `--column-max` (600px). Staff: the same column below 1024px. From 1024px, a side rail of the same four sections, then list and detail (list 360–420px, detail fills the rest). |
 | Direction | Logical properties only. The prototype bar flips `dir="rtl"` to prove it. |
-| Touch | Every target at least `--tap` (44px). Primary action in the bottom half of the screen. |
-| Buttons | One primary button per screen; other actions are secondary or ghost. Rejecting, declining and sending back use the danger button (red text and border, never a red fill). On S4, for example: Approve is primary, Revised terms secondary, Reject danger. |
-| Doors | Each Listing's door colour comes from a stable hash of its ID (the six `--door-*` tokens). Every category (Food, Building, Textiles, Energy, Other) has a goods icon; the missing ones (Building, Energy, Other) are drawn in the same duotone style. |
-| Investor view | Every Listing figure is visible to investors (ADR 0004). |
+| Touch | Every target at least `--size-hit` (44px). A primary control is `--size-control` (48px). At least 8px between targets. |
+| Buttons | One primary button on the action bar (solid green, 48px, white label). At most one secondary beside it. Rejecting, declining, and sending back use the danger treatment (loss-coloured text and border, never a filled red button). On S4, for example: Approve is primary, Revised terms secondary, Reject danger. |
+| Lead | A listing lead is one photograph, full bleed, radius 0. If there is no photograph, the lead is one opaque green field with the name in white serif. No door-colour hash and no goods-colour set. |
+| Investor view | Every Listing figure is visible to investors (ADR 0004), including on I5 and I10. |
 | Halal claim | Only inside the logo artwork. No "halal" or "Shariah-compliant" copy anywhere in the mock. |
 
 ## 3. Navigation per role
 
-| Role | Phone tab bar (bottom, 64px + safe area) | ≥ 1024px |
+The mode bar has four sections and only sections. It is opaque paper, 56px plus the safe area, with a 1px ink rule on the top. The active item is green icon and green label. Inactive items are ink. Labels are always shown. There is no pill and no badge.
+
+| Role | Phone mode bar | ≥ 1024px |
 |---|---|---|
 | Visitor | none: splash → welcome → sign in or create account | same, centred at 600px |
-| Investor | Home · Shipments · Wallet · Profile | same, centred at 600px |
-| Manager | Home · My listings · Wallet · Profile | same, centred at 600px |
-| Staff | Queue · Listings · Money · Team (owner) or More | 600–1023px: the same tab bar over a two-column card grid. ≥ 1024px: left sidebar (240px) with the same items plus Shareholders, Users, Settings, Audit log, Ledger |
+| Investor | Home · Shipments · Wallet · You | same, centred at 600px |
+| Manager | Home · Listings · Wallet · You | same, centred at 600px |
+| Staff | Queue · Listings · Money · You | The same four items move into a side rail. No fifth item. |
 
-An account is either an investor or a manager (BR §2), so there is no combined tab bar.
+An account is either an investor or a manager (BR §2), so there is no combined mode bar.
 
-Where each screen lives (a guess to test in the walkthrough):
+A task screen removes the mode bar and shows one action bar in its place. Never both. Task screens are I6, I7, I12, I13, the shared withdraw on M13, M10, and the submit step of M5. Leaving the task brings the mode bar back.
 
-| Tab | Screens |
+Where each screen lives:
+
+| Section | Screens |
 |---|---|
-| Investor: Home | I1, and from it I8 portfolio, I9 track, I10 settlement statement |
-| Investor: Shipments | I4, I5, I6, I7 |
-| Investor and manager: Wallet | I11–I14 (M13) |
-| Investor and manager: Profile | P7, P8, and I2–I3 or M1–M2 |
+| Investor: Home | I1. From a listing: I8 portfolio, I9 track, I10 settlement statement |
+| Investor: Shipments | I4, I5. I6 and I7 are the task, so the mode bar is gone there |
+| Investor and manager: Wallet | I11. I12–I14 are tasks or status pushed from the wallet |
+| Investor and manager: You | P6, P7, P8, and I2–I3 or M1–M2 |
 | Manager: Home | M3, and from its actions due M11 |
-| Manager: My listings | M4–M10, M12 |
-| Staff: Queue | S1, S2–S5, S6, S9, S10 |
+| Manager: Listings | M4–M9, M12. M5's submit step and M10 are tasks |
+| Staff: Queue | S1, S2–S6, S9, S10 |
 | Staff: Listings | S7, S8 |
 | Staff: Money | S11 |
-| Staff: Team (owner) | S12, S13, S14, S15, S16, S17 |
-| Staff: More (other roles) | Profile, S14 users (read only) |
-| Header bell (every signed-in role) | P6 |
+| Staff: You | P6, P7. Owner also reaches S12–S17 from here. Other roles reach S14 read only from here |
 
-- Header: the mark (24px) and "SHEHNAT" on the start side; the wallet pill (investor and manager) and the notifications bell on the end side. The spec puts the account there; the mock uses the bell instead, because the account is already the Profile tab (a hypothesis, PLAN §9). The header respects `env(safe-area-inset-*)`, like the tab bar.
-- The active tab gets the pill behind its icon (choreography 8). Labels are never hidden.
-- Back is in the header on every pushed screen; it plays the screen transition in reverse.
+- Masthead: 56px plus the top safe area, opaque paper, 1px ink rule on the bottom. Start side: the mark at 24px. End side: Search, 44×44px, labelled "Search". No wordmark, no wallet pill, no account icon, no bell. Search is not a fifth section.
+- Home does not replace the masthead with a greeting. The `h1` is the lead listing's name, or the screen title on other section screens.
+- On a pushed screen, Back (44×44, labelled "Back") replaces the mark. The Maker screen (a manager, opened from a listing) uses Back, a centred name, then a 1px ink rule, then listing rows.
+- P6 opens from You. It is not a masthead control.
+- The mode bar is not hard-coded to the bottom edge. From 1024px the staff rail is the same four items moved to the side. Do not draw a bar and a rail together.
+- Back plays the return move in §5.
 
 ## 4. Component inventory
 
-### 4.1 From the spec (port as is)
+### 4.1 Shared
 
 | Component | Used on |
 |---|---|
-| Button (primary, secondary, ghost, danger, disabled; press scale) | every screen |
-| Input, select, amount input (with `$` prefix, minimum and "max 2 decimals" helper) | P3–P5, I2, I6, I12, I13, M1, M5, M6, S5, S11, S15 |
-| Card | every screen |
-| Chip (Live, Pending, Late, Rejected, Shareholder Listing, Awaiting, plus Overdue in the warning colour, as the spec's colour table says) | lists and detail headers |
-| Banner (info, warning, loss) | KYC and registration gates, Revised terms, Overdue, Late, suspension, held payout |
-| Money figure (hero `--fs-44`, key `--fs-34`, with a muted "what and when" line) | I1, I10, I11, M3, M10, S1, S10, S11 |
-| Shipment card with door strip, route line, three KPIs, funding bar, footer line | I4, I8, M4, S7 |
-| Funding bar (`role="progressbar"`) | cards, I5, M8, S6, S8 |
-| Route (curved path, stage dots, gold vessel) | I5, I9, M8, S8 |
-| Bottom sheet (`role="dialog"`, focus trap, Esc and scrim close) | every action with input or a confirmation |
-| Toast (above the tab bar, 2.4s) | after every action, never the only record of money |
-| Skeleton (content-shaped, warm shimmer) | first paint of every screen |
-| Empty state (icon, one sentence, one action) | every list |
+| Button (primary, secondary, danger, disabled). Pressed state changes colour only, no scale | every action bar, and a text link in the column where a button would be a second primary |
+| Input, select, amount input (17px text, square, `$` prefix, minimum and "max 2 decimals" helper) | P3–P5, I2, I6, I12, I13, M1, M5, M6, S5, S11, S15 |
+| Listing row (serif title, 14px meta, optional 56px image, row is the hit target, hairline inset with the column) | I1 next row, I4, I8, M4, S7 |
+| Status word (14px, the status name, not a pill). On a reading screen it sits in the row. Inside a utility panel it may sit on its status background | lists and detail headers |
+| Banner (info, warning, loss). Tinted background, bold lead sentence, the status word | KYC and registration gates, Revised terms, Overdue, Late, suspension, held payout |
+| Money figure (hero 44px, a row price at least 16px, muted 14px "what and when" line). No count-up | I10, I11, M3, M10, S1, S10, S11 |
+| Funding bar (`role="progressbar"`, green fill on the sunken track, no glint) | I5, M8, S6, S8 |
+| Route, static (travelled part green, the rest hairline, no gold marker, no draw) | I5, I9, M8, S8. A stage list is enough when the route does not fit |
+| Bottom sheet (`role="dialog"`, focus trap, Esc and scrim close). Flat ink scrim at 48%, no blur | short confirmations that are not already a task screen |
+| Toast (above the bar, 2.4s) | after a non-money action. Never the only record of money |
+| Skeleton (content-shaped, opacity pulse, still under reduced motion) | first paint of every screen |
+| Empty state (one sentence, one action, no illustration collage) | every list |
 
-### 4.2 New for the mock (style from tokens; propose to the spec if they hold up)
+### 4.2 New for the mock
 
 | Component | Spec | Used on |
 |---|---|---|
-| **More status chips** | Withdrawn and Cancelled: `--surface-sunken` with `--text-muted`, like Pending. Completed: `--surface-brand-subtle` with `--text` and a done icon. Each with its word | lists and detail headers |
-| **Success banner** | Like the spec's banners: `--surface-brand-subtle` background, a 4px start-side rule in `--border-brand`, the done icon, a bold lead sentence in `--text`, `role="status"`. Not `--gain`, which is kept for money results | I3 and M2 approved, settlement completed (S10), a withdrawal paid (I14) |
-| **List row** | 56px minimum (72px with two lines), start icon or door swatch 40px, title `--fs-18` 600, sub line `--fs-14` muted, end slot for an amount or chip, chevron that mirrors in right to left, 1px `--border` divider | I3, I8, I11, I14, M4, S2, S6, S7, S11–S16 |
-| **Segmented tabs** | Sunken track and thumb both `--r-md` (pills stay for chips only), 44px, active thumb white with `--border`; slides with `--ease-spring-soft` | I5 (4 tabs), I8, M8, S7, S11 |
-| **Wizard stepper** | A row of numbered dots joined by a line; done = `--action` filled with a tick, current = `--action` ring, next = `--border-input` ring with a `--text-muted` number. "Step 2 of 5" text beside it for screen readers | I2, M1, M5 |
-| **Upload tile** | Dashed `--border-input` box, 88px, documents icon, "Choose file" button, then the file name, type and size with a remove button. Simulated: stores metadata only | I2, M1, M11, S8 |
-| **Diff row** (Revised terms) | Label, old value struck through in `--text-muted`, arrow (mirrors), new value in `--text` 600 on `--surface-accent-subtle` | M9, S5 |
-| **Step board** | One column per state (To do · In progress · Done · Verified · Blocked · Skipped). Steps that need no verification (BR §5.4 step 8) go from Done straight to counting for their Stage; Done cards that need it show "Awaiting verification". Cards are white with `--r-md`, with Step name, owner, cost and document count. Horizontal scroll on phones with scroll snap; columns side by side from 1024px | S8 (and read-only on I9, M8) |
-| **KPI tile** | Overline label `--fs-12` caps, figure `--fs-22` 700 tabular, muted delta line | S1, M3, S11 |
-| **Data table** (≥ 1024px only) | Header row sunken, 48px rows, numbers end-aligned and tabular, sticky header, row is a link to the detail. Below 1024px the same data renders as list rows | S2, S7, S11, S14, S16, S17 |
+| **Lead** | One full-bleed image under the masthead, radius 0, no stroke. Headline on paper under the image. No photograph: one green field, white serif name. The next row stays fully above the bar | I1, and the header of I5 and M8 |
+| **Utility panel** | White, 12px radius, 16px padding, no shadow. Stacks with 12px between panels. The last row sits inside the panel and above the bar | I11, M3 exposure, S1 figures, S11 |
+| **More status words** | Withdrawn and Cancelled: muted text. Completed: ink plus a done icon. Overdue uses the warning colour. Each is the word, at 14px | lists and detail headers |
+| **Success banner** | `--color-primary-subtle` background, a 4px start-side rule in `--color-primary`, a bold lead sentence, `role="status"`. Not `--color-gain`, which is kept for money results | I3 and M2 approved, settlement completed (S10), a withdrawal paid (I14) |
+| **List row** | 72px when it has two lines, title 22px Newsreader, meta 14px, end slot for an amount or status word, chevron that mirrors, hairline divider | I3, I8, I11, I14, M4, S2, S6, S7, S11–S16 |
+| **Segmented tabs** | In the column, not a second bar. Square, 44px, active face white with a 1px rule. No spring | I5 (4 tabs), I8, M8, S7, S11 |
+| **Wizard stepper** | Numbered dots joined by a line. Done and current use `--color-primary`. Next uses `--color-input`. "Step 2 of 5" text beside it for screen readers. No spring | I2, M1, M5 |
+| **Upload tile** | Square dashed `--color-input` box, 88px, "Choose file", then the file name, type and size with a remove button. Stores metadata only | I2, M1, M11, S8 |
+| **Diff row** (Revised terms) | Label, old value struck through in muted text, arrow (mirrors), new value in ink on `--color-primary-subtle` | M9, S5 |
+| **Step board** | The one staff surface that is not a single column. One column per state (To do · In progress · Done · Verified · Blocked · Skipped). Steps that need no verification (BR §5.4 step 8) go from Done straight to counting for their Stage. Cards are square, white, hairline, with Step name, owner, cost and document count. No door colour. A move between columns fades (§5). Horizontal scroll on phones; columns side by side from 1024px | S8 (read-only summary on I9 and M8 may be a stage list instead) |
+| **KPI line** | 14px label, figure at least 16px, tabular. Not a 12px overline and not a tile grid | S1, M3, S11, inside a utility panel |
+| **Data table** (≥ 1024px only) | Header row sunken, 48px rows, numbers end-aligned and tabular, sticky header, row is a link to the detail. Below 1024px the same data is list rows | S2, S7, S11, S14, S16, S17 |
 | **Timeline** | Vertical line with dots, each entry: time (simulated clock), actor, action, reason | I3, M2, M8, S3, S4, S16 |
-| **Statement block** | Two-column rows of label and amount, totals with a top rule, the final line in `--fs-22` with gain or loss styling | I10, S10 |
-| **Confirm-with-reason sheet** | Sheet with a summary, a required reason field for rejects and Revised terms, and one action button naming the action: primary for approvals ("Approve listing"), danger for rejects, declines and send-backs ("Reject listing") | S3, S4, S5, S9, S10, S14 |
-| **Mock gateway sheet** | A neutral third-party-looking checkout: grey header "Secure payment", no Shehnat green, amount, card field placeholder, "Pay" and "Fail" buttons | I12, M10 |
-| **Phone frame** | Prototype only: a 390 × 844 rounded frame centred on a stone background, toggled from the prototype bar | the whole mock at ≥ 768px |
+| **Statement block** | Two-column rows of label and amount, totals with a top rule, the final line at least 22px with gain or loss styling | I10, S10 |
+| **Action bar** | Opaque paper, same height and safe area as the mode bar, 1px ink rule on top. One primary, at most one secondary, 8px apart. The primary label names the verb and the object ("Confirm investment") | task screens in §3 |
+| **Confirm-with-reason sheet** | Sheet with a summary, a required reason field for rejects and Revised terms, and one action button naming the action | S3, S4, S5, S9, S10, S14 |
+| **Mock gateway sheet** | A neutral third-party-looking checkout: grey header "Secure payment", no Shehnat green, amount, card field placeholder, "Pay" and "Fail" | I12, M10 |
+| **Phone frame** | Prototype only: a 390 × 844 frame centred on a neutral ground, toggled from the prototype bar | the whole mock at ≥ 768px |
 
 ### 4.3 Prototype controls (outside the design under test)
 
 The prototype bar and state inspector must never be mistaken for product UI:
 
-- Ink background (`--ink-900`), monospace labels, a "PROTOTYPE" tag, pinned to the top edge above the app header.
-- No brand green, no motion tokens, no sprout; plain 120ms fades only.
+- Ink background, monospace labels, a "PROTOTYPE" tag, pinned to the top edge above the masthead.
+- No brand green as decoration, no product motion. Plain 120ms fades only.
 - The inspector is a drawer from the end side, 360px wide (full width on phones), with JSON-ish rows: current entity, balances, ledger check (✓ or ✗ with the difference), last 10 audit entries.
 
-## 5. Motion map
+## 5. Motion
 
-The nine choreographies are specified in the spec's motion chapter, including their beats, timings and reduced-motion fallbacks. The mock places them like this:
+Motion explains a change of place. It is not a catalogue.
 
-| Where | Choreography |
+| Where | What plays |
 |---|---|
-| Every push or pop between screens | 1 · shared-axis screen transition (direction-aware, flips in right to left) |
-| Opening a Listing card (I4 → I5, M4 → M8, S7 → S8) | 2 · container doors |
-| Invest, top-up, withdraw, pay deposit, every approve or reject with a reason, Step actions | 3 · bottom sheet |
-| Wallet balances (I1, I11, M3), KPIs (S1), my payout (I10), the final payout line on S10 (not the statement rows: the spec keeps count-up out of tables and lists) | 4 · money count-up, once per figure per session and again when the value changes (as the spec says) |
-| Investment confirmed (I7), Listing live (M10), payout received (I10) | 5 · sprout ceremony (only these three). The spec's second moment is "Listing approved"; the mock uses "Listing live" instead as a hypothesis (PLAN §9). KYC and registration approval get a success banner, and the splash has no sprout. |
-| Track (I9), portfolio cards (I8), Listing detail Shipments tab (I5, M8), operations (S8) | 6 · route progress, and the vessel sailing on to a new Stage |
-| Every list (I4, I8, M4, S2, S6, S7, S11) and funding bars | 7 · cascade and funding fill |
-| Bottom tabs (phones) and sidebar (staff ≥ 1024px) | 8 · tab bar pill |
-| Toasts for every action, skeletons on every screen's first paint (a simulated 400ms delay), button press | 9 · feedback |
-| Step board (S8) | A card moves between columns (a FLIP move, `--dur-slow`, `--ease-standard`); the Stage chip pops when a Stage is reached |
-| Segmented tabs, wizard stepper | Thumb slide and dot fill with `--ease-spring-soft`, `--dur-spring` |
+| Tab and section changes | 160ms fade. No slide |
+| Push to a detail | 160ms fade |
+| Back | The screen follows the finger up to 16px, then finishes. Reduced motion fades |
+| Opening and closing a sheet | The sheet follows the finger. The scrim fades. No bounce |
+| Press | The control's pressed colour, within 100ms. No scale and no layout shift |
+| Step board (S8) | The card fades into the new column. No spring |
+| Skeleton | Opacity pulse. Reduced motion shows still blocks |
 
-Rules carried from the spec:
+Do not play a count-up, a sprout, a door swing, a drawing route, a list cascade, a tab pill, a glint, or a spring. One still lead on Home is the only hero.
 
-- Animate `transform` and `opacity` only (plus SVG `stroke-dashoffset` and the glint's `filter`).
-- Nothing waits for motion: a tap during a transition jumps it to its end state.
-- Figures are correct on the first frame; the count-up only reveals them.
-- Reduced motion comes from the system, or is forced from the prototype bar (system / full / reduced). Under reduced motion every choreography shows its end state, with at most a 120ms crossfade.
-- The sprout plays only on the three ceremony moments above, so it stays special. The spec's other sprout, pull to refresh (choreography 9), is out of scope: the mock's data is local, so there is nothing to refresh.
-- At most one showpiece (count-up, route or sprout) runs at a time; on I10 the sprout plays first and the count-up of "my payout" follows.
+Reduced motion, from the system or forced from the prototype bar, is a 120ms fade. Movement distance becomes 0. A tap during a transition jumps that transition to its end. Figures are final on the first frame.
+
+Animate `transform` and `opacity` only. Nothing waits for motion.
 
 ## 6. States every screen needs
 
 | State | Look |
 |---|---|
-| Loading | Skeleton shaped like the content for a simulated 400ms; no spinners for content |
-| Empty | Duotone icon, one sentence about what will appear, one action |
-| Error | Loss banner with a bold lead sentence and a "Try again" button; field errors under the field, starting with "!", linked with `aria-describedby` |
-| Blocked by a gate | Info banner saying what is missing (KYC, registration, suspension) and one action to fix it |
+| Loading | Skeleton shaped like the content for a simulated 400ms. No spinner in place of content |
+| Empty | One sentence about what will appear, and one action |
+| Error | Loss banner with a bold lead sentence and a "Try again" button. Field errors sit under the field, start with the word "Error", and are linked with `aria-describedby` |
+| Blocked by a gate | Info banner saying what is missing (KYC, registration, suspension) and one action to fix it. On Home the banner sits above the lead |
 | Not allowed (permissions, four-eyes) | The action is replaced by a muted line with the reason ("Needs another staff member to approve"), never a disabled button with no explanation |
-| Success | Toast, plus the sprout on the three ceremony moments, or the success banner (§4.2) where a status changes for good |
+| Success | The task screen shows the result, or a success banner (§4.2) where a status changes for good. A toast may repeat a non-money change. No sprout |
 
 ## 7. Accessibility checks (part of H3)
 
-- Contrast: every text pair from the semantic tokens is at least 4.5:1 (already verified for the tokens); the mock must not put text on `--accent` or on door colours other than white.
-- Keyboard: tab through every screen with a visible 2px `--focus-ring` at a 2px offset; sheets trap focus and return it on close; Esc closes sheets and the inspector.
-- Screen readers: `h1` per screen, landmarks (`header`, `nav`, `main`), `aria-live="polite"` on the toast layer, money changes announced in a polite live region with the final value (count-ups carry it in `aria-label`), progress bars with values, icon-only buttons with `aria-label`.
-- Colour is never the only signal: every chip and money figure has a word or a sign.
-- Widths: 320, 360, 768, 1024 and 1440px with no horizontal scroll, in both directions.
+- Contrast: body and meta on paper `#F7F6F3` and on white panels meet 4.5:1. Large titles may meet 3:1. Do not put text on gold. White text only on the green lead field or the primary button. The pairs are recorded in `MASTER.md`.
+- Keyboard: tab through every screen with a visible 2px `--color-ring` at a 2px offset. Sheets trap focus and return it on close. Esc closes sheets and the inspector.
+- Screen readers: one `h1` per screen, landmarks (`header`, `nav`, `main`), `aria-live="polite"` on the toast layer, money changes announced with the final value, progress bars with values, icon-only buttons with `aria-label`. A decorative icon next to a visible label is hidden.
+- Colour is never the only signal: every status and money figure has a word or a sign.
+- Type grows by wrapping. Tab labels do not grow with the body. Do not disable zoom.
+- Widths: 320, 360, 768, 1024 and 1440px with no horizontal scroll, in both directions. The last row sits above the bar.
 
 ## 8. What the mock should teach the design system
 
 Record these in `FINDINGS.md` during task I1:
 
-- Which of the new components in §4.2 earned a place in the spec.
-- Any token that was missing (a value the mock wanted but `tokens.css` lacked).
-- Whether the motion felt right at real-screen density, especially the doors on every Listing open and the count-up on the first wallet visit of a session.
-- Whether "Listing live" is the right sprout moment for managers (PLAN §9).
-- Whether the bell in the header (instead of the account) works, with the account living in the Profile tab (PLAN §9).
-- Whether the success banner and the extra status chips earned a place in the spec's banner and chip rules.
-- Whether gold-as-decoration held up, or a screen wanted gold text where only `--text-accent` is allowed.
-- Staff console density at 1024px and 1440px.
+- Which of the new components in §4.2 earned a place in `MASTER.md`.
+- Any token that was missing.
+- Whether one lead on Home is enough to find a listing, or whether people look for a catalog.
+- Whether Search in the masthead, with notifications under You, is findable.
+- Whether the wallet panels read as the same system as Home.
+- Whether the S8 step board still feels like one theme.
+- Staff density at 1024px and 1440px with a four-item rail.
+- Whether square reading screens and 12px utility panels stay distinct when a screen mixes a statement and a panel.
