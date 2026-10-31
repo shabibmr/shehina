@@ -543,8 +543,9 @@
     return st ? { shipment: sh, step: st } : null;
   }
 
-  /* next is "done" (default) or "in_progress". doc is { name, type, size } or omitted. */
-  function completeStep(listingId, shipmentId, stepId, doc, next) {
+  /* A manager never changes a step's status; only staff do (setStep). The manager attaches an optional
+     document and tells staff the step is ready. doc is { name, type, size } or omitted. */
+  function sendStep(listingId, shipmentId, stepId, doc) {
     var u = user();
     var row = ownListing(listingId);
     if (!row) return { ok: false, error: "That listing was not found." };
@@ -553,12 +554,12 @@
     if (!hit) return { ok: false, error: "That step was not found." };
     if (hit.step.owner !== "manager") return { ok: false, error: "Error: staff own this step." };
     if (hit.step.state !== "todo" && hit.step.state !== "in_progress") return { ok: false, error: "Error: this step is already " + hit.step.state.replace("_", " ") + "." };
-    var target = next === "in_progress" ? "in_progress" : "done";
-    if (target === "in_progress" && hit.step.state === "in_progress") return { ok: false, error: "Error: this step is already in progress." };
+    if (hit.step.verify && !(doc && doc.name) && !(hit.step.docs || []).length) return { ok: false, error: "Error: attach the required document first." };
+    if (!hit.step.docs) hit.step.docs = [];
     if (doc && doc.name) hit.step.docs.push({ name: String(doc.name), type: doc.type || "", size: doc.size || 0, at: state.now, byId: u.id });
-    hit.step.state = target;
-    row.history.push({ at: state.now, actorId: u.id, action: target === "done" ? "Step done" : "Step started", reason: hit.step.name });
-    audit(u.id, target === "done" ? "Marked step done" : "Started step", row.id, hit.step.name);
+    hit.step.ready = { at: state.now, byId: u.id };
+    row.history.push({ at: state.now, actorId: u.id, action: "Step sent to staff", reason: hit.step.name });
+    audit(u.id, "Sent step to staff", row.id, hit.step.name);
     save();
     return { ok: true };
   }
@@ -937,6 +938,7 @@
       return { ok: true };
     }
     step.state = next === "in_progress" ? "in_progress" : next;
+    delete step.ready;
     if (extra.reason) step.reason = String(extra.reason).trim();
     if (extra.doc) {
       if (!step.docs) step.docs = [];
@@ -1357,7 +1359,7 @@
     assign: assign, decide: decide, invest: invest, topup: topup, withdraw: withdraw,
     saveListing: saveListing, submitListing: submitListing,
     submitManagerApplication: submitManagerApplication, respondTerms: respondTerms, payDeposit: payDeposit,
-    withdrawListing: withdrawListing, deleteDraft: deleteDraft, completeStep: completeStep, proposePlan: proposePlan,
+    withdrawListing: withdrawListing, deleteDraft: deleteDraft, sendStep: sendStep, proposePlan: proposePlan,
     reviewListing: reviewListing, fillOverdue: fillOverdue,
     decideWithdrawal: decideWithdrawal, failWithdrawal: failWithdrawal,
     treasuryTopup: treasuryTopup, moveReserve: moveReserve,

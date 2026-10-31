@@ -61,6 +61,26 @@
           items.push({ href: "#/approvals", title: l.name, meta: "Approval · " + ap.type });
         });
       });
+      /* Ops board step cards: steps a manager sent over come first, then late ones, then the rest. */
+      if (!L.can(actor, "steps")) {
+        var steps = [];
+        Store.state.listings.forEach(function (l) {
+          if (l.status !== "live") return;
+          (l.shipments || []).forEach(function (sh) {
+            (sh.steps || []).forEach(function (st, i) {
+              var s = st.state || "todo";
+              if (s === "done" || s === "verified" || s === "skipped") return;
+              var late = L.isLate(l, sh, i, Store.state.now);
+              if (!st.ready && st.owner === "manager" && !late) return;
+              var rank = st.ready ? 0 : late ? 1 : 2;
+              var meta = l.name + " · " + (st.ready ? "Sent by the manager" : late ? "Late" : s === "blocked" ? "Blocked" : s === "in_progress" ? "In progress" : "To do");
+              steps.push({ rank: rank, href: "#/ops/" + l.id, title: st.name, meta: meta });
+            });
+          });
+        });
+        steps.sort(function (a, b) { return a.rank - b.rank; });
+        items = items.concat(steps);
+      }
       return items;
     }
 
@@ -80,6 +100,8 @@
         var work = workFor(actor);
         var lead = work[0] ? "<a class=\"lead-staff\" href=\"" + work[0].href + "\" data-go=\"" + work[0].href + "\"><span class=\"lead-staff-eyebrow\">Up next</span><span class=\"lead-staff-title\">" + UI.esc(work[0].title) + "</span><span class=\"lead-staff-meta\">" + UI.esc(work[0].meta) + "</span><span class=\"lead-staff-go\" aria-hidden=\"true\">›</span></a>" : "<div class=\"empty\"><p>Nothing is waiting for you.</p></div>";
         var next = work[1] ? rowLink(work[1].href, work[1].title, work[1].meta, "Next") : "";
+        var more = work.slice(2, 8).map(function (w) { return rowLink(w.href, w.title, w.meta); }).join("");
+        if (more) next += "<h2>Also waiting</h2>" + more + (work.length > 8 ? "<p class=\"muted\">" + (work.length - 8) + " more</p>" : "");
         var ledger = "";
         if (actor.role === "owner") {
           var check = L.verify(Store.state.entries);

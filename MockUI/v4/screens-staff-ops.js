@@ -43,7 +43,7 @@
                   return "<button type=\"button\" class=\"btn-text\" data-act=\"move\" data-next=\"" + c[0] + "\" data-ship=\"" + sh.id + "\" data-step=\"" + st.id + "\">" + c[1] + "</button>";
                 }).join(""));
               }
-              return "<article class=\"card\"><p>" + UI.esc(st.name) + (st.verify ? " · Document required" : "") + "</p>" + docs + moves + "</article>";
+              return "<article class=\"card\"><p>" + UI.esc(st.name) + (st.verify ? " · Document required" : "") + (st.ready ? " · <span class=\"chip chip-warn\">Sent by manager</span>" : "") + "</p>" + docs + moves + "</article>";
             }).join("");
             var count = (sh.steps || []).filter(function (st) { return (st.state || "todo") === col[0]; }).length;
             if (!count) return "";
