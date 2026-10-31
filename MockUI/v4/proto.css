@@ -411,3 +411,45 @@ a.bento:focus-visible { outline: 3px solid var(--color-ring); outline-offset: 2p
 .events-expected .event-dot { background: transparent; box-shadow: inset 0 0 0 2px var(--color-border); }
 .events-expected li:not(:last-child)::before { background: transparent; border-inline-start: 2px dashed var(--color-border); width: 0; }
 .events-expected .title { color: var(--color-muted-foreground); }
+
+/* Icons with a job: pending pulses, success pops, errors shake, empty states float. */
+.ico {
+  --ico-spring: cubic-bezier(0.34, 1.3, 0.64, 1);
+  width: 48px; height: 48px; flex: none; border-radius: 50%;
+  display: inline-grid; place-items: center;
+  background: var(--color-surface-sunken); color: var(--color-muted-foreground);
+}
+.ico svg { overflow: visible; }
+.ico-success { background: var(--color-primary-subtle); color: var(--color-primary); }
+.ico-warning { background: var(--color-warning-bg); color: var(--color-warning); }
+.ico-loss { background: var(--color-loss-bg); color: var(--color-loss); }
+.empty > .ico { align-self: center; width: 64px; height: 64px; }
+.empty { text-align: center; align-items: center; }
+.banner.has-ico { display: grid; grid-template-columns: auto 1fr; column-gap: var(--space-3); align-items: start; }
+.banner.has-ico > :not(.ico) { grid-column: 2; }
+.banner.has-ico > .ico { grid-row: 1 / span 6; width: 36px; height: 36px; }
+.ico-sm { display: inline-grid; place-items: center; vertical-align: -2px; margin-inline-end: var(--space-1); }
+.ico-sm.ico-pulse { color: var(--color-warning); }
+.ico-sm.ico-pop { color: var(--color-primary); }
+.ico-sm.ico-shake { color: var(--color-warning); }
+.draw { stroke-dasharray: 40; stroke-dashoffset: 0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .ico-pop { animation: ico-pop var(--duration-move) var(--ico-spring, cubic-bezier(0.34, 1.3, 0.64, 1)) both; }
+  .ico-pop .draw { animation: ico-draw calc(var(--duration-move) * 2) var(--ease-fade) both; animation-delay: var(--duration-fade); }
+  .ico-pulse { animation: ico-pulse var(--duration-pulse) ease-in-out infinite; }
+  .ico-pulse .hand { transform-origin: 12px 12px; animation: ico-spin calc(var(--duration-pulse) * 6) linear infinite; }
+  .ico-shake { animation: ico-shake var(--duration-move) var(--ease-fade) 1 both; }
+  .ico-float { animation: ico-float calc(var(--duration-pulse) * 3) ease-in-out infinite; }
+  .ico .sail { animation: ico-sail calc(var(--duration-pulse) * 2) ease-in-out infinite; }
+  .ico .slide { animation: ico-slide calc(var(--duration-pulse) * 1.5) ease-in-out infinite; }
+  .fab svg, .mode a[aria-current="page"] svg { animation: ico-pop var(--duration-move) var(--ease-fade) both; }
+}
+@keyframes ico-pop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes ico-draw { from { stroke-dashoffset: 40; } to { stroke-dashoffset: 0; } }
+@keyframes ico-pulse { 50% { opacity: 0.55; transform: scale(0.94); } }
+@keyframes ico-spin { to { transform: rotate(360deg); } }
+@keyframes ico-shake { 20% { transform: translateX(-3px); } 40% { transform: translateX(3px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(2px); } }
+@keyframes ico-float { 50% { transform: translateY(-5px); } }
+@keyframes ico-sail { 50% { transform: translateX(2px); } }
+@keyframes ico-slide { 50% { transform: translateY(2px); } }

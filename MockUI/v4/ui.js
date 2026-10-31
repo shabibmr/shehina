@@ -57,7 +57,70 @@
       queue: "<path d=\"M4 5h16v2H4V5Zm0 6h16v2H4v-2Zm0 6h10v2H4v-2Z\"/>",
       money: "<path d=\"M4 7h16v10H4V7Zm8 7a2.2 2.2 0 1 0 0-4.4A2.2 2.2 0 0 0 12 14Z\"/>"
     };
-    return "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\" fill=\"currentColor\">" + (paths[name] || "") + "</svg>";
+    if (paths[name]) return "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\" fill=\"currentColor\">" + paths[name] + "</svg>";
+    return strokeIcon(name, 24);
+  }
+
+  /* Outline icons: drawn with strokes so a check or an arrow can draw itself in. */
+  var STROKES = {
+    check: "<path class=\"draw\" d=\"M5 12.5l4.5 4.5L19 7.5\"/>",
+    clock: "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path class=\"hand\" d=\"M12 7.5V12l3 2\"/>",
+    alert: "<path d=\"M12 4 3 19.5h18L12 4Z\"/><path d=\"M12 10v4.5M12 17.2v.1\"/>",
+    shield: "<path d=\"M12 3.5 5 6v5.5c0 4.2 2.8 7.4 7 9 4.2-1.6 7-4.8 7-9V6l-7-2.5Z\"/><path class=\"draw\" d=\"M9 12l2.2 2.2L15.5 10\"/>",
+    lock: "<rect x=\"5.5\" y=\"10.5\" width=\"13\" height=\"9\" rx=\"1.5\"/><path d=\"M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5\"/>",
+    document: "<path d=\"M7 3.5h7l4 4V20.5H7V3.5Z\"/><path d=\"M14 3.5v4h4M9.5 12h6M9.5 15.5h6\"/>",
+    receipt: "<path d=\"M6.5 3.5h11V21l-2.75-1.8L12 21l-2.75-1.8L6.5 21V3.5Z\"/><path class=\"draw\" d=\"M9.5 8.5h5M9.5 12h5\"/>",
+    upload: "<path d=\"M12 16V5M7.5 9.5 12 5l4.5 4.5M5 19.5h14\"/>",
+    bank: "<path d=\"M3.5 9.5 12 4l8.5 5.5M5.5 10v8M10 10v8M14 10v8M18.5 10v8M4 20h16\"/>",
+    in: "<g class=\"slide\"><path d=\"M12 4.5v12M7.5 12 12 16.5 16.5 12\"/></g><path d=\"M5 20h14\"/>",
+    out: "<g class=\"slide\"><path d=\"M12 19.5v-12M7.5 12 12 7.5 16.5 12\"/></g><path d=\"M5 4h14\"/>",
+    ship: "<g class=\"sail\"><path d=\"M3.5 15h17l-2.2 4.5H5.7L3.5 15Z\"/><path d=\"M12 4.5v9.5M12 5l5 8.5H12\"/></g>",
+    package: "<path d=\"M12 3.5 20 8v8l-8 4.5L4 16V8l8-4.5Z\"/><path d=\"M4 8l8 4.5L20 8M12 12.5v8\"/>",
+    inbox: "<path d=\"M4 13.5 6.5 5h11L20 13.5V19H4v-5.5Z\"/><path d=\"M4 13.5h4.5l1 2.5h5l1-2.5H20\"/>",
+    bell: "<path d=\"M6 17.5V11a6 6 0 0 1 12 0v6.5l1.5 1.5h-15L6 17.5Z\"/><path d=\"M10 21h4\"/>",
+    user: "<circle cx=\"12\" cy=\"8.5\" r=\"3.5\"/><path d=\"M5 20a7 7 0 0 1 14 0\"/>",
+    users: "<circle cx=\"9\" cy=\"9\" r=\"3\"/><path d=\"M3.5 19a5.5 5.5 0 0 1 11 0M16 6.3a3 3 0 0 1 0 5.4M17.5 14a5.5 5.5 0 0 1 3 5\"/>",
+    chart: "<path d=\"M4 20V4M4 20h16\"/><path class=\"draw\" d=\"M7.5 15l3.5-4 3 2.5L19 7.5\"/>",
+    globe: "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M3.5 12h17M12 3.5c2.5 2.5 3.5 5.5 3.5 8.5s-1 6-3.5 8.5c-2.5-2.5-3.5-5.5-3.5-8.5s1-6 3.5-8.5Z\"/>",
+    gear: "<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 3.5v2.5M12 18v2.5M3.5 12H6M18 12h2.5M6 6l1.8 1.8M16.2 16.2 18 18M18 6l-1.8 1.8M7.8 16.2 6 18\"/>",
+    plus: "<path d=\"M12 5v14M5 12h14\"/>",
+    flag: "<path d=\"M6 20.5v-17M6 4.5h11l-2 4 2 4H6\"/>",
+    info: "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 11v5M12 8v.1\"/>",
+    cross: "<path d=\"M6.5 6.5l11 11M17.5 6.5l-11 11\"/>"
+  };
+  function strokeIcon(name, size) {
+    return "<svg viewBox=\"0 0 24 24\" width=\"" + size + "\" height=\"" + size + "\" aria-hidden=\"true\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\">" + (STROKES[name] || "") + "</svg>";
+  }
+
+  /* A larger round icon. motion: "pop" | "pulse" | "shake" | "float" | "" (static). */
+  function badge(name, tone, motion) {
+    return "<span class=\"ico ico-" + (tone || "neutral") + (motion ? " ico-" + motion : "") + "\" aria-hidden=\"true\">" + strokeIcon(name, 28) + "</span>";
+  }
+
+  /* Adds a purposeful icon to empty states, banners and status labels after a screen renders. */
+  function decorate(stage) {
+    stage.querySelectorAll(".empty").forEach(function (el) {
+      if (el.querySelector(".ico")) return;
+      el.insertAdjacentHTML("afterbegin", badge("inbox", "neutral", "float"));
+    });
+    stage.querySelectorAll(".banner").forEach(function (el) {
+      if (el.querySelector(".ico")) return;
+      var kind = el.classList.contains("banner-success") ? ["check", "success", "pop"]
+        : el.classList.contains("banner-loss") ? ["alert", "loss", "shake"]
+        : el.classList.contains("banner-warning") ? ["alert", "warning", "pulse"]
+        : /waiting|pending|review/i.test(el.textContent) ? ["clock", "neutral", "pulse"]
+        : ["info", "neutral", ""];
+      el.classList.add("has-ico");
+      el.insertAdjacentHTML("afterbegin", badge(kind[0], kind[1], kind[2]));
+    });
+    stage.querySelectorAll(".status").forEach(function (el) {
+      if (el.querySelector(".ico-sm")) return;
+      var t = el.textContent.trim().toLowerCase();
+      var kind = /^(pending|in review|in_review|awaiting|proposed|waiting)/.test(t) ? ["clock", "pulse"]
+        : /^(approved|completed|paid|verified|done|live)/.test(t) ? ["check", "pop"]
+        : /^(rejected|late|overdue|failed|cancelled|withdrawn)/.test(t) ? ["alert", "shake"] : null;
+      if (kind) el.insertAdjacentHTML("afterbegin", "<span class=\"ico-sm ico-" + kind[1] + "\" aria-hidden=\"true\">" + strokeIcon(kind[0], 14) + "</span>");
+    });
   }
 
   function screen(def) { screens.push(def); }
@@ -162,6 +225,7 @@
     clearTimeout(timer);
     stage.innerHTML = "";
     hit.def.render(stage, params);
+    decorate(stage);
     var title = screenTitle(hit.def);
     stage.querySelectorAll("h1").forEach(function (h) {
       if (title && h.textContent.trim() === title) h.remove();
@@ -289,7 +353,7 @@
   }
 
   var api = {
-    esc: esc, cname: cname, countryOpts: countryOpts, blockedNote: blockedNote, when: when, money: money, icon: icon,
+    esc: esc, cname: cname, countryOpts: countryOpts, blockedNote: blockedNote, when: when, money: money, icon: icon, badge: badge, decorate: decorate,
     screen: screen, go: go, back: back, toast: toast, openSheet: openSheet, closeSheet: closeSheet, field: field,
     homeFor: homeFor, start: start,
     kpis: kpis, tabs: tabs, fold: fold, menu: menu, sticky: sticky, group: group,
