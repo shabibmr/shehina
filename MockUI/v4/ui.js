@@ -100,10 +100,6 @@
     return true;
   }
 
-  function skeleton() {
-    return "<div class=\"column\"><div class=\"skel skel-lead\"></div><div class=\"skel skel-row\"></div><div class=\"skel skel-row\"></div></div>";
-  }
-
   function screenTitle(def) {
     if (!def || def.title == null) return "";
     var value = typeof def.title === "function" ? def.title(params) : def.title;
@@ -120,7 +116,7 @@
     }
     mast.hidden = false;
     var backBtn = def.back ? "<button class=\"icon-btn\" type=\"button\" data-back aria-label=\"Back\">" + icon("back") + "</button>" : "<a href=\"#/\" data-go=\"" + homeFor(u) + "\" aria-label=\"Shehnat\"><img class=\"mark\" src=\"../../Demo/frontend/brand/mark.svg\" alt=\"\"></a>";
-    var search = u ? "<button class=\"icon-btn\" type=\"button\" data-go=\"#/search\" aria-label=\"Search\">" + icon("search") + "</button>" : "<span></span>";
+    var search = "<span></span>";
     var title = screenTitle(def);
     var mid = title ? "<h1 class=\"mast-title\">" + esc(title) + "</h1>" : "<span></span>";
     mast.innerHTML = backBtn + mid + search;
@@ -162,20 +158,17 @@
     params = hit.params;
     chrome(hit.def);
     var stage = document.getElementById("stage");
+    // Render at once: only the stage is replaced (masthead and tab bar are already updated above), then it fades in.
     clearTimeout(timer);
-    stage.innerHTML = skeleton();
-    timer = setTimeout(function () {
-      if (!guard(hit.def)) return;
-      stage.innerHTML = "";
-      hit.def.render(stage, params);
-      var title = screenTitle(hit.def);
-      stage.querySelectorAll("h1").forEach(function (h) {
-        if (title && h.textContent.trim() === title) h.remove();
-      });
-      Motion.fade(stage);
-      var focus = document.querySelector(".mast-title") || stage.querySelector("h1");
-      if (focus) focus.setAttribute("tabindex", "-1");
-    }, 400);
+    stage.innerHTML = "";
+    hit.def.render(stage, params);
+    var title = screenTitle(hit.def);
+    stage.querySelectorAll("h1").forEach(function (h) {
+      if (title && h.textContent.trim() === title) h.remove();
+    });
+    Motion.fade(stage);
+    var focus = document.querySelector(".mast-title") || stage.querySelector("h1");
+    if (focus) focus.setAttribute("tabindex", "-1");
   }
 
   function toast(text) {
