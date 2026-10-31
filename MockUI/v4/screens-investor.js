@@ -18,6 +18,13 @@
     function mine(listing, id) {
       return (listing.contributions || []).filter(function (c) { return c.userId === id; }).reduce(function (s, c) { return s + c.amount; }, 0);
     }
+    /* Why this shipment is on Home: your own earlier stake, or the company's. */
+    function earlierLine(l) {
+      var u = Store.user();
+      if (u && mine(l, u.id) > 0) return "Invested earlier";
+      var company = (l.contributions || []).some(function (c) { return c.kind === "manager" && c.amount > 0; });
+      return company ? "The company invested earlier" : "";
+    }
     function liveRows() {
       return Store.state.listings.filter(function (l) { return l.status === "live"; });
     }
@@ -54,9 +61,11 @@
         (almost ? "<span class=\"bento-k\">Almost funded</span>" : "") + "</div>" +
         "<div class=\"bento-cell bento-wide\"><span class=\"bento-k\">Turnaround time</span><span class=\"bento-v\">About " + L.cycleDays(l) + " days</span></div>";
     }
-    function row(l, href) {
+    function row(l, href, note) {
       return "<a class=\"bento\" href=\"" + href + "\" data-go=\"" + href + "\">" +
-        "<div class=\"bento-cell bento-wide bento-head\"><div class=\"bento-title\"><span class=\"bento-name\">" + UI.esc(l.name) + "</span><span class=\"bento-k\">" + UI.esc(UI.cname(l.source)) + " to " + UI.esc(UI.cname(l.buyer)) + "</span></div><span class=\"bento-return num\">" + returnRange(l) + "</span></div>" +
+        "<div class=\"bento-cell bento-wide bento-head\"><div class=\"bento-title\"><span class=\"bento-name\">" + UI.esc(l.name) + "</span><span class=\"bento-k\">" + UI.esc(UI.cname(l.source)) + " to " + UI.esc(UI.cname(l.buyer)) + "</span>" +
+        (note ? "<span class=\"bento-k\">" + UI.esc(note) + "</span>" : "") +
+        "</div><span class=\"bento-return num\">" + returnRange(l) + "</span></div>" +
         bentoCells(l) + "</a>";
     }
     function moneyBlock(user, action, unapproved) {
@@ -78,7 +87,7 @@
       var D = ShehnatDash;
       var S = Store.state;
       var bal = Store.bal("user:" + u.id + ":wallet");
-      var invested = 0, expected = 0, realised = 0, capDone = 0, roiW = 0, nextPay = 0, nActive = 0, nDone = 0;
+      var invested = 0, expected = 0, realised = 0, capDone = 0, roiW = 0, nextPay = 0, waiting = 0, nActive = 0, nDone = 0;
       var series = [0], cats = {}, markets = {};
       S.listings.forEach(function (l) {
         var held = mine(l, u.id);
@@ -91,7 +100,9 @@
           if (l.liveAt && L.raised(l) >= L.fundingTarget(l)) {
             var due = l.liveAt + L.cycleDays(l) * L.DAY;
             if (!nextPay || due < nextPay) nextPay = due;
-          }
+          } else { waiting += held; }
+        } else if (l.status !== "rejected" && l.status !== "cancelled") {
+          waiting += held;
         } else if (l.status === "completed") {
           var sale = l.shipments.reduce(function (a, sh) { return a + (sh.proceeds || 0); }, 0);
           var cost = l.shipments.reduce(function (a, sh) { return a + (sh.costActual || 0); }, 0);
@@ -120,7 +131,7 @@
         D.tile({ label: "Expected profit", value: L.formatUsd(expected), sub: invested ? "+" + (expected * 100 / invested).toFixed(1) + "% on invested" : "Invest to start earning", tone: "green", icon: "in" }) +
         D.tile({ label: "Realised profit", value: (realised >= 0 ? "+" : "\u2212") + L.formatUsd(Math.abs(realised)), sub: nDone + " completed", tone: realised >= 0 ? "green" : "red", icon: "check", href: "#/portfolio" }) +
         D.tile({ label: "Avg yearly return", value: invested ? (roiW / invested * 100).toFixed(0) + "%" : "\u2014", sub: "Expected, annualised", tone: "blue", icon: "chart" }) +
-        D.tile({ label: "Next payout", value: nextPay ? UI.when(nextPay) : "\u2014", sub: nextPay ? "Expected date" : "Nothing funded yet", tone: "amber", icon: "clock" }) +
+        D.tile({ label: "Next payout", value: nextPay ? UI.when(nextPay) : (waiting ? "Pending" : "\u2014"), sub: nextPay ? "Expected date" : (waiting ? L.formatUsd(waiting) + " awaiting full funding" : "Nothing funded yet"), tone: "amber", icon: "clock" }) +
         D.tile({ label: "Markets", value: String(Object.keys(markets).length), sub: "Countries your money works in", tone: "blue", icon: "globe" }) +
       "</div>" +
       D.meter({ label: "Capital at work", pct: total ? invested * 100 / total : 0, tone: "green", text: L.formatUsd(invested) + " invested, " + L.formatUsd(bal) + " idle in your wallet" }) +
@@ -150,7 +161,8 @@
           stage.innerHTML = gate(u) + dashboardFor(u) + "<div class=\"column\"><div class=\"empty\"><p>No shipment is open right now.</p><a href=\"#/shipments\" data-go=\"#/shipments\">See shipments</a></div></div>";
           return;
         }
-        stage.innerHTML = gate(u) + dashboardFor(u) + "<a class=\"lead\" href=\"#/listing/" + lead.id + "\" data-go=\"#/listing/" + lead.id + "\"><p class=\"lead-title\">" + UI.esc(lead.name) + "</p></a><div class=\"column\"><a href=\"#/portfolio\" data-go=\"#/portfolio\">Your shipments</a>" + (next ? row(next, "#/listing/" + next.id) : "") + "</div>";
+        var leadNote = earlierLine(lead);
+        stage.innerHTML = gate(u) + dashboardFor(u) + "<a class=\"lead\" href=\"#/listing/" + lead.id + "\" data-go=\"#/listing/" + lead.id + "\"><p class=\"lead-title\">" + UI.esc(lead.name) + "</p>" + (leadNote ? "<p>" + UI.esc(leadNote) + "</p>" : "") + "</a><div class=\"column\"><a href=\"#/portfolio\" data-go=\"#/portfolio\">Your shipments</a>" + (next ? row(next, "#/listing/" + next.id, earlierLine(next)) : "") + "</div>";
       }
     });
 
