@@ -417,10 +417,152 @@
         const val = e.target.value;
         if (window.ShehnatStore) {
           window.ShehnatStore.setActivePersona(val);
+          if (window.ShehnatUI) {
+            window.ShehnatUI.navigateTo(window.location.hash);
+          }
         }
       });
 
-      // 9. Clock Buttons (+1d, +5d, +14d)
+      // 9. Scenarios & Simulated Events Handlers
+      const protoScenario = document.getElementById('protoScenario');
+      if (protoScenario) {
+        protoScenario.addEventListener('change', (e) => {
+          const val = e.target.value;
+          if (!val) return;
+          switch (val) {
+            case 'settle_ready':
+              if (window.ShehnatStore) window.ShehnatStore.setActivePersona('sam');
+              if (window.ShehnatUI) window.ShehnatUI.navigateTo('#/staff/settlement/lst_settle_proposed');
+              break;
+            case 'waiver_listing':
+              if (window.ShehnatStore) window.ShehnatStore.setActivePersona('layla');
+              if (window.ShehnatUI) window.ShehnatUI.navigateTo('#/listing/lst_shareholder');
+              break;
+            case 'overdue_listing':
+              if (window.ShehnatStore) {
+                window.ShehnatStore.setActivePersona('priya');
+                window.ShehnatStore.clock.advanceDays(6);
+              }
+              if (window.ShehnatUI) window.ShehnatUI.navigateTo('#/listing/lst_overdue');
+              break;
+            case 'kyc_rejected':
+              if (window.ShehnatStore) window.ShehnatStore.setActivePersona('dina');
+              if (window.ShehnatUI) window.ShehnatUI.navigateTo('#/investor/profile');
+              break;
+            case 'revised_terms':
+              if (window.ShehnatStore) window.ShehnatStore.setActivePersona('kerala');
+              if (window.ShehnatUI) window.ShehnatUI.navigateTo('#/manager/listings');
+              break;
+            case 'withdraw_large':
+              if (window.ShehnatStore) window.ShehnatStore.setActivePersona('aisha');
+              if (window.ShehnatUI) window.ShehnatUI.navigateTo('#/investor/wallet');
+              break;
+          }
+          e.target.value = '';
+        });
+      }
+
+      const protoEvent = document.getElementById('protoEvent');
+      if (protoEvent) {
+        protoEvent.addEventListener('change', (e) => {
+          const val = e.target.value;
+          if (!val) return;
+          const activePersona = window.ShehnatStore ? window.ShehnatStore.getActivePersona() : null;
+          switch (val) {
+            case 'gw_confirm':
+              if (activePersona && window.ShehnatStore) {
+                const topupCents = 100000;
+                window.ShehnatStore.setState(s => {
+                  const tx = {
+                    id: 'tx_gw_conf_' + Date.now(),
+                    ts: s.simulatedDate,
+                    type: 'deposit_complete',
+                    entries: [
+                      { account: `wallet:${activePersona.id}`, debit: topupCents, credit: 0 },
+                      { account: 'external:gateway', debit: 0, credit: topupCents }
+                    ]
+                  };
+                  s.ledger.push(tx);
+                  s.accounts.wallets[activePersona.id] = (s.accounts.wallets[activePersona.id] || 0) + topupCents;
+                  s.auditLog.unshift({
+                    ts: s.simulatedDate,
+                    actor: 'SYSTEM',
+                    action: 'GATEWAY_CONFIRMED',
+                    details: `Simulated gateway deposit of $1,000 credited to ${activePersona.id}`
+                  });
+                  return s;
+                });
+                if (window.ShehnatUI) window.ShehnatUI.showToast(`Gateway confirmed: $1,000 credited to ${activePersona.name}`);
+              }
+              break;
+            case 'gw_fail':
+              if (window.ShehnatUI) window.ShehnatUI.showToast('Gateway simulation: Payment authorization failed');
+              break;
+            case 'payout_fail':
+              if (activePersona && window.ShehnatStore) {
+                window.ShehnatStore.setState(s => {
+                  const returnCents = 200000;
+                  const tx = {
+                    id: 'tx_payout_fail_' + Date.now(),
+                    ts: s.simulatedDate,
+                    type: 'payout_returned',
+                    entries: [
+                      { account: `wallet:${activePersona.id}`, debit: returnCents, credit: 0 },
+                      { account: 'withdrawals:hold', debit: 0, credit: returnCents }
+                    ]
+                  };
+                  s.ledger.push(tx);
+                  s.accounts.wallets[activePersona.id] = (s.accounts.wallets[activePersona.id] || 0) + returnCents;
+                  s.accounts.hold = Math.max(0, (s.accounts.hold || 0) - returnCents);
+                  s.auditLog.unshift({
+                    ts: s.simulatedDate,
+                    actor: 'SYSTEM',
+                    action: 'PAYOUT_FAILED',
+                    details: `Bank returned $2,000 payout for ${activePersona.id}`
+                  });
+                  return s;
+                });
+                if (window.ShehnatUI) window.ShehnatUI.showToast('Bank payout failed: $2,000 returned to wallet');
+              }
+              break;
+            case 'buyer_paid_full':
+              if (window.ShehnatUI) window.ShehnatUI.showToast('Buyer event: Full purchase proceeds received');
+              break;
+            case 'buyer_paid_short':
+              if (window.ShehnatUI) window.ShehnatUI.showToast('Buyer event: Short proceeds received (shortfall flagged)');
+              break;
+            case 'manager_suspended':
+              if (window.ShehnatStore) {
+                window.ShehnatStore.setState(s => {
+                  const mgr = s.personas.find(p => p.id === 'kerala' || (activePersona && p.id === activePersona.id));
+                  if (mgr) mgr.suspended = true;
+                  s.auditLog.unshift({
+                    ts: s.simulatedDate,
+                    actor: 'SYSTEM',
+                    action: 'MANAGER_SUSPENDED',
+                    details: `Manager ${mgr ? mgr.name : ''} suspended`
+                  });
+                  return s;
+                });
+                if (window.ShehnatUI) window.ShehnatUI.showToast('Manager status: Suspended');
+              }
+              break;
+            case 'country_blocked':
+              if (window.ShehnatStore) {
+                window.ShehnatStore.setState(s => {
+                  if (!s.blockedCountries) s.blockedCountries = ['IR', 'KP', 'SY', 'CU', 'RU', 'BY'];
+                  s.blockedCountries.push('ZZ');
+                  return s;
+                });
+                if (window.ShehnatUI) window.ShehnatUI.showToast('Country policy: Added ZZ to blocked list');
+              }
+              break;
+          }
+          e.target.value = '';
+        });
+      }
+
+      // 10. Clock Buttons (+1d, +5d, +14d)
       document.getElementById('btnClock1').addEventListener('click', () => {
         if (window.ShehnatStore) window.ShehnatStore.clock.advanceDays(1);
       });
@@ -561,6 +703,12 @@
         const initialState = window.ShehnatStore.load();
         renderState(initialState);
         window.ShehnatStore.subscribe(renderState);
+      }
+
+      // Initialize UI & Router
+      if (window.ShehnatUI) {
+        window.ShehnatUI.init();
+        window.ShehnatUI.navigateTo(window.location.hash);
       }
 
       // 13. Keyboard Escape handler for Sheet and Inspector
