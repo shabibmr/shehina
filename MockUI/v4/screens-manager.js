@@ -1131,15 +1131,15 @@
         var note = "";
         if (!yours) note = "<div class=\"banner\" role=\"status\"><strong>Staff own this step.</strong></div>";
         else if (!open) note = "<div class=\"banner\" role=\"status\"><strong>This step is " + esc(stateText(st.state)) + ".</strong></div>";
-        else if (st.verify) note = "<p class=\"muted\">Staff verify this step after you mark it done.</p>";
+        else if (st.ready) note = "<div class=\"banner\" role=\"status\"><strong>Sent to staff " + UI.when(st.ready.at) + ".</strong> Staff will update the status.</div>";
+        else note = "<p class=\"muted\">Staff update the status. Attach any document, then send the step to staff." + (st.verify ? " A document is required." : "") + "</p>";
         stage.innerHTML = "<div class=\"column\"><h1>" + esc(st.name) + "</h1><p>" + esc(l.name) + (l.shipments.length > 1 ? " · Shipment " + (hit.si + 1) : "") + "</p>" + note +
           "<p><span class=\"chip" + (late ? " chip-warn" : "") + "\">" + esc(late ? "Late" : stateText(st.state)) + "</span>" +
           (due ? " <span class=\"muted\">Due " + UI.when(due) + "</span>" : "") + "</p>" +
           "<p class=\"muted\">" + st.days + " days · " + esc(st.party || "No counterparty set") + "</p>" +
           "<section class=\"stack\"><h2>Documents</h2>" + docs +
           (open ? "<label class=\"upload\">Add document<input class=\"sr\" type=\"file\" name=\"doc\" data-live=\"step-file\"></label><p id=\"doc-name\" class=\"muted\">" + (stepDoc ? esc(stepDoc.name) + " will be attached." : "") + "</p>" : "") + "</section>" +
-          (open ? "<div class=\"stack\">" + (st.state === "todo" ? "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"progress\">Mark in progress</button>" : "") +
-            "<button class=\"btn btn-primary\" type=\"button\" data-act=\"done\">Mark done</button></div>" : "") +
+          (open ? "<div class=\"stack\"><button class=\"btn btn-primary\" type=\"button\" data-act=\"send\">" + (st.ready ? "Send again with new document" : "Send to staff") + "</button></div>" : "") +
           "<p>" + link("#/listing-desk/" + l.id, "Back to the listing") + "</p></div>";
       },
       on: function (act, el, params) {
@@ -1153,12 +1153,12 @@
           if (slot) slot.textContent = stepDoc ? stepDoc.name + " will be attached." : "";
           return;
         }
-        if (act !== "progress" && act !== "done") return;
-        var res = Store.completeStep(l.id, hit.sh.id, hit.st.id, act === "done" ? stepDoc : null, act === "progress" ? "in_progress" : "done");
+        if (act !== "send") return;
+        var res = Store.sendStep(l.id, hit.sh.id, hit.st.id, stepDoc);
         if (!res.ok) { UI.toast(res.error); return; }
         stepDoc = null;
-        UI.toast(act === "done" ? "Step marked done" : "Step started");
-        UI.go(act === "done" ? "#/listing-desk/" + l.id : "#/step/" + l.id + "/" + hit.st.id);
+        UI.toast("Sent to staff");
+        UI.go("#/listing-desk/" + l.id);
       }
     });
 

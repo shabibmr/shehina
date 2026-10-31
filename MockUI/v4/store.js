@@ -18,7 +18,46 @@
     save();
   }
 
+  /* Tell the manager, ops and the investors once when a step passes its due date. There is no
+     clock job in the mock, so this runs on every save, including the one at boot. */
+  function scanLate() {
+    if (!state || !L) return;
+    state.listings.forEach(function (row) {
+      if (row.status !== "live") return;
+      (row.shipments || []).forEach(function (sh) {
+        (sh.steps || []).forEach(function (st, i) {
+          if (!L.isLate(row, sh, i, state.now)) return;
+          var due = L.stepDue(row, sh, i);
+          if (st.lateNoted === due) return;
+          st.lateNoted = due;
+          var text = st.name + " for " + row.name + " is late. It was due " + dateText(due) + ".";
+          var people = {};
+          if (row.managerId) people[row.managerId] = text + (st.owner === "manager" ? " Please send it to staff." : " Staff are handling it.");
+          state.users.forEach(function (u) { if (u.role === "ops") people[u.id] = text + " Set a new date or move the step."; });
+          (row.contributions || []).forEach(function (c) {
+            if (c.kind === "investor" && !people[c.userId]) people[c.userId] = text + " Your money stays safe in escrow.";
+          });
+          stakeholders(row).forEach(function (id) { if (!people[id]) people[id] = text + " You are told because you are a stakeholder in this listing."; });
+          Object.keys(people).forEach(function (id) { note(id, people[id]); });
+          row.history.push({ at: state.now, actorId: "system", action: "Step late", reason: st.name });
+        });
+      });
+    });
+  }
+
+  /* People with a stake who are not the manager, ops or an investor: the owner and the buyer shareholder. */
+  function stakeholders(row) {
+    var ids = state.users.filter(function (u) { return u.role === "owner"; }).map(function (u) { return u.id; });
+    if (row.buyerShareholderId && ids.indexOf(row.buyerShareholderId) === -1) ids.push(row.buyerShareholderId);
+    return ids;
+  }
+
+  function dateText(ms) {
+    return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(ms);
+  }
+
   function save() {
+    scanLate();
     if (root.localStorage) root.localStorage.setItem(KEY, JSON.stringify(state));
   }
 
@@ -543,8 +582,9 @@
     return st ? { shipment: sh, step: st } : null;
   }
 
-  /* next is "done" (default) or "in_progress". doc is { name, type, size } or omitted. */
-  function completeStep(listingId, shipmentId, stepId, doc, next) {
+  /* A manager never changes a step's status; only staff do (setStep). The manager attaches an optional
+     document and tells staff the step is ready. doc is { name, type, size } or omitted. */
+  function sendStep(listingId, shipmentId, stepId, doc) {
     var u = user();
     var row = ownListing(listingId);
     if (!row) return { ok: false, error: "That listing was not found." };
@@ -553,12 +593,12 @@
     if (!hit) return { ok: false, error: "That step was not found." };
     if (hit.step.owner !== "manager") return { ok: false, error: "Error: staff own this step." };
     if (hit.step.state !== "todo" && hit.step.state !== "in_progress") return { ok: false, error: "Error: this step is already " + hit.step.state.replace("_", " ") + "." };
-    var target = next === "in_progress" ? "in_progress" : "done";
-    if (target === "in_progress" && hit.step.state === "in_progress") return { ok: false, error: "Error: this step is already in progress." };
+    if (hit.step.verify && !(doc && doc.name) && !(hit.step.docs || []).length) return { ok: false, error: "Error: attach the required document first." };
+    if (!hit.step.docs) hit.step.docs = [];
     if (doc && doc.name) hit.step.docs.push({ name: String(doc.name), type: doc.type || "", size: doc.size || 0, at: state.now, byId: u.id });
-    hit.step.state = target;
-    row.history.push({ at: state.now, actorId: u.id, action: target === "done" ? "Step done" : "Step started", reason: hit.step.name });
-    audit(u.id, target === "done" ? "Marked step done" : "Started step", row.id, hit.step.name);
+    hit.step.ready = { at: state.now, byId: u.id };
+    row.history.push({ at: state.now, actorId: u.id, action: "Step sent to staff", reason: hit.step.name });
+    audit(u.id, "Sent step to staff", row.id, hit.step.name);
     save();
     return { ok: true };
   }
@@ -912,6 +952,31 @@
     return { ok: true };
   }
 
+  /* Staff give a late (or any open) step a new target date and everyone involved is told. */
+  function setStepDate(listingId, shipmentId, stepId, ms, reason) {
+    var gate = need("steps");
+    if (gate.error) return fail(gate.error);
+    var row = listing(listingId);
+    var shipment = row && shipmentById(row, shipmentId);
+    var step = shipment && stepById(shipment, stepId);
+    if (!step) return fail("That step was not found.");
+    if (row.status !== "live") return fail("Error: dates can only change while the listing is live.");
+    if (step.state === "done" || step.state === "verified" || step.state === "skipped") return fail("Error: this step is already finished.");
+    if (!Number.isFinite(ms) || ms <= state.now) return fail("Error: choose a date in the future.");
+    step.revisedAt = ms;
+    delete step.ready;
+    var text = "New date for " + step.name + " on " + row.name + ": " + dateText(ms) + (reason ? ". " + reason : ".");
+    var told = {};
+    if (row.managerId) told[row.managerId] = true;
+    (row.contributions || []).forEach(function (c) { if (c.kind === "investor") told[c.userId] = true; });
+    stakeholders(row).forEach(function (id) { told[id] = true; });
+    Object.keys(told).forEach(function (id) { note(id, text); });
+    row.history.push({ at: state.now, actorId: gate.actor.id, action: "New step date", reason: step.name + " · " + dateText(ms) });
+    audit(gate.actor.id, "Set new step date", row.id, step.name + " " + dateText(ms));
+    save();
+    return { ok: true };
+  }
+
   function setStep(listingId, shipmentId, stepId, next, extra) {
     var gate = need("steps");
     if (gate.error) return fail(gate.error);
@@ -937,6 +1002,7 @@
       return { ok: true };
     }
     step.state = next === "in_progress" ? "in_progress" : next;
+    delete step.ready;
     if (extra.reason) step.reason = String(extra.reason).trim();
     if (extra.doc) {
       if (!step.docs) step.docs = [];
@@ -1357,7 +1423,7 @@
     assign: assign, decide: decide, invest: invest, topup: topup, withdraw: withdraw,
     saveListing: saveListing, submitListing: submitListing,
     submitManagerApplication: submitManagerApplication, respondTerms: respondTerms, payDeposit: payDeposit,
-    withdrawListing: withdrawListing, deleteDraft: deleteDraft, completeStep: completeStep, proposePlan: proposePlan,
+    withdrawListing: withdrawListing, deleteDraft: deleteDraft, sendStep: sendStep, setStepDate: setStepDate, proposePlan: proposePlan,
     reviewListing: reviewListing, fillOverdue: fillOverdue,
     decideWithdrawal: decideWithdrawal, failWithdrawal: failWithdrawal,
     treasuryTopup: treasuryTopup, moveReserve: moveReserve,
