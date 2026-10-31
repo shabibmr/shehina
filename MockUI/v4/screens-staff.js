@@ -78,7 +78,7 @@
         var overdueN = listings.filter(function (l) { return L.overdue(l, Store.state.now, Store.state.settings.overdueDays); }).length;
         var lateN = listings.filter(listingLate).length;
         var work = workFor(actor);
-        var lead = work[0] ? "<a class=\"lead\" href=\"" + work[0].href + "\" data-go=\"" + work[0].href + "\"><p class=\"lead-title\">" + UI.esc(work[0].title) + "</p><p>" + UI.esc(work[0].meta) + "</p></a>" : "<div class=\"empty\"><p>Nothing is waiting for you.</p></div>";
+        var lead = work[0] ? "<a class=\"lead-staff\" href=\"" + work[0].href + "\" data-go=\"" + work[0].href + "\"><span class=\"lead-staff-eyebrow\">Up next</span><span class=\"lead-staff-title\">" + UI.esc(work[0].title) + "</span><span class=\"lead-staff-meta\">" + UI.esc(work[0].meta) + "</span><span class=\"lead-staff-go\" aria-hidden=\"true\">›</span></a>" : "<div class=\"empty\"><p>Nothing is waiting for you.</p></div>";
         var next = work[1] ? rowLink(work[1].href, work[1].title, work[1].meta, "Next") : "";
         var ledger = "";
         if (actor.role === "owner") {

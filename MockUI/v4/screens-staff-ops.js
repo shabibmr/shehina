@@ -45,17 +45,28 @@
               }
               return "<article class=\"card\"><p>" + UI.esc(st.name) + (st.verify ? " · Document required" : "") + "</p>" + docs + moves + "</article>";
             }).join("");
-            return "<section><h2>" + col[1] + "</h2>" + cards + "</section>";
+            var count = (sh.steps || []).filter(function (st) { return (st.state || "todo") === col[0]; }).length;
+            if (!count) return "";
+            return "<section class=\"board-col\"><h3>" + col[1] + " <span class=\"board-count\">" + count + "</span></h3>" + cards + "</section>";
           }).join("");
-          return "<h2>" + UI.esc(sh.id) + "</h2><div class=\"board\" id=\"board-" + sh.id + "\">" + cols + "</div>";
+          var total = (sh.steps || []).length;
+          var finished = (sh.steps || []).filter(function (st) { return st.state === "done" || st.state === "verified" || st.state === "skipped"; }).length;
+          return "<section class=\"ops-ship\"><div class=\"ops-ship-head\"><h2>" + UI.esc(sh.id) + "</h2><span class=\"muted num\">" + finished + " of " + total + " steps complete</span></div>" +
+            "<div class=\"bar\" aria-hidden=\"true\"><i style=\"width:" + (total ? Math.round(finished * 100 / total) : 0) + "%\"></i></div>" +
+            "<div class=\"board\" id=\"board-" + sh.id + "\">" + cols + "</div></section>";
         }).join("");
+        var target = L.fundingTarget(l);
+        var summary = "<div class=\"ops-summary\"><div><span class=\"muted\">Status</span><b>" + UI.esc(String(l.status).replace(/_/g, " ")) + "</b></div>" +
+          "<div><span class=\"muted\">Raised</span><b class=\"num\">" + L.formatUsd(L.raised(l)) + "</b></div>" +
+          "<div><span class=\"muted\">Target</span><b class=\"num\">" + L.formatUsd(target) + "</b></div>" +
+          "<div><span class=\"muted\">Shipments</span><b class=\"num\">" + (l.shipments || []).length + "</b></div></div>";
         var actions = UI.group("Money", "<div class=\"kpis\">" +
           "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"step-cost\">Step cost</button>" + "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"unplanned\">Unplanned cost</button>" + "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"proceeds\">Sale proceeds</button>" + "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"use-proceeds\">Use proceeds</button>" + "</div>") +
           UI.group("Resolve", "<div class=\"kpis\">" + "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"overrun\">Overrun fill</button>" + "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"writeoff\">Write-off</button>" + "<button class=\"btn btn-secondary\" type=\"button\" data-act=\"sheet\" data-kind=\"resale\">Resale</button>" + "</div>") +
           "<div class=\"danger-zone\">" + "<button class=\"btn btn-danger\" type=\"button\" data-act=\"sheet\" data-kind=\"cancel\">Cancel listing</button>" + "</div>";
         var settle = "";
         if (!L.can(actor, "propose-settlement")) settle = UI.sticky("<a class=\"btn btn-primary\" href=\"#/settlement/" + l.id + "\" data-go=\"#/settlement/" + l.id + "\">Settlement</a>");
-        stage.innerHTML = "<div class=\"column\"><h1>" + UI.esc(l.name) + "</h1><p id=\"viewer\" class=\"muted\"></p>" + boards + actions + settle + "</div>";
+        stage.innerHTML = "<div class=\"column column-wide\"><h1>" + UI.esc(l.name) + "</h1>" + summary + "<p id=\"viewer\" class=\"muted\"></p>" + boards + "<div class=\"ops-actions\">" + actions + "</div>" + settle + "</div>";
         var board = stage.querySelector(".board");
         if (board && root.ShehnatMotion) root.ShehnatMotion.fade(board);
       },
