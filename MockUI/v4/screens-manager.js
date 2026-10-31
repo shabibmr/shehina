@@ -59,6 +59,22 @@
       }).join("");
     }
 
+    function eventTrack(rows) {
+      var list = (rows || []).slice().reverse();
+      if (!list.length) return "<p class=\"muted\">No history yet.</p>";
+      return "<ol class=\"events\">" + list.map(function (h, i) {
+        var who = h.actorId ? Store.byId(h.actorId) : null;
+        var bad = /reject|withdr|cancel|return|late/i.test(h.action);
+        var good = /approv|live|complet|fund|verif|paid/i.test(h.action);
+        var cls = bad ? "bad" : good ? "good" : "";
+        var mark = bad ? "!" : good ? "&#10003;" : "&bull;";
+        return "<li class=\"" + cls + (i === 0 ? " latest" : "") + "\"><span class=\"event-dot\" aria-hidden=\"true\">" + mark + "</span><div class=\"event-body\">" +
+          "<p class=\"event-when\">" + UI.when(h.at) + "</p><p class=\"title\">" + esc(h.action) + "</p>" +
+          (h.reason ? "<p class=\"muted\">" + esc(h.reason) + "</p>" : "") +
+          "<p class=\"meta\">" + esc(who ? who.name : "You") + "</p></div></li>";
+      }).join("") + "</ol>";
+    }
+
     function notFound(stage, text, href, label) {
       stage.innerHTML = "<div class=\"column\"><div class=\"empty\"><p>" + esc(text) + "</p>" + link(href || "#/listings", label || "Back to listings") + "</div></div>";
     }
@@ -750,16 +766,24 @@
       var live = l.status === "live";
       return l.shipments.map(function (sh, si) {
         var stageN = L.shipmentStage(l, sh);
-        var rows = sh.steps.map(function (st, i) {
+        var doneN = 0;
+        var items = sh.steps.map(function (st, i) {
+          var finished = st.state === "done" || st.state === "verified" || st.state === "skipped";
+          if (finished) doneN++;
           var open = live && st.owner === "manager" && (st.state === "todo" || st.state === "in_progress");
           var due = L.stepDue(l, sh, i);
           var late = L.isLate(l, sh, i, Store.state.now);
+          var cls = finished ? "done" : late ? "late" : st.state === "in_progress" ? "now" : "todo";
+          var dot = finished ? "&#10003;" : late ? "!" : String(i + 1);
           var meta = (st.owner === "manager" ? "You" : "Staff") + " · " + st.days + " days" + (due ? " · due " + UI.when(due) : "") + (st.tag ? " · " + st.tag : "");
-          var inner = "<span class=\"title\">" + esc(st.name) + "</span><span class=\"meta\">" + esc(meta) + "</span><span class=\"end status" + (late ? " status-warning" : "") + "\">" + esc(late ? "Late" : stateText(st.state)) + "</span>";
-          if (open) return "<a class=\"row\" href=\"#/step/" + l.id + "/" + st.id + "\" data-go=\"#/step/" + l.id + "/" + st.id + "\">" + inner + "</a>";
-          return "<div class=\"row\">" + inner + "</div>";
+          var inner = "<span class=\"track-dot\" aria-hidden=\"true\">" + dot + "</span><span class=\"track-body\"><span class=\"title\">" + esc(st.name) + "</span><span class=\"meta\">" + esc(meta) + "</span></span><span class=\"track-state status" + (late ? " status-warning" : "") + "\">" + esc(late ? "Late" : stateText(st.state)) + "</span>";
+          if (open) return "<li class=\"" + cls + "\"><a href=\"#/step/" + l.id + "/" + st.id + "\" data-go=\"#/step/" + l.id + "/" + st.id + "\">" + inner + "</a></li>";
+          return "<li class=\"" + cls + "\"><div>" + inner + "</div></li>";
         }).join("");
-        return "<section class=\"stack\"><h2>Shipment " + (si + 1) + "</h2><p class=\"muted\">" + L.formatUsd(sh.goods) + " goods · " + esc(L.STAGES[stageN]) + "</p>" + rows + "</section>";
+        var pct = sh.steps.length ? Math.round(doneN * 100 / sh.steps.length) : 0;
+        return "<section class=\"stack\"><h2>Shipment " + (si + 1) + "</h2><p class=\"muted\">" + L.formatUsd(sh.goods) + " goods · " + esc(L.STAGES[stageN]) + "</p>" +
+          "<div class=\"progress\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"" + pct + "\" aria-label=\"Steps done\"><i style=\"width:" + pct + "%\"></i></div>" +
+          "<p class=\"meta\">" + doneN + " of " + sh.steps.length + " steps done</p><ol class=\"track\">" + items + "</ol></section>";
       }).join("");
     }
 
@@ -811,9 +835,9 @@
         stage.innerHTML = "<div class=\"column\"><h1>" + esc(l.name) + "</h1>" +
           "<p class=\"muted\">" + esc(UI.cname(l.source)) + " to " + esc(UI.cname(l.buyer)) + " · " + STATUS[st] + "</p>" + banner +
           (action ? "<div class=\"stack\">" + action + "</div>" : "") +
-          UI.tabs([["overview", "Overview"], ["shipments", "Shipments"], ["history", "History"]], deskTab, "desktab") +
+          UI.tabs([["overview", "Overview"], ["shipments", "Shipments"], ["history", "Timeline"]], deskTab, "desktab") +
           (deskTab === "overview" ? figuresPanel(l) : "") + (deskTab === "shipments" ? shipmentsPanel(l) : "") +
-          (deskTab === "history" ? (hist ? "<ol class=\"timeline\">" + hist + "</ol>" : "<p class=\"muted\">No history yet.</p>") : "") + "</div>";
+          (deskTab === "history" ? eventTrack(l.history) : "") + "</div>";
       },
       on: function (act, el, params) {
         var l = mine(params.id);
