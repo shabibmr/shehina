@@ -104,12 +104,18 @@
       { transform: 'translateX(0)', opacity: 1 }
     ], { duration: d, delay: d * 0.25, easing: css('--ease-enter') || 'ease-out' });
 
-    a.finished.then(() => {
+    let doneCalled = false;
+    const finish = () => {
+      if (doneCalled) return;
+      doneCalled = true;
       fromEl.hidden = true;
       fromEl.style.zIndex = '';
       toEl.style.zIndex = '';
       if (onDone) onDone();
-    }).catch(() => {});
+    };
+
+    a.finished.then(finish).catch(finish);
+    setTimeout(finish, d + 60);
   }
 
   // --------------------------------------------------------------------------

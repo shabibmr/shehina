@@ -305,10 +305,7 @@
   // --------------------------------------------------------------------------
   // 6. Navigation Execution & Transitions
   // --------------------------------------------------------------------------
-  let navigating = false;
-
   function navigateTo(hash, isBack = false) {
-    if (navigating) return;
     const targetHash = hash || '#/';
     const match = matchRoute(targetHash);
     const host = document.getElementById('screenHost');
@@ -319,19 +316,14 @@
 
     // Fallback: If route not found or root, decide default based on role
     if (!match || targetHash === '#/' || targetHash === '') {
-      if (role === 'investor') {
-        window.location.hash = '#/investor/home';
-        return;
-      } else if (role === 'manager') {
-        window.location.hash = '#/manager/home';
-        return;
-      } else if (role.startsWith('staff')) {
-        window.location.hash = '#/staff/queue';
-        return;
-      } else {
-        window.location.hash = '#/welcome';
-        return;
-      }
+      let defaultRoute = '#/welcome';
+      if (role === 'investor') defaultRoute = '#/investor/home';
+      else if (role === 'manager') defaultRoute = '#/manager/home';
+      else if (role.startsWith('staff')) defaultRoute = '#/staff/queue';
+
+      window.location.hash = defaultRoute;
+      navigateTo(defaultRoute, isBack);
+      return;
     }
 
     const { config, params } = match;
@@ -369,14 +361,15 @@
     // Update Look & Navigation
     updateLookAndNav(persona, config, targetHash);
 
-    // Prepare transition elements
+    // Prepare transition elements: clean any stale children
+    while (host.children.length > 1) {
+      host.firstElementChild.remove();
+    }
     const oldScreen = host.firstElementChild;
     const newScreen = document.createElement('div');
     newScreen.className = 'screen-view';
     newScreen.setAttribute('role', 'region');
     newScreen.setAttribute('aria-label', config.title || 'Screen');
-
-    navigating = true;
 
     // Render screen content
     const state = window.ShehnatStore ? window.ShehnatStore.getState() : {};
@@ -387,8 +380,8 @@
       host.appendChild(newScreen);
       if (window.ShehnatMotion) {
         window.ShehnatMotion.navigate(oldScreen, newScreen, isBack);
-      } else {
-        if (oldScreen) oldScreen.remove();
+      } else if (oldScreen) {
+        oldScreen.remove();
       }
 
       setTimeout(() => {
@@ -396,7 +389,6 @@
         config.render(newScreen, params, state, persona);
         if (window.ShehnatMotion) window.ShehnatMotion.cascade(newScreen);
         if (oldScreen && oldScreen.parentNode) oldScreen.remove();
-        navigating = false;
       }, 400);
     } else {
       config.render(newScreen, params, state, persona);
@@ -404,11 +396,9 @@
       if (window.ShehnatMotion && oldScreen) {
         window.ShehnatMotion.navigate(oldScreen, newScreen, isBack, () => {
           if (oldScreen && oldScreen.parentNode) oldScreen.remove();
-          navigating = false;
         });
-      } else {
-        if (oldScreen) oldScreen.remove();
-        navigating = false;
+      } else if (oldScreen) {
+        oldScreen.remove();
       }
     }
   }
@@ -447,6 +437,7 @@
       actionsEl.innerHTML = '';
       if (opts.confirmText !== false) {
         const btnConfirm = document.createElement('button');
+        btnConfirm.id = 'btnSheetConfirm';
         btnConfirm.className = `btn ${opts.isDanger ? 'btn-danger' : 'btn-primary'}`;
         btnConfirm.textContent = opts.confirmText || 'Confirm';
         btnConfirm.onclick = () => {
@@ -457,6 +448,7 @@
       }
       if (opts.cancelText !== false) {
         const btnCancel = document.createElement('button');
+        btnCancel.id = 'btnSheetCancel';
         btnCancel.className = 'btn btn-secondary';
         btnCancel.textContent = opts.cancelText || 'Cancel';
         btnCancel.onclick = () => {
@@ -608,6 +600,13 @@
     openGatewaySheet,
     showToast,
     init,
+    navigate(hash) {
+      if (window.location.hash === hash) {
+        navigateTo(hash);
+      } else {
+        window.location.hash = hash;
+      }
+    },
     get currentRoute() { return currentRoute; },
     get activeParams() { return activeParams; }
   };

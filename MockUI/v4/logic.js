@@ -513,6 +513,10 @@
     },
 
     // Remainder Rule for Investment (BR §6.2)
+    validateRemainderRule(amt, rem, min) {
+      return this.validateInvestment({ amount: amt, remaining: rem, minimum: min, walletBalance: Infinity });
+    },
+
     validateInvestment({ amount, minimum, remaining, walletBalance }) {
       const amt = Number(amount) || 0;
       const min = Number(minimum) || 0;
