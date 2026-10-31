@@ -21,7 +21,7 @@
           if ((location.hash || "#/") !== "#/") return;
           var u = Store.user();
           if (u) UI.go(UI.homeFor(u));
-          else UI.go(Store.state.welcomeSeen ? "#/sign-in" : "#/welcome");
+          else UI.go("#/sign-in");
         }, 700);
       }
     });
@@ -38,6 +38,8 @@
       title: function () { return slides[slide][0]; },
       test: function (h) { return h === "#/welcome" ? {} : null; },
       render: function (stage) {
+        /* The intro slides are skipped: the welcome link and the splash both go straight to sign-in. */
+        var who = Store.user(); Store.seeWelcome(); slide = 0; UI.go(who ? UI.homeFor(who) : "#/sign-in"); return;
         var s = slides[slide];
         stage.innerHTML = "<div class=\"column\"><p class=\"muted\">" + (slide + 1) + " of 3</p><h1>" + s[0] + "</h1><p>" + s[1] + "</p><button class=\"btn btn-primary\" type=\"button\" data-act=\"next\">" + (slide === 2 ? "Continue" : "Next") + "</button><button class=\"btn-text\" type=\"button\" data-act=\"skip\">Skip</button></div>";
       },
