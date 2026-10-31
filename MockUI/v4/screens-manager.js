@@ -380,12 +380,12 @@
           var many = x.l.shipments.length > 1 ? " · Shipment " + (x.si + 1) : "";
           rows.push(dueRow("#/step/" + x.l.id + "/" + x.st.id, x.st.name + " · " + x.l.name, (x.late ? "This step is late." : "Your step.") + many, x.late ? "Late" : "Step", x.late));
         });
-        var create = approved(u) ? "<p>" + link("#/list/new", "Create new listing", "btn btn-primary") + "</p>" : "";
-        stage.innerHTML = "<div class=\"column\"><h1>" + esc(u.name) + "</h1>" + gate(u) +
+        var fab = approved(u) ? link("#/list/new", "Post Shipment", "btn btn-primary fab") : "";
+        stage.innerHTML = "<div class=\"column" + (fab ? " has-fab" : "") + "\"><h1>" + esc(u.name) + "</h1>" + gate(u) +
           "<section class=\"panel stack\"><h2>Exposure</h2><p class=\"figure num\">" + L.formatUsd(used) + "</p>" +
           "<p class=\"muted\">used of your <span class=\"num\">" + L.formatUsd(limitOf(u)) + "</span> limit</p></section>" +
           "<section class=\"stack\"><h2>Actions due</h2>" + (rows.join("") || "<p>Nothing needs you right now.</p>") + "</section>" +
-          create + "<p>" + link("#/listings", "All my listings") + "</p></div>";
+          "<p>" + link("#/listings", "All my listings") + "</p></div>" + fab;
       }
     });
 
@@ -423,10 +423,10 @@
           return "<a class=\"row\" href=\"" + href + "\" data-go=\"" + href + "\"><span class=\"title\">" + esc(l.name) + "</span><span class=\"meta\">" +
             L.formatUsd(L.fundingTarget(l)) + " target</span><span class=\"end status\">" + STATUS[l.status] + "</span></a>";
         }).join("");
-        stage.innerHTML = "<div class=\"column\"><h1>Listings</h1>" + gate(u) +
-          (approved(u) ? "<p>" + link("#/list/new", "Create new listing", "btn btn-primary") + "</p>" : "") +
+        var fab = approved(u) ? link("#/list/new", "Post Shipment", "btn btn-primary fab") : "";
+        stage.innerHTML = "<div class=\"column" + (fab ? " has-fab" : "") + "\"><h1>Listings</h1>" + gate(u) +
           "<div class=\"tabs\" role=\"tablist\">" + tabs + "</div>" +
-          (rows || "<div class=\"empty\"><p>Nothing is in this list yet.</p></div>") + "</div>";
+          (rows || "<div class=\"empty\"><p>Nothing is in this list yet.</p></div>") + "</div>" + fab;
       },
       on: function (act, el) {
         if (act === "tab") { listTab = el.getAttribute("data-tab"); UI.go("#/listings"); }

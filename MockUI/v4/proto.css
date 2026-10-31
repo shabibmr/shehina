@@ -140,6 +140,12 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .btn-primary:active { background: var(--button-bg-active); transform: translateY(1px); box-shadow: 0 1px 2px rgb(0 0 0 / 0.18); }
 .btn-primary:focus-visible { outline: 3px solid var(--color-ring); outline-offset: 2px; }
 .btn-block { display: flex; width: 100%; }
+.fab {
+  position: fixed; z-index: 15;
+  inset-inline-end: max(var(--spacing-gutter), calc((100vw - var(--column-max)) / 2 + var(--column-pad)));
+  bottom: calc(var(--mode-bar-height) + env(safe-area-inset-bottom) + var(--space-4));
+}
+.column.has-fab { padding-bottom: calc(var(--space-12) + var(--size-hit)); }
 .btn-pair { display: flex; gap: var(--space-3); margin-block-start: var(--space-4); }
 .btn-pair .btn { flex: 1; }
 .btn-pair .btn-primary { flex: 1.4; }
