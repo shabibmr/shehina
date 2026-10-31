@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#06503A">
+<title>Shehnat Design System</title>
+<link rel="icon" href="brand/mark.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="styleguide.css">
+</head>
+<body>
+<header class="sg-top">
+  <div class="sg-top-in">
+    <span class="lockup"><img src="brand/mark.svg" alt="" width="32" height="32"><span class="lockup-word">SHEHNAT</span></span>
+    <span class="sg-tag">Design system · v0.1 draft</span>
+  </div>
+  <div class="sg-toggles">
+    <button class="btn btn-secondary btn-sm" data-act="rtl" aria-pressed="false">Right-to-left</button>
+    <button class="btn btn-secondary btn-sm" data-act="reduce" aria-live="polite">Motion: system</button>
+  </div>
+</header>
+
+<nav class="sg-toc" aria-label="Sections">
+  <a href="#brand">Brand</a><a href="#colour">Colour</a><a href="#type">Type</a><a href="#space">Space &amp; shape</a><a href="#components">Components</a><a href="#money">Money</a><a href="#shipment">Shipment</a><a href="#icons">Icons</a><a href="#motion">Motion</a>
+</nav>
+
+<main class="sg">
+
+<section id="brand">
+  <h2>Brand</h2>
+  <p class="lede">The full logo is for large moments only (sign-in, splash, about 160px and up). Everything smaller uses the mark. All SVGs are <strong>drafts</strong> for a designer to refine.</p>
+  <div class="sg-grid">
+    <figure class="card sg-fig"><img src="brand/logo-full.png" alt="Shehnat logo with the Halal Investments tagline" width="160" height="160"><figcaption>Full logo · 160px and up · tagline stays in the artwork only</figcaption></figure>
+    <figure class="card sg-fig"><img src="brand/mark.svg" alt="Shehnat mark" width="96" height="96"><figcaption>Mark · 24–96px · header, favicon</figcaption></figure>
+    <figure class="card sg-fig"><img src="brand/app-icon.svg" alt="Shehnat app icon" width="96" height="96"><figcaption>App icon · reversed on brand green</figcaption></figure>
+    <figure class="card sg-fig sg-wide"><span class="lockup lockup-lg"><img src="brand/mark.svg" alt="" width="48" height="48"><span class="lockup-word">SHEHNAT</span></span><figcaption>Horizontal lockup · mobile header (built in HTML so the wordmark uses IBM Plex Sans)</figcaption></figure>
+  </div>
+  <div class="sg-sizes" aria-label="Mark at small sizes">
+    <img src="brand/mark.svg" alt="" width="16" height="16"><img src="brand/mark.svg" alt="" width="24" height="24"><img src="brand/mark.svg" alt="" width="32" height="32"><img src="brand/mark.svg" alt="" width="48" height="48"><span class="sub">16 · 24 · 32 · 48px</span>
+  </div>
+</section>
+
+<section id="colour">
+  <h2>Colour</h2>
+  <p class="lede">Green leads (actions, links, focus). Gold is decoration: never text on light surfaces, except <code>--text-accent</code>. Ratios below are computed live against white and the sand page.</p>
+  <h3>Brand and neutrals</h3>
+  <div class="swatches" data-swatches="--green-800 --green-700 --green-900 --green-100 --green-50 --gold-500 --gold-300 --gold-700 --gold-100 --sand-100 --sand-200 --sand-300 --stone-500 --stone-600 --ink-900"></div>
+  <h3>Semantic</h3>
+  <div class="swatches" data-swatches="--text --text-muted --text-link --text-accent --action --border-input --gain --loss --warning --info"></div>
+  <h3>Container doors</h3>
+  <div class="swatches" data-swatches="--door-green --door-gold --door-clay --door-olive --door-teal --door-umber" data-on="#FFFFFF"></div>
+</section>
+
+<section id="type">
+  <h2>Type</h2>
+  <p class="lede">IBM Plex Sans for everything, IBM Plex Sans Arabic when Arabic arrives. Figures are tabular so money columns align.</p>
+  <div class="card type-specimen">
+    <p class="t-44 num">$12,480.50</p>
+    <p class="t-34">Page title · 34</p>
+    <p class="t-28">Section title · 28</p>
+    <p class="t-22">Card title · 22</p>
+    <p class="t-18">Lead / emphasis · 18</p>
+    <p class="t-16">Body · 16. Fund a container of Kerala spices bound for Rotterdam and share the real profit when the goods are sold.</p>
+    <p class="t-14 muted">Secondary · 14. Expected sale in 74 days.</p>
+    <p class="t-12 caps">Overline · 12 · caps</p>
+    <p class="t-18 arabic" lang="ar" dir="rtl">شهنات · استثمر في شحنات التصدير وشارك في الربح الحقيقي.</p>
+  </div>
+</section>
+
+<section id="space">
+  <h2>Space &amp; shape</h2>
+  <div class="sg-grid">
+    <div class="card"><h3>Spacing · 4px steps</h3><div class="spaces" data-spaces="--sp-1 --sp-2 --sp-3 --sp-4 --sp-6 --sp-8 --sp-12"></div></div>
+    <div class="card"><h3>Radius</h3><div class="radii"><span class="r r-sm">4 · sm</span><span class="r r-md">8 · cards, inputs</span><span class="r r-btn">10 · buttons</span><span class="r r-lg">16 · sheets</span><span class="r r-pill">pill · chips</span></div></div>
+    <div class="card"><h3>Elevation</h3><p class="sub">Flat by default: 1px borders. Shadows only on what floats above the page.</p><div class="elev"><span class="e e-card">Card · border</span><span class="e e-toast">Toast</span><span class="e e-sheet">Sheet</span></div></div>
+  </div>
+</section>
+
+<section id="components">
+  <h2>Components</h2>
+  <div class="sg-grid">
+    <div class="card">
+      <h3>Buttons</h3>
+      <div class="stack">
+        <button class="btn btn-primary">Invest $500</button>
+        <button class="btn btn-secondary">View shipment</button>
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-danger">Withdraw listing</button>
+        <button class="btn btn-primary" disabled>Funding closed</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Inputs</h3>
+      <label class="field"><span class="field-label">Amount (USD)</span><span class="amount"><span aria-hidden="true">$</span><input type="text" inputmode="decimal" value="500.00" aria-describedby="amt-help"></span><span id="amt-help" class="field-help">Minimum $100 · max 2 decimals</span></label>
+      <label class="field"><span class="field-label">Country</span><select><option>United Arab Emirates</option><option>India</option></select></label>
+      <label class="field field-error"><span class="field-label">IBAN</span><input type="text" value="AE07 0331 2345 6789" aria-invalid="true" aria-describedby="iban-err"><span id="iban-err" class="field-msg">Checksum does not match. Check the number.</span></label>
+    </div>
+    <div class="card">
+      <h3>Status chips</h3>
+      <div class="chips">
+        <span class="chip chip-live">Live</span><span class="chip">Pending review</span><span class="chip chip-warn">Late</span><span class="chip chip-loss">Rejected</span><span class="chip chip-accent">Shareholder Listing</span><span class="chip chip-info">Awaiting deposit</span>
+      </div>
+      <h3>Banners</h3>
+      <div class="banner banner-warn" role="status"><b>Shipment is late.</b> New expected sale: 14 Dec.</div>
+      <div class="banner banner-info" role="status"><b>Identity check in review.</b> Usually under 2 days.</div>
+    </div>
+  </div>
+</section>
+
+<section id="money">
+  <h2>Money</h2>
+  <p class="lede">Realised results are coloured, with a sign, an arrow and a word. Projections stay neutral ink and always say <em>expected</em>.</p>
+  <div class="sg-grid">
+    <div class="card money-card">
+      <span class="overline">Realised result</span>
+      <span class="money money-gain"><span class="money-sign" aria-hidden="true">▲</span>+$1,240.50</span><span class="money-label">Profit, paid 2 Nov</span>
+    </div>
+    <div class="card money-card">
+      <span class="overline">Realised result</span>
+      <span class="money money-loss"><span class="money-sign" aria-hidden="true">▼</span>−$310.00</span><span class="money-label">Loss, shared pro-rata</span>
+    </div>
+    <div class="card money-card">
+      <span class="overline">Expected</span>
+      <span class="money money-expected">+$860.00</span><span class="money-label">Expected profit · not guaranteed</span>
+    </div>
+    <div class="card money-card brand-panel">
+      <span class="overline">Wallet</span>
+      <span class="money money-on-brand num">$12,480.50</span><span class="money-label">Available to invest</span>
+    </div>
+  </div>
+</section>
+
+<section id="shipment">
+  <h2>Shipment card</h2>
+  <p class="lede">The container door stays as the signature, in the six brand door colours, with a goods icon instead of emoji. Tap the card to open the doors.</p>
+  <div class="sg-grid">
+    <article class="ship" tabindex="0" data-act="openDoor" aria-label="Kerala spices, India to Netherlands. Press to open">
+      <div class="door door-teal">
+        <span class="door-inside" aria-hidden="true"></span>
+        <span class="leaf leaf-l" aria-hidden="true"></span><span class="leaf leaf-r" aria-hidden="true"></span>
+        <span class="door-face"><svg class="ico ico-door" viewBox="0 0 24 24" aria-hidden="true"><path class="i2s" d="M12 21V9"/><path class="i1" d="M12 9c-3-1-4.5-3.5-4-7 3 .8 4.5 3.3 4 7Zm0 0c3-1 4.5-3.5 4-7-3 .8-4.5 3.3-4 7Zm0 5c-3-1-5-3.5-5-6.5 3 .5 5 3 5 6.5Zm0 0c3-1 5-3.5 5-6.5-3 .5-5 3-5 6.5Z"/></svg><span class="cid">SHNU 418203 · 40′HC</span></span>
+      </div>
+      <div class="ship-body">
+        <h3 class="ship-name">Kerala black pepper, 18 t</h3>
+        <p class="ship-route">India <span class="arr" aria-hidden="true">→</span><span class="sr-only">to</span> Netherlands · 90-day cycle</p>
+        <div class="kpis">
+          <div><b class="num">18.4%</b><span>Expected return</span></div>
+          <div><b class="num">$46,000</b><span>Target</span></div>
+          <div><b class="num">$100</b><span>Minimum</span></div>
+        </div>
+        <div class="fund" role="progressbar" aria-valuenow="68" aria-valuemin="0" aria-valuemax="100" aria-label="Funded"><i data-fill="0.68"></i></div>
+        <p class="fund-label"><b>68% funded</b> · $31,280 of $46,000 · 9 days left</p>
+      </div>
+    </article>
+    <div class="card">
+      <h3>Route</h3>
+      <svg class="route" viewBox="0 0 320 130" role="img" aria-label="Route from Kochi, India to Rotterdam, Netherlands. Stage 4 of 7: at sea">
+        <g class="route-g">
+          <path class="route-base" d="M28 98C100 18 220 18 292 98"/>
+          <path class="route-line" d="M28 98C100 18 220 18 292 98"/>
+          <g class="route-stops"></g>
+          <circle class="port" cx="28" cy="98" r="6"/><circle class="port" cx="292" cy="98" r="6"/>
+          <g class="vessel"><circle class="ripple" r="8"/><circle class="ripple" r="8"/><circle class="hull" r="7"/></g>
+        </g>
+        <text x="28" y="122" text-anchor="middle" class="route-txt" data-x="28">Kochi · IN</text>
+        <text x="292" y="122" text-anchor="middle" class="route-txt" data-x="292">Rotterdam · NL</text>
+      </svg>
+      <p class="sub">Stage 4 of 7 · At sea · ETA 14 Dec</p>
+    </div>
+  </div>
+</section>
+
+<section id="icons">
+  <h2>Icons</h2>
+  <p class="lede">Duotone, 24px grid: a green primary layer and a gold secondary layer. Inactive icons are stone with gold at 40%. The gold layer never carries meaning alone.</p>
+  <div class="icons" id="iconGrid"></div>
+</section>
+
+<section id="motion">
+  <h2>Motion</h2>
+  <p class="lede">Expressive and choreographed, but every piece has a job: it shows where you came from, what just changed, or that money moved. Use the <b>Motion</b> switch at the top to preview full motion or the reduced fallbacks, whatever your device is set to.</p>
+
+  <div class="sg-grid motion-grid">
+
+    <div class="card lab">
+      <h3>1 · Screen transitions</h3>
+      <p class="sub">Forward slides in from the reading end (it flips in right-to-left). The old screen recedes 8% and dims. Back reverses it.</p>
+      <div class="phone" id="phoneNav">
+        <div class="scr scr-a"><span class="overline">Shipments</span><p class="t-22">3 open listings</p><div class="sk-list"><span></span><span></span><span></span></div></div>
+        <div class="scr scr-b" hidden><span class="overline">Kerala black pepper</span><p class="t-22">68% funded</p><div class="sk-list"><span></span><span></span></div></div>
+      </div>
+      <div class="lab-btns"><button class="btn btn-secondary btn-sm" data-act="navFwd">Forward</button><button class="btn btn-secondary btn-sm" data-act="navBack">Back</button></div>
+    </div>
+
+    <div class="card lab">
+      <h3>2 · Bottom sheet</h3>
+      <p class="sub">The scrim fades in over 160ms while the sheet springs up with a small overshoot. Dismissing slides it down fast with an exit curve.</p>
+      <div class="phone" id="phoneSheet">
+        <div class="scr"><span class="overline">Shipment</span><p class="t-22">Kerala black pepper</p><div class="sk-list"><span></span><span></span></div></div>
+        <div class="p-scrim" hidden></div>
+        <div class="p-sheet" hidden><span class="grab" aria-hidden="true"></span><p class="t-18"><b>Invest in this shipment</b></p><p class="sub">Amount: $500.00</p><button class="btn btn-primary">Confirm</button></div>
+      </div>
+      <div class="lab-btns"><button class="btn btn-secondary btn-sm" data-act="sheet">Open / close</button></div>
+    </div>
+
+    <div class="card lab">
+      <h3>3 · Money count-up</h3>
+      <p class="sub">Key figures count up once, on first view (1.4s, most of the climb early). Tabular figures stop the digits jittering. The gain chip pops in when the count lands.</p>
+      <div class="brand-panel count-panel"><span class="overline">Wallet</span><span class="money money-on-brand num" id="countVal">$12,480.50</span><span class="chip chip-gain" id="countChip" hidden>▲ +$1,240.50 realised</span></div>
+      <div class="lab-btns"><button class="btn btn-secondary btn-sm" data-act="count">Replay</button></div>
+    </div>
+
+    <div class="card lab">
+      <h3>4 · Sprout on success</h3>
+      <p class="sub">The ring of people joins hand by hand, the stem rises, the leaves unfurl, and a gold glint passes over the sprout. Reserved for success: investment confirmed, listing approved, payout received.</p>
+      <div class="sprout-stage">
+        <svg class="sprout" viewBox="0 0 64 64" aria-hidden="true">
+          <circle class="halo" cx="32" cy="20" r="14"/>
+          <g class="people">
+            <g class="person" data-i="0"><path d="M45 55.52A26 26 0 0 1 19 55.52A29.67 29.67 0 0 1 45 55.52Z"/><circle cx="32" cy="47.8" r="3.7"/></g>
+            <g class="person" data-i="1"><path d="M18.22 55.05A26 26 0 0 1 6.02 32.09A29.67 29.67 0 0 1 18.22 55.05Z"/><circle cx="18.93" cy="39.95" r="3.7"/></g>
+            <g class="person" data-i="2"><path d="M57.98 32.09A26 26 0 0 1 45.78 55.05A29.67 29.67 0 0 1 57.98 32.09Z"/><circle cx="45.07" cy="39.95" r="3.7"/></g>
+            <g class="person" data-i="3"><path d="M6.06 31.19A26 26 0 0 1 20.6 9.63A29.67 29.67 0 0 1 6.06 31.19Z"/><circle cx="19.73" cy="24.72" r="3.7"/></g>
+            <g class="person" data-i="4"><path d="M43.4 9.63A26 26 0 0 1 57.94 31.19A29.67 29.67 0 0 1 43.4 9.63Z"/><circle cx="44.27" cy="24.72" r="3.7"/></g>
+          </g>
+          <path class="stem" d="M32 42V21" pathLength="1"/>
+          <path class="leaf-s leaf-sl" d="M31 31C26.5 30.5 23.5 25.5 23.5 16C28 17.5 31 22.5 31 31Z"/>
+          <path class="leaf-s leaf-sr" d="M33 31C37.5 30.5 40.5 25.5 40.5 16C36 17.5 33 22.5 33 31Z"/>
+          <path class="leaf-s leaf-sc" d="M32 22C28.3 17 28.3 9.5 32 3C35.7 9.5 35.7 17 32 22Z"/>
+          <g class="motes"></g>
+        </svg>
+        <p class="sprout-msg t-18"><b>Investment confirmed</b></p>
+      </div>
+      <div class="lab-btns"><button class="btn btn-secondary btn-sm" data-act="sprout">Replay</button></div>
+    </div>
+
+    <div class="card lab">
+      <h3>5 · Route progress</h3>
+      <p class="sub">The route draws from origin to destination, the stage stops pop in along it, the vessel sails to the current stage, and its wake pulses three times.</p>
+      <div class="lab-btns"><button class="btn btn-secondary btn-sm" data-act="route">Replay (see the route card above)</button></div>
+    </div>
+
+    <div class="card lab">
+      <h3>6 · Container doors</h3>
+      <p class="sub">Opening a shipment: the label fades, the two door leaves swing outward in 3D, and light spills from inside before the detail screen takes over. Closing reverses it.</p>
+      <div class="lab-btns"><button class="btn btn-secondary btn-sm" data-act="openDoor">Open the doors</button></div>
+    </div>
+
+    <div class="card lab">
+      <h3>7 · List cascade &amp; funding fill</h3>
+      <p class="sub">Cards rise 8px and fade in, 45ms apart (capped at 360ms). Funding bars fill from zero with a gold glint at the tip.</p>
+      <div class="cascade" id="cascade">
+        <div class="mini"><b>Kerala black pepper</b><div class="fund"><i data-fill="0.68"></i></div></div>
+        <div class="mini"><b>Ethiopian coffee, 2 × 20′</b><div class="fund"><i data-fill="0.41"></i></div></div>
+        <div class="mini"><b>Turkish textiles</b><div class="fund"><i data-fill="0.93"></i></div></div>
+        <div class="mini"><b>Chilean walnuts</b><div class="fund"><i data-fill="0.22"></i></div></div>
+      </div>
+      <div class="lab-btns"><button class="btn btn-secondary btn-sm" data-act="cascade">Replay</button></div>
+    </div>
+
+    <div class="card lab">
+      <h3>8 · Tab bar</h3>
+      <p class="sub">The highlight pill springs to the chosen tab, its icon fills to duotone, and the gold layer pops in with a small overshoot.</p>
+      <div class="phone phone-short" id="phoneTabs">
+        <div class="scr"><p class="t-22" id="tabTitle">Home</p></div>
+        <nav class="tabbar" aria-label="Main">
+          <span class="tab-pill" aria-hidden="true"></span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="card lab">
+      <h3>9 · Toast, press &amp; loading</h3>
+      <p class="sub">Toasts spring up softly and leave fast. Buttons sink to 97% on press. Skeletons shimmer in warm sand and stop when reduce motion is on.</p>
+      <div class="phone phone-short" id="phoneToast">
+        <div class="scr"><div class="skeleton"><span></span><span></span><span class="short"></span></div></div>
+        <div class="p-toast" hidden role="status">Withdrawal requested · $2,000.00</div>
+      </div>
+      <div class="lab-btns"><button class="btn btn-primary btn-sm" data-act="toast">Show toast</button></div>
+    </div>
+
+  </div>
+</section>
+
+</main>
+<footer class="sg-foot">Spec: <code>docs/design-system.md</code> · Tokens: <code>Demo/frontend/tokens.css</code></footer>
+<script type="module" src="styleguide.js"></script>
+</body>
+</html>

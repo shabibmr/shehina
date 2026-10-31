@@ -126,7 +126,7 @@ _Avoid_: expired, abandoned.
 
 ## Shariah compliance
 
-A product requirement: Shehnat must be structured so a Shariah board can certify it. The existing vocabulary (Investor, Manager, Manager share, Service fee) is kept as it is.
+A product requirement: Shehnat must be structured so a Shariah board can certify it. The existing vocabulary (Investor, Manager, Manager share, Service fee) is kept as it is. Until a Shariah board certifies it, Shehnat does not call itself halal or Shariah-compliant anywhere in the product; the "Halal Investments" tagline appears only inside the logo artwork.
 
 _Open question_: the Service fee is charged on sale price, which a Shariah board may challenge.
 

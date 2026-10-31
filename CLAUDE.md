@@ -53,7 +53,7 @@ npm start                                                  # serves API + web ap
 - `core.js` holds shared state `S`, the `META` reference data loaded from `/meta` at boot (`loadMeta`, `cname`, `flag`, `countryOpts`), money formatting (`usd`, `usdx`, `usdk`; amounts arrive in cents), the `api()` fetch client (Bearer token in `localStorage`), router (`go`, `render`), toast/icons and reusable components. Each role module registers screens on the shared `views` object (e.g. `views.adHome = {...}`).
 - Served under a strict CSP: **no inline scripts or inline event handlers** — put all code in the `.js` modules. Escape interpolated values with `esc()`.
 - Amounts arrive in cents; format with `usd()` / `usdx()`.
-- Three visual themes (`container`, `majlis`, `oasis`) selected via `data-look` on `<html>`.
+- Three visual themes (`container`, `majlis`, `oasis`) selected via `data-look` on `<html>`. These are legacy: the target is the single Shehnat brand theme in `docs/design-system.md` (ADR 0005), with tokens in `frontend/tokens.css`, brand SVGs in `frontend/brand/` and a live reference at `/web/styleguide.html`. New UI work uses the semantic tokens, logical (RTL-safe) CSS properties, and the motion tokens with a reduced-motion fallback.
 
 ## Agent skills
 

@@ -1,0 +1,199 @@
+/* Shehnat design tokens. Spec and usage rules: docs/design-system.md.
+   Light theme only at launch. Components use the semantic tokens (second block), never the primitives,
+   so a dark theme can be added later by redefining the semantic block alone. */
+
+:root {
+  /* ---- Primitives: brand palette ---- */
+  --green-950: #03251A;
+  --green-900: #03301F;
+  --green-800: #06503A;   /* brand green, sampled from the logo */
+  --green-700: #0B6A4D;
+  --green-600: #13805E;
+  --green-200: #BFD9CB;
+  --green-100: #E3EFE8;
+  --green-50:  #F0F6F2;
+
+  --gold-700: #7E6224;    /* the only gold allowed as text on light surfaces (5.2:1 on sand) */
+  --gold-600: #8A6D2B;
+  --gold-500: #B39144;    /* brand gold, sampled from the logo: decoration only (2.98:1 on white) */
+  --gold-300: #D9C28A;    /* gold for text and figures on green panels (5.4:1 on green-800) */
+  --gold-100: #F4ECD8;
+
+  --sand-50:  #FBF9F4;
+  --sand-100: #F7F4EC;    /* page */
+  --sand-200: #EFE9DC;
+  --sand-300: #E4DDCD;
+  --stone-400: #A89E89;
+  --stone-500: #857B67;
+  --stone-600: #6B6458;
+  --ink-900: #14231C;     /* green-black body text */
+
+  /* ---- Semantic: surfaces ---- */
+  --surface-page: var(--sand-100);
+  --surface-card: #FFFFFF;
+  --surface-sunken: var(--sand-200);
+  --surface-raised: #FFFFFF;
+  --surface-brand: var(--green-800);
+  --surface-brand-deep: var(--green-900);
+  --surface-brand-subtle: var(--green-50);
+  --surface-accent-subtle: var(--gold-100);
+  --scrim: rgb(20 35 28 / 0.48);
+
+  /* ---- Semantic: text ---- */
+  --text: var(--ink-900);
+  --text-muted: var(--stone-600);
+  --text-on-brand: #FFFFFF;
+  --text-accent: var(--gold-700);
+  --text-accent-on-brand: var(--gold-300);
+  --text-link: var(--green-800);
+
+  /* ---- Semantic: borders and focus ---- */
+  --border: var(--sand-300);          /* decorative: cards, dividers */
+  --border-input: var(--stone-500);   /* form controls need 3:1 against the card */
+  --border-brand: var(--green-800);
+  --focus-ring: var(--green-800);
+
+  /* ---- Semantic: actions ---- */
+  --action: var(--green-800);
+  --action-hover: var(--green-700);
+  --action-press: var(--green-900);
+  --action-subtle: var(--green-50);
+  --action-subtle-hover: var(--green-100);
+  --on-action: #FFFFFF;
+  --action-disabled: var(--sand-300);
+  --on-action-disabled: var(--stone-600);
+
+  /* ---- Semantic: accent (decoration only, never text on light) ---- */
+  --accent: var(--gold-500);
+  --accent-soft: var(--gold-300);
+
+  /* ---- Semantic: money and status. Colour is never the only signal: always a sign, arrow or label too. ---- */
+  --gain: #2F7D1F;            /* realised gain; deliberately a different hue from the brand green */
+  --gain-bg: #EEF6E9;
+  --loss: #B42318;
+  --loss-bg: #FDEDEB;
+  --expected: var(--text);    /* projections stay neutral and are labelled "expected" */
+  --warning: #93370D;
+  --warning-bg: #FEF4E6;
+  --info: #1F5E8C;
+  --info-bg: #EAF2F8;
+
+  /* ---- Container doors (shipment cards). White text passes 4.8:1 or better on each. ---- */
+  --door-green: var(--green-800);
+  --door-gold: var(--gold-600);
+  --door-clay: #8C4A2F;
+  --door-olive: #55652B;
+  --door-teal: #2F5D62;
+  --door-umber: #6E5238;
+
+  /* ---- Icons: duotone. Primary layer + gold secondary layer. ---- */
+  --icon-1: var(--green-800);
+  --icon-2: var(--gold-500);
+  --icon-1-muted: var(--stone-500);
+  --icon-2-muted: rgb(179 145 68 / 0.4);
+
+  /* ---- Typography ---- */
+  --font-sans: "IBM Plex Sans", "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-arabic: "IBM Plex Sans Arabic", "IBM Plex Sans", system-ui, sans-serif;
+  --fs-12: 0.75rem;
+  --fs-14: 0.875rem;
+  --fs-16: 1rem;       /* body */
+  --fs-18: 1.125rem;
+  --fs-22: 1.375rem;
+  --fs-28: 1.75rem;
+  --fs-34: 2.125rem;
+  --fs-44: 2.75rem;    /* hero money figures only */
+  --lh-tight: 1.15;
+  --lh-snug: 1.3;
+  --lh-body: 1.5;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --tracking-caps: 0.08em;
+
+  /* ---- Space: 4px steps ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-12: 48px;
+  --gutter: 16px;
+
+  /* ---- Shape ---- */
+  --r-sm: 4px;
+  --r-md: 8px;      /* cards, inputs, doors */
+  --r-btn: 10px;
+  --r-lg: 16px;     /* top corners of sheets, dialogs */
+  --r-pill: 999px;  /* chips and status pills only */
+
+  /* ---- Elevation: flat by default; shadows only on things that float ---- */
+  --shadow-sheet: 0 -8px 32px rgb(20 35 28 / 0.16);
+  --shadow-dialog: 0 16px 48px rgb(20 35 28 / 0.22);
+  --shadow-toast: 0 8px 24px rgb(20 35 28 / 0.18);
+  --shadow-nav: 0 -1px 0 var(--border);
+
+  /* ---- Layout ---- */
+  --w-content: 600px;   /* investor and manager single column */
+  --w-console: 1280px;  /* staff console from 1024px */
+  --tap: 44px;          /* minimum touch target */
+  --nav-h: 64px;
+
+  /* ---- Motion: durations ---- */
+  --dur-instant: 90ms;      /* press feedback, toggles */
+  --dur-fast: 160ms;        /* hovers, small fades, tab icon swap */
+  --dur-base: 260ms;        /* screen and sheet transitions */
+  --dur-slow: 420ms;        /* door opening, shared-element moves */
+  --dur-deliberate: 700ms;  /* list cascades, progress fills */
+  --dur-showpiece: 1400ms;  /* money count-up, route drawing */
+  --dur-ceremony: 2200ms;   /* sprout growth on success screens */
+  --stagger: 45ms;          /* delay between items in a cascade */
+  --stagger-max: 360ms;     /* cap so long lists never wait */
+
+  /* ---- Motion: easing ---- */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);       /* on-screen moves */
+  --ease-enter: cubic-bezier(0.05, 0.7, 0.1, 1);     /* things arriving: fast start, long settle */
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);      /* things leaving: quick acceleration away */
+  --ease-count: cubic-bezier(0.16, 1, 0.3, 1);       /* number count-up: most of the climb early */
+  --ease-grow: cubic-bezier(0.34, 1.3, 0.64, 1);     /* sprout and leaves: slight overshoot */
+  --ease-spring: linear(0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%, 0.938 16.7%, 1.017, 1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%, 1.051 39.6%, 1.017 43.1%, 0.991, 0.977 51%, 0.974 53.8%, 0.975 57.1%, 0.997 69.8%, 1.003 76.9%, 1);
+  --ease-spring-soft: linear(0, 0.06 4%, 0.25 9%, 0.55 16%, 0.82 25%, 0.96 35%, 1.02 45%, 1.025 55%, 1.01 70%, 1);
+  --dur-spring: 640ms;      /* springs need their full length to settle */
+
+  /* ---- Motion: distances ---- */
+  --move-screen: 24%;       /* how far a screen slides in */
+  --move-small: 8px;        /* toasts, list items rising in */
+  --press-scale: 0.97;
+}
+
+/* Browsers without linear() get a plain overshoot curve. */
+@supports not (transition-timing-function: linear(0, 1)) {
+  :root {
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-spring-soft: cubic-bezier(0.34, 1.2, 0.64, 1);
+  }
+}
+
+/* Reduced motion: every duration collapses, so movement becomes an instant state change.
+   Opacity crossfades are kept short (see docs/design-system.md, "Reduced motion"). */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-instant: 1ms;
+    --dur-fast: 1ms;
+    --dur-base: 120ms;
+    --dur-slow: 120ms;
+    --dur-deliberate: 1ms;
+    --dur-showpiece: 1ms;
+    --dur-ceremony: 1ms;
+    --dur-spring: 120ms;
+    --stagger: 0ms;
+    --stagger-max: 0ms;
+    --move-screen: 0%;
+    --move-small: 0px;
+    --press-scale: 1;
+    --ease-spring: linear;
+    --ease-spring-soft: linear;
+  }
+}

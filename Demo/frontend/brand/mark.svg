@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Shehnat">
+  <!-- DRAFT placeholder for a designer to refine: five people, hands joined in a ring, around a sprout. -->
+  <g fill="#06503A">
+    <path d="M45 55.52A26 26 0 0 1 19 55.52A29.67 29.67 0 0 1 45 55.52Z"/>
+    <path d="M57.98 32.09A26 26 0 0 1 45.78 55.05A29.67 29.67 0 0 1 57.98 32.09Z"/>
+    <path d="M18.22 55.05A26 26 0 0 1 6.02 32.09A29.67 29.67 0 0 1 18.22 55.05Z"/>
+    <path d="M43.4 9.63A26 26 0 0 1 57.94 31.19A29.67 29.67 0 0 1 43.4 9.63Z"/>
+    <path d="M6.06 31.19A26 26 0 0 1 20.6 9.63A29.67 29.67 0 0 1 6.06 31.19Z"/>
+    <circle cx="32" cy="47.8" r="3.7"/>
+    <circle cx="45.07" cy="39.95" r="3.7"/>
+    <circle cx="18.93" cy="39.95" r="3.7"/>
+    <circle cx="44.27" cy="24.72" r="3.7"/>
+    <circle cx="19.73" cy="24.72" r="3.7"/>
+  </g>
+  <g fill="#B39144">
+    <path d="M32 42V21" fill="none" stroke="#B39144" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M32 22C28.3 17 28.3 9.5 32 3C35.7 9.5 35.7 17 32 22Z"/>
+    <path d="M31 31C26.5 30.5 23.5 25.5 23.5 16C28 17.5 31 22.5 31 31Z"/>
+    <path d="M33 31C37.5 30.5 40.5 25.5 40.5 16C36 17.5 33 22.5 33 31Z"/>
+  </g>
+</svg>
