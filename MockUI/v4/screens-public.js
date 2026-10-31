@@ -16,7 +16,7 @@
       chrome: "none",
       test: function (h) { return h === "#/" || h === "" ? {} : null; },
       render: function (stage) {
-        stage.innerHTML = "<div class=\"splash\"><img src=\"../../Demo/frontend/brand/logo-full.png\" alt=\"Shehnat\"></div>";
+        stage.innerHTML = "<div class=\"splash\"><img src=\"brand/logo-full.png\" alt=\"Shehnat\"></div>";
         setTimeout(function () {
           if ((location.hash || "#/") !== "#/") return;
           var u = Store.user();
@@ -72,7 +72,7 @@
       chrome: "none",
       test: function (h) { return h === "#/sign-in" ? {} : null; },
       render: function (stage) {
-        stage.innerHTML = "<div class=\"column sign-in\"><img class=\"logo-sign\" src=\"../../Demo/frontend/brand/logo-full.png\" alt=\"Shehnat\"><h1>Sign in</h1><form class=\"stack\">" +
+        stage.innerHTML = "<div class=\"column sign-in\"><img class=\"logo-sign\" src=\"brand/logo-full.png\" alt=\"Shehnat\"><h1>Sign in</h1><form class=\"stack\">" +
           UI.field("email", "Email", "<input id=\"email\" name=\"email\" type=\"email\" autocomplete=\"username\" required>", errors.email) +
           UI.field("password", "Password", "<input id=\"password\" name=\"password\" type=\"password\" autocomplete=\"current-password\" required>", errors.password) +
           "<button class=\"btn btn-primary\" type=\"submit\">Sign in</button></form>" +
