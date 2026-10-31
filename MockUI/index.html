@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shehnat – Mock UI</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--ink:#14213d;--mut:#6b7385;--line:#e3e6ec;--pri:#0f766e;--pri2:#115e59;--acc:#d97706;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;--okbg:#dcfce7;--badbg:#fee2e2;--warnbg:#fef3c7;--infobg:#e0f2fe;--info:#0369a1;--r:12px}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1420;--card:#172033;--ink:#e8ecf4;--mut:#93a0b8;--line:#2a3550;--pri:#2dd4bf;--pri2:#5eead4;--okbg:#14532d;--badbg:#7f1d1d;--warnbg:#78350f;--infobg:#0c4a6e;--ok:#86efac;--bad:#fca5a5;--warn:#fcd34d;--info:#7dd3fc}}
+*{box-sizing:border-box}body{margin:0;font:14px/1.5 system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+a{color:var(--pri);text-decoration:none;cursor:pointer}
+header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.bar{max-width:1180px;margin:auto;padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.logo{font-weight:800;font-size:18px;color:var(--pri);letter-spacing:.3px}
+.logo small{display:block;font-size:10px;font-weight:500;color:var(--mut);letter-spacing:0}
+.roles{display:flex;gap:4px;background:var(--bg);padding:3px;border-radius:10px;margin-left:auto}
+.roles button{border:0;background:none;padding:6px 12px;border-radius:8px;cursor:pointer;color:var(--mut);font-weight:600}
+.roles button.on{background:var(--pri);color:#fff}
+nav{max-width:1180px;margin:auto;padding:0 16px 8px;display:flex;gap:4px;overflow-x:auto}
+nav a{padding:7px 12px;border-radius:8px;color:var(--mut);font-weight:600;white-space:nowrap}
+nav a.on{background:var(--infobg);color:var(--info)}
+main{max-width:1180px;margin:auto;padding:20px 16px 60px}
+footer{max-width:1180px;margin:auto;padding:20px 16px 40px;color:var(--mut);font-size:12px;border-top:1px solid var(--line)}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:0 0 10px}h3{font-size:14px;margin:0 0 6px}
+.sub{color:var(--mut);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:16px}
+.grid{display:grid;gap:16px}.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}.g3{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}.g4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px}.stat b{display:block;font-size:22px}.stat span{color:var(--mut);font-size:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.sp{justify-content:space-between}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:9px;cursor:pointer;font-weight:600;font-size:13px}
+.btn.p{background:var(--pri);border-color:var(--pri);color:#fff}.btn.d{background:var(--bad);border-color:var(--bad);color:#fff}.btn.s{padding:4px 10px;font-size:12px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700;background:var(--bg);color:var(--mut)}
+.tag.ok{background:var(--okbg);color:var(--ok)}.tag.bad{background:var(--badbg);color:var(--bad)}.tag.warn{background:var(--warnbg);color:var(--warn)}.tag.info{background:var(--infobg);color:var(--info)}
+label{display:block;font-size:12px;font-weight:600;color:var(--mut);margin-bottom:3px}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.f{margin-bottom:12px}.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 16px}.full{grid-column:1/-1}
+.hint{font-size:12px;color:var(--mut);margin-top:3px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:11px;text-transform:uppercase;color:var(--mut);letter-spacing:.4px}
+.tw{overflow-x:auto}.r{text-align:right}
+.bar2{height:8px;background:var(--bg);border-radius:9px;overflow:hidden}.bar2>i{display:block;height:100%;background:var(--pri)}
+.alert{padding:12px 14px;border-radius:10px;margin-bottom:16px;background:var(--infobg);color:var(--info)}.alert.warn{background:var(--warnbg);color:var(--warn)}.alert.bad{background:var(--badbg);color:var(--bad)}.alert.ok{background:var(--okbg);color:var(--ok)}
+.lc{cursor:pointer;transition:.15s}.lc:hover{border-color:var(--pri);transform:translateY(-2px)}
+.hero{height:90px;border-radius:9px;margin-bottom:10px;display:flex;align-items:flex-end;padding:8px 10px;color:#fff;font-weight:700;font-size:13px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 16px}.kv dt{color:var(--mut)}.kv dd{margin:0;font-weight:600;text-align:right}
+.tl{list-style:none;margin:0;padding:0}.tl li{position:relative;padding:0 0 14px 28px;color:var(--mut)}
+.tl li:before{content:"";position:absolute;left:5px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--line)}
+.tl li:after{content:"";position:absolute;left:10px;top:18px;bottom:0;width:2px;background:var(--line)}.tl li:last-child:after{display:none}
+.tl li.done{color:var(--ink)}.tl li.done:before{background:var(--pri)}.tl li.cur:before{background:var(--acc);box-shadow:0 0 0 4px var(--warnbg)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px;overflow-x:auto}
+.tabs a{padding:8px 14px;color:var(--mut);font-weight:600;border-bottom:2px solid transparent;white-space:nowrap}.tabs a.on{color:var(--pri);border-color:var(--pri)}
+.priv{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;color:var(--mut);font-size:12px;margin-top:10px}
+.auth{max-width:440px;margin:40px auto}
+.up{border:2px dashed var(--line);border-radius:10px;padding:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:20;padding:16px}#modal.on{display:flex}
+#modal>div{background:var(--card);border-radius:var(--r);padding:20px;width:100%;max-width:460px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:10px;opacity:0;pointer-events:none;transition:.2s;z-index:30}#toast.on{opacity:1}
+.mock{background:var(--warnbg);color:var(--warn);font-size:11px;text-align:center;padding:3px}
+.perm{font-size:12px;color:var(--mut)}
+@media(max-width:640px){.roles{margin-left:0;width:100%}.roles button{flex:1}}
+</style>
+</head>
+<body>
+<div class="mock">MOCK UI – static prototype with sample data. Nothing is saved and no money moves.</div>
+<header>
+  <div class="bar">
+    <div class="logo">SHEHNAT<small>Profit-sharing container exports · USD</small></div>
+    <div class="row" id="staffRoleBox" style="display:none"><label style="margin:0">Staff role</label>
+      <select id="staffRole" style="width:auto"><option>owner</option><option>reviewer</option><option>ops</option><option>finance</option></select></div>
+    <div class="roles" id="roles">
+      <button data-role="investor">Investor</button><button data-role="manager">Manager</button><button data-role="staff">Staff</button>
+    </div>
+  </div>
+  <nav id="nav"></nav>
+</header>
+<main id="app"></main>
+<footer>Shehnat is operated from the UAE · open to investors and managers worldwide · all amounts are in US dollars (USD) · returns are estimates, not guarantees and investments can lose value.</footer>
+<div id="modal"><div id="modalBox"></div></div>
+<div id="toast"></div>
+
+<script>
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const usd=n=>'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
+const usdx=n=>'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pct=n=>(Math.round(n*10)/10)+'%';
+const COUNTRIES={IN:'India',KE:'Kenya',BR:'Brazil',JP:'Japan',AE:'United Arab Emirates',US:'United States',GB:'United Kingdom',DE:'Germany',VN:'Vietnam',NG:'Nigeria',TR:'Türkiye',EG:'Egypt',SA:'Saudi Arabia',PK:'Pakistan',ID:'Indonesia',ZA:'South Africa'};
+const FLAG=c=>[...c].map(x=>String.fromCodePoint(127397+x.charCodeAt(0))).join('');
+const cn=c=>FLAG(c)+' '+COUNTRIES[c];
+const copts=(sel,any)=>(any?'<option value="">'+any+'</option>':'')+Object.entries(COUNTRIES).map(([k,v])=>`<option value="${k}"${k===sel?' selected':''}>${FLAG(k)} ${v}</option>`).join('');
+const BLOCKED='Cuba, Iran, North Korea, Syria';
+const STAGES=['Funding open','Goods purchased','Loaded at port','At sea','Customs cleared','Goods sold','Profit paid out'];
+const CATS=['Food','Building','Textiles','Energy','Other'];
+const GRAD={Food:'linear-gradient(135deg,#0f766e,#14b8a6)',Building:'linear-gradient(135deg,#475569,#94a3b8)',Textiles:'linear-gradient(135deg,#9333ea,#e879f9)',Energy:'linear-gradient(135deg,#d97706,#fbbf24)',Other:'linear-gradient(135deg,#1d4ed8,#60a5fa)'};
+
+/* ---------- sample data ---------- */
+const LISTINGS=[
+ {id:101,name:'Basmati rice – 40ft container',cat:'Food',src:'IN',buy:'KE',target:500000,raised:400000,min:1000,share:60,mgrPct:20,cycle:60,exp:60000,stage:1,status:'live',mgr:'Al Noor Trading LLC',days:2,cert:'ISO 22000 #A-4471',cost:480000,my:5000},
+ {id:102,name:'Ceramic floor tiles',cat:'Building',src:'TR',buy:'NG',target:120000,raised:45000,min:500,share:55,mgrPct:30,cycle:45,exp:18000,stage:0,status:'live',mgr:'Bosphorus Exports',days:6,cert:'',cost:0,my:0},
+ {id:103,name:'Cotton fabric rolls',cat:'Textiles',src:'VN',buy:'DE',target:80000,raised:80000,min:250,share:50,mgrPct:25,cycle:75,exp:14000,stage:3,status:'live',mgr:'Saigon Weave Co.',days:30,cert:'OEKO-TEX 8841',cost:76000,my:2500},
+ {id:104,name:'Arabica coffee beans',cat:'Food',src:'BR',buy:'JP',target:20000,raised:20000,min:100,share:60,mgrPct:20,cycle:50,exp:6000,stage:6,status:'completed',mgr:'Café do Sul',days:60,cert:'',cost:18000,sale:24000,my:1000},
+ {id:105,name:'Solar panel modules',cat:'Energy',src:'DE',buy:'ZA',target:250000,raised:0,min:2000,share:70,mgrPct:20,cycle:90,exp:35000,stage:0,status:'awaiting_deposit',mgr:'Al Noor Trading LLC',days:0,cert:'IEC 61215',cost:0,my:0},
+ {id:106,name:'Industrial lubricants',cat:'Energy',src:'AE',buy:'EG',target:60000,raised:0,min:500,share:65,mgrPct:25,cycle:30,exp:7000,stage:0,status:'pending_review',mgr:'Al Noor Trading LLC',days:0,cert:'',cost:0,my:0},
+];
+const byId=id=>LISTINGS.find(l=>l.id==id);
+/* settlement – mirrors the rules in BUSINESS_REQUIREMENTS §6.3 (floats are fine for a mock) */
+function settle(target,cost,sale,share){
+  const gross=sale-cost, fee=gross>0?Math.min(Math.round(sale*0.01),gross):0, net=gross-fee;
+  const mgr=net>0?Math.floor(net*(100-share)/100):0, pool=net-mgr;
+  return {gross,fee,net,mgr,pool};
+}
+function roi(target,exp,share,cycle){
+  const s=settle(target,target,target+exp,share), c=s.pool/target*100;
+  return {cycle:c,year:c*365/cycle,...s};
+}
+const stTag=s=>{const m={pending_review:['warn','Pending review'],awaiting_deposit:['info','Awaiting deposit'],live:['ok','Live'],completed:['','Completed'],rejected:['bad','Rejected']}[s];return `<span class="tag ${m[0]}">${m[1]}</span>`};
+
+/* ---------- state ---------- */
+const NAV={
+ investor:[['explore','Explore'],['portfolio','My portfolio'],['track','Track'],['wallet','Wallet'],['kyc','Identity (KYC)']],
+ manager:[['overview','Overview'],['ships','My shipments'],['new','List a shipment'],['register','Registration']],
+ staff:[['home','Home'],['review','Review'],['overdue','Funding overdue'],['ships','Shipments'],['money','Money'],['team','Team']]
+};
+const S={role:'investor',screen:'auth',arg:null,signed:false,kyc:'approved',mgr:'approved',staffRole:'owner',tab:'investors',mtype:'company',wallet:12500};
+const PERM={review:['owner','reviewer'],deposit:['owner','finance'],ops:['owner','ops'],wd:['owner','finance'],team:['owner']};
+const can=a=>PERM[a].includes(S.staffRole);
+const dis=a=>can(a)?'':` disabled title="Needs ${PERM[a].join(' / ')} role"`;
+
+function go(role,screen,arg){S.role=role;S.screen=screen;S.arg=arg??null;location.hash=`#/${role}/${screen}${arg?'/'+arg:''}`;}
+function fromHash(){
+  const p=location.hash.replace(/^#\//,'').split('/');
+  if(p[0]&&NAV[p[0]]){S.role=p[0];S.screen=p[1]||NAV[p[0]][0][0];S.arg=p[2]||null;S.signed=true;}
+}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2200)}
+function modal(title,body,ok,okLabel='Confirm',cls='p'){
+  $('#modalBox').innerHTML=`<h2>${title}</h2>${body}<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-act="mclose">Cancel</button><button class="btn ${cls}" data-act="mok">${okLabel}</button></div>`;
+  $('#modal').classList.add('on');modal.ok=ok;
+}
+const mclose=()=>$('#modal').classList.remove('on');
+
+/* ---------- shared components ---------- */
+const prog=l=>`<div class="bar2"><i style="width:${Math.min(100,l.raised/l.target*100)}%"></i></div>`;
+function timeline(l){return `<ul class="tl">${STAGES.map((s,i)=>`<li class="${i<l.stage?'done':i==l.stage?'cur':''}">${s}${i<=l.stage&&i>0?` <span class="perm">· ${['','Cost of goods paid to supplier','Container sealed & loaded','Vessel departed','Cleared at destination','Buyer accepted goods','Wallets credited'][i]}</span>`:''}</li>`).join('')}</ul>`}
+function card(l,to){
+  const r=roi(l.target,l.exp,l.share,l.cycle);
+  return `<div class="card lc" data-go="${to}" data-arg="${l.id}" style="margin:0">
+   <div class="hero" style="background:${GRAD[l.cat]}">${esc(l.cat)}</div>
+   <div class="row sp"><h3 style="margin:0">${esc(l.name)}</h3></div>
+   <div class="perm" style="margin:2px 0 8px">${cn(l.src)} → ${cn(l.buy)}</div>
+   ${prog(l)}<div class="row sp perm" style="margin:4px 0 10px"><span>${usd(l.raised)} of ${usd(l.target)}</span><span>${Math.round(l.raised/l.target*100)}% funded</span></div>
+   <div class="row sp"><span><b>${pct(r.year)}</b> <span class="perm">est. / year</span></span><span class="perm">${l.cycle}-day cycle · min ${usd(l.min)}</span></div></div>`;
+}
+function head(t,s,right=''){return `<div class="row sp"><div><h1>${t}</h1><p class="sub">${s}</p></div><div>${right}</div></div>`}
+function field(id,label,type='text',val='',hint='',extra=''){return `<div class="f"><label for="${id}">${label}</label><input id="${id}" type="${type}" value="${esc(val)}" ${extra}>${hint?`<div class="hint">${hint}</div>`:''}</div>`}
+function sel(id,label,opts,val){return `<div class="f"><label for="${id}">${label}</label><select id="${id}">${opts.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')}</select></div>`}
+function table(cols,rows,empty='Nothing here.'){return `<div class="tw"><table><thead><tr>${cols.map(c=>`<th${c.startsWith('>')?' class="r"':''}>${c.replace('>','')}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.map(r=>`<tr>${r.map((c,i)=>`<td${cols[i].startsWith('>')?' class="r"':''}>${c}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${cols.length}" class="perm">${empty}</td></tr>`}</tbody></table></div>`}
+function statusTag(s){return `<span class="tag ${{approved:'ok',pending:'warn',rejected:'bad',none:''}[s]}">${{approved:'Approved',pending:'Pending review',rejected:'Rejected',none:'Not submitted'}[s]}</span>`}
+
+/* ---------- AUTH ---------- */
+function vAuth(){
+  return `<div class="auth card"><div style="text-align:center;margin-bottom:14px"><div class="logo" style="font-size:26px">SHEHNAT</div><p class="sub">Invest in export shipments. Share in the real profit.</p></div>
+  <div class="tabs"><a class="${S.authTab!=='up'?'on':''}" data-act="authtab" data-v="in">Sign in</a><a class="${S.authTab==='up'?'on':''}" data-act="authtab" data-v="up">Create account</a></div>
+  ${S.authTab==='up'?`${field('a_name','Full name')}${field('a_mail','Email','email')}${field('a_pw','Password','password','','At least 10 characters with letters and numbers')}
+   <div class="f"><label>I want to…</label><select id="a_role"><option value="investor">Invest in shipments</option><option value="manager">Manage shipments (I'm a business or trader)</option></select></div>
+   <button class="btn p" style="width:100%" data-act="signup">Create account</button>`:
+  `${field('a_mail','Email','email','demo@shehnat.example')}${field('a_pw','Password','password','••••••••••')}
+   <button class="btn p" style="width:100%" data-act="signin" data-v="investor">Sign in</button>
+   <div class="hint" style="text-align:center;margin:8px 0">5 wrong attempts lock the account for 15 minutes.</div>`}
+  <hr style="border:0;border-top:1px solid var(--line);margin:16px 0"><div class="perm" style="margin-bottom:6px">Prototype shortcut – jump straight in as:</div>
+  <div class="row"><button class="btn" data-act="signin" data-v="investor">Investor</button><button class="btn" data-act="signin" data-v="manager">Manager</button><button class="btn" data-act="signin" data-v="staff">Staff</button></div></div>`;
+}
+
+/* ---------- INVESTOR ---------- */
+function gateKyc(){return S.kyc==='approved'?'':`<div class="alert warn">Your identity check is <b>${S.kyc==='none'?'not submitted':S.kyc}</b>. You can browse, but you can only invest and withdraw once approved. <a data-go="kyc">Go to identity check →</a></div>`}
+function vExplore(){
+  const f=S.f||{};
+  const list=LISTINGS.filter(l=>l.status==='live'&&(!f.q||l.name.toLowerCase().includes(f.q.toLowerCase()))&&(!f.c||l.cat===f.c)&&(!f.s||l.src===f.s)&&(!f.b||l.buy===f.b));
+  return head('Explore shipments','Live shipments open for funding. Returns are estimates, not guarantees.')+gateKyc()+
+  `<div class="card"><div class="form" style="margin:0">
+    <div class="f"><label>Search</label><input id="f_q" placeholder="Rice, tiles…" value="${esc(f.q||'')}"></div>
+    <div class="f"><label>Category</label><select id="f_c"><option value="">All</option>${CATS.map(c=>`<option${f.c===c?' selected':''}>${c}</option>`).join('')}</select></div>
+    <div class="f"><label>Sourced from</label><select id="f_s">${copts(f.s,'Anywhere')}</select></div>
+    <div class="f"><label>Sold in</label><select id="f_b">${copts(f.b,'Anywhere')}</select></div></div>
+    <button class="btn p s" data-act="filter">Apply filters</button> <button class="btn s" data-act="clearf">Clear</button></div>
+  <div class="grid g3">${list.map(l=>card(l,'detail')).join('')||'<p class="perm">No shipments match.</p>'}</div>`;
+}
+function vDetail(){
+  const l=byId(S.arg)||LISTINGS[0], r=roi(l.target,l.exp,l.share,l.cycle), left=l.target-l.raised;
+  return `<p><a data-go="explore">← All shipments</a></p>`+head(esc(l.name),`${cn(l.src)} → ${cn(l.buy)} · ${l.cat}`,stTag(l.status))+
+  `<div class="grid g2"><div>
+   <div class="card"><h2>Funding</h2>${prog(l)}<div class="row sp" style="margin:6px 0 14px"><b>${usd(l.raised)} raised</b><span class="perm">target ${usd(l.target)}</span></div>
+    <dl class="kv"><dt>Still to fund</dt><dd>${usd(left)}</dd><dt>Minimum investment</dt><dd>${usd(l.min)}</dd><dt>Cycle</dt><dd>${l.cycle} days</dd><dt>Investors' share of net profit</dt><dd>${l.share}%</dd><dt>Estimated return / cycle</dt><dd>${pct(r.cycle)}</dd><dt>Estimated return / year</dt><dd>${pct(r.year)}</dd></dl>
+    <div class="priv">Estimates assume the whole target is spent on goods and sells for target + expected profit. No fixed interest – profit and losses are shared in proportion to capital.</div></div>
+   <div class="card"><h2>Shipment progress</h2>${timeline(l)}</div></div>
+   <div><div class="card"><h2>Invest</h2>
+    ${l.status!=='live'||l.stage>0?`<div class="alert">Funding is closed for this shipment.</div>`:S.kyc!=='approved'?`<div class="alert warn">Complete your identity check to invest.</div>`:`
+    <div class="perm" style="margin-bottom:8px">Wallet balance: <b>${usdx(S.wallet)}</b></div>
+    ${field('inv_amt','Amount (USD)','number',l.min,`Between ${usd(l.min)} and ${usd(left)}`,`min="${l.min}" max="${left}" step="0.01"`)}
+    <div id="invPreview" class="alert" style="font-size:13px"></div>
+    <button class="btn p" style="width:100%" data-act="invest" data-id="${l.id}">Invest now</button>`}
+    <div class="priv">🔒 For privacy, the manager's capital, deposit, expected profit and manager share are not shown to investors.</div></div>
+   <div class="card"><h2>Product</h2><dl class="kv"><dt>Category</dt><dd>${l.cat}</dd><dt>Certificate</dt><dd>${l.cert||'—'}</dd><dt>Source country</dt><dd>${cn(l.src)}</dd><dt>Buyer country</dt><dd>${cn(l.buy)}</dd></dl></div></div></div>`;
+}
+function vKyc(){
+  const st=S.kyc, ro=st==='pending'||st==='approved';
+  return head('Identity check (KYC)','Required before you can invest or withdraw.',statusTag(st))+
+  (st==='rejected'?`<div class="alert bad"><b>Rejected:</b> Proof of address is older than 3 months. Please upload a recent document and resubmit.</div>`:'')+
+  (st==='pending'?`<div class="alert">Submitted – a reviewer will decide shortly. You cannot edit while it is pending.</div>`:'')+
+  (st==='approved'?`<div class="alert ok">You are approved. You can invest and withdraw.</div>`:'')+
+  `<div class="row perm" style="margin-bottom:10px">Preview state: ${['none','pending','rejected','approved'].map(s=>`<button class="btn s ${st===s?'p':''}" data-act="setkyc" data-v="${s}">${s}</button>`).join('')}</div>
+  <div class="card"><h2>1. Documents</h2>
+   <div class="up"><span>📄 Government photo ID <span class="perm">(passport, national ID, driving licence or residence permit)</span></span>${ro?'<span class="tag ok">passport.pdf ✓</span>':'<button class="btn s" data-act="upload">Upload</button>'}</div>
+   <div class="up"><span>🏠 Proof of address</span>${ro?'<span class="tag ok">utility-bill.png ✓</span>':'<button class="btn s" data-act="upload">Upload</button>'}</div>
+   <div class="hint">PDF, JPEG or PNG, up to 5 MB each.</div></div>
+  <div class="card"><h2>2. Your details</h2><div class="form">
+   ${field('k1','Full name (as on ID)','text','Sara Ahmed',' ',ro?'disabled':'')}${field('k2','Date of birth','date','1990-04-12','Must be 18 or older',ro?'disabled':'')}
+   <div class="f"><label>Nationality</label><select ${ro?'disabled':''}>${copts('GB')}</select></div>
+   <div class="f"><label>Country of residence</label><select ${ro?'disabled':''}>${copts('AE')}</select><div class="hint">Not accepted: ${BLOCKED}</div></div>
+   ${field('k3','Address','text','Marina Walk 12',' ',ro?'disabled':'')}${field('k4','City','text','Dubai',' ',ro?'disabled':'')}
+   <div class="f"><label>ID type</label><select ${ro?'disabled':''}><option>Passport</option><option>National ID card</option><option>Driving licence</option><option>Residence permit</option></select></div>
+   ${field('k5','ID number','text','P1234567',' ',ro?'disabled':'')}${field('k6','Phone (with country code)','tel','+971 50 123 4567',' ',ro?'disabled':'')}${field('k7','Email','email','sara@example.com',' ',ro?'disabled':'')}
+   ${field('k8','Occupation','text','Software engineer',' ',ro?'disabled':'')}${field('k9','Source of funds','text','Salary and savings',' ',ro?'disabled':'')}</div>
+   <label style="display:flex;gap:8px;font-weight:400;color:var(--ink)"><input type="checkbox" style="width:auto" ${ro?'checked disabled':''}> I confirm these details are true and I understand investments can lose value.</label>
+   <div style="margin-top:12px"><button class="btn p" data-act="submitkyc" ${ro?'disabled':''}>${st==='rejected'?'Resubmit':'Submit for review'}</button></div></div>`;
+}
+const MYINV=[{id:101,amt:5000},{id:103,amt:2500},{id:104,amt:1000}];
+function vPortfolio(){
+  const rows=MYINV.map(m=>{const l=byId(m.id);const done=l.status==='completed';let exp;
+    if(done){const s=settle(l.target,l.cost,l.sale,l.share);exp=m.amt+s.pool*m.amt/l.target}else{const r=roi(l.target,l.exp,l.share,l.cycle);exp=m.amt+r.pool*m.amt/l.target}
+    return [`<a data-go="track" data-arg="${l.id}">${esc(l.name)}</a><div class="perm">${cn(l.src)} → ${cn(l.buy)}</div>`,usd(m.amt),`<span class="tag ${done?'':'info'}">${STAGES[l.stage]}</span>`,(done?'Paid ':'Est. ')+usdx(exp),done?`<b style="color:var(--ok)">+${usdx(exp-m.amt)}</b>`:`<span class="perm">+${usdx(exp-m.amt)} est.</span>`]});
+  return head('My portfolio','Everything you have invested in.')+gateKyc()+
+  `<div class="grid g4" style="margin-bottom:16px"><div class="stat"><span>Total invested</span><b>${usd(8500)}</b></div><div class="stat"><span>Active shipments</span><b>2</b></div><div class="stat"><span>Profit received</span><b style="color:var(--ok)">${usdx(207.36)}</b></div><div class="stat"><span>Wallet</span><b>${usdx(S.wallet)}</b></div></div>
+  <div class="card">${table(['Shipment','>Invested','Stage','>Payout','>Profit'],rows.map(r=>r))}</div>`;
+}
+function vTrack(){
+  const l=byId(S.arg)||byId(101);
+  return head('Track a shipment','Live progress updates from operations.')+
+  `<div class="card"><label>Choose investment</label><select id="trk">${MYINV.map(m=>`<option value="${m.id}"${m.id==l.id?' selected':''}>${esc(byId(m.id).name)} – ${usd(m.amt)}</option>`).join('')}</select></div>
+  <div class="grid g2"><div class="card"><h2>${esc(l.name)}</h2>${timeline(l)}</div>
+  <div class="card"><h2>Updates from operations</h2>${[['3 days ago','Goods purchased and paid to supplier. Quality inspection passed.'],['Yesterday','Container sealed and ready for port transfer.'],['Today','Loaded at Mundra port. Vessel departs in 2 days.']].slice(0,Math.max(1,l.stage)).map(u=>`<div style="border-left:3px solid var(--pri);padding-left:10px;margin-bottom:12px"><div class="perm">${u[0]}</div>${u[1]}</div>`).join('')}
+  ${l.status==='completed'?`<h3>Settlement</h3>${settleTable(l)}`:''}</div></div>`;
+}
+function settleTable(l,full){
+  const s=settle(l.target,l.cost,l.sale,l.share);
+  return `<dl class="kv"><dt>Sale price</dt><dd>${usdx(l.sale)}</dd><dt>Cost of goods</dt><dd>${usdx(l.cost)}</dd><dt>Gross result</dt><dd>${usdx(s.gross)}</dd><dt>Platform fee (1%)</dt><dd>${usdx(s.fee)}</dd><dt>Net profit</dt><dd>${usdx(s.net)}</dd><dt>Pool for investors</dt><dd>${usdx(s.pool)}</dd>${full?`<dt>Manager share</dt><dd>${usdx(s.mgr)}</dd>`:''}</dl>`;
+}
+function vWallet(){
+  const w=[['Withdrawal #3','2026-09-30','Pending','$2,000.00'],['Withdrawal #2','2026-08-12','Approved','$1,500.00','REF-88231'],['Withdrawal #1','2026-07-01','Declined','$500.00','Name mismatch']];
+  return head('Wallet','US dollars only. Convert other currencies outside the platform.')+
+  `<div class="grid g2"><div><div class="card"><div class="perm">Available balance</div><div style="font-size:32px;font-weight:800">${usdx(S.wallet)}</div></div>
+   <div class="card"><h2>Add money</h2><p>Send US dollars by bank transfer to the Shehnat escrow account, quoting your reference:</p><div class="alert" style="font-size:18px;font-weight:800;text-align:center">SHE-1042</div>
+   <div class="priv"><b>Sandbox top-up (dev only)</b><div class="row" style="margin-top:6px"><input id="topup" type="number" value="1000" style="max-width:140px"><button class="btn s" data-act="topup">Add test money</button></div></div></div>
+   <div class="card"><h2>Statement</h2>${table(['Date','Entry','>Amount'],[['Oct 12','Invested in Basmati rice','<span style="color:var(--bad)">−$5,000.00</span>'],['Oct 10','Bank deposit SHE-1042','<span style="color:var(--ok)">+$10,000.00</span>'],['Sep 30','Withdrawal hold #3','<span style="color:var(--bad)">−$2,000.00</span>'],['Sep 02','Payout – Arabica coffee','<span style="color:var(--ok)">+$1,062.00</span>']])}</div></div>
+   <div><div class="card"><h2>Withdraw to your bank</h2>${S.kyc!=='approved'?'<div class="alert warn">Withdrawals need an approved identity check.</div>':''}
+    <div class="form">${field('w_amt','Amount (USD)','number','','Max 10,000,000. $10,000 or more needs owner approval.')}
+    <div class="f"><label>Bank country</label><select>${copts('AE')}</select><div class="hint">Banks in ${BLOCKED} are not accepted.</div></div>
+    ${field('w_bank','Bank name','text','Emirates NBD')}${field('w_holder','Account holder name','text','Sara Ahmed','Must be your own name')}
+    ${field('w_acc','IBAN or account number','text','AE07 0331 2345 6789 0123 456','IBAN checksum is verified')}${field('w_swift','SWIFT / BIC','text','EBILAEAD','8 or 11 characters; must match the bank country')}</div>
+    <button class="btn p" data-act="withdraw" ${S.kyc!=='approved'?'disabled':''}>Request withdrawal</button>
+    <div class="hint">The amount is held immediately and released when finance approves.</div></div>
+   <div class="card"><h2>My withdrawals</h2>${table(['Request','>Amount','Status'],w.map(x=>[x[0]+`<div class="perm">${x[1]}</div>`,x[3],`<span class="tag ${x[2]==='Approved'?'ok':x[2]==='Declined'?'bad':'warn'}">${x[2]}</span>${x[4]?`<div class="perm">${x[4]}</div>`:''}`]))}</div></div></div>`;
+}
+
+/* ---------- MANAGER ---------- */
+const MGR=LISTINGS.filter(l=>l.mgr==='Al Noor Trading LLC').concat(LISTINGS.filter(l=>l.id==101));
+const myShips=()=>LISTINGS.filter(l=>['Al Noor Trading LLC'].includes(l.mgr));
+function gateMgr(){return S.mgr==='approved'?'':`<div class="card" style="text-align:center;padding:40px"><h1>Almost there</h1><p class="sub">Your manager registration is <b>${S.mgr}</b>. Finish registration to list shipments and withdraw.</p><button class="btn p" data-go="register">Go to registration</button></div>`}
+function vRegister(){
+  const st=S.mgr, ro=st==='pending'||st==='approved', biz=S.mtype==='company';
+  return head('Manager registration','Register once as a business or an individual trader, anywhere in the world.',statusTag(st))+
+  (st==='rejected'?`<div class="alert bad"><b>Rejected:</b> Trade licence has expired. Upload the renewed licence and resubmit.</div>`:'')+(st==='pending'?'<div class="alert">Submitted – awaiting review.</div>':'')+(st==='approved'?'<div class="alert ok">Approved – you can list shipments.</div>':'')+
+  `<div class="row perm" style="margin-bottom:10px">Preview state: ${['none','pending','rejected','approved'].map(s=>`<button class="btn s ${st===s?'p':''}" data-act="setmgr" data-v="${s}">${s}</button>`).join('')}</div>
+  <div class="card"><h2>I am registering as</h2><div class="row"><button class="btn ${biz?'p':''}" data-act="mtype" data-v="company">A business</button><button class="btn ${!biz?'p':''}" data-act="mtype" data-v="individual">An individual trader</button></div></div>
+  <div class="card"><h2>1. Documents</h2>${(biz?['Business registration / trade licence','Owner photo ID','Company profile']:['Your photo ID','Proof of address','Trading profile']).map(d=>`<div class="up"><span>📄 ${d}</span>${ro?'<span class="tag ok">uploaded ✓</span>':'<button class="btn s" data-act="upload">Upload</button>'}</div>`).join('')}</div>
+  <div class="card"><h2>2. Details</h2><div class="form">
+   ${field('m1',biz?'Business name':'Trading name','text',biz?'Al Noor Trading LLC':'',' ',ro?'disabled':'')}${field('m2','Registration number'+(biz?'':' (optional)'),'text',biz?'DED-2019-88412':'',' ',ro?'disabled':'')}
+   ${field('m3','State / region / free zone (optional)','text','Dubai',' ',ro?'disabled':'')}<div class="f"><label>Country of registration / residence</label><select ${ro?'disabled':''}>${copts('AE')}</select><div class="hint">Not accepted: ${BLOCKED}</div></div>
+   ${field('m4','Address','text','Business Bay, Tower 4',' ',ro?'disabled':'')}${field('m5','City','text','Dubai',' ',ro?'disabled':'')}
+   <div class="f full"><label>Business activities and products (max 1,500 characters)</label><textarea rows="3" ${ro?'disabled':''}>Export of food staples and building materials to East Africa.</textarea></div>
+   ${field('m6','Years trading','number','7',' ',ro?'disabled':'')}${field('m7','Shipments exported so far','number','64',' ',ro?'disabled':'')}
+   ${field('m8','Owner / signatory name','text','Omar Al Noor',' ',ro?'disabled':'')}<div class="f"><label>Owner nationality</label><select ${ro?'disabled':''}>${copts('AE')}</select></div>
+   ${field('m9','Owner ID type','text','Passport',' ',ro?'disabled':'')}${field('m10','Owner ID number','text','L9988112',' ',ro?'disabled':'')}
+   ${field('m11','Phone (with country code)','tel','+971 4 555 0100',' ',ro?'disabled':'')}${field('m12','Business email','email','ops@alnoor.example',' ',ro?'disabled':'')}</div>
+   <label style="display:flex;gap:8px;font-weight:400;color:var(--ink)"><input type="checkbox" style="width:auto" ${ro?'checked disabled':''}> I confirm these details are true and I am authorised to act for this business.</label>
+   <div style="margin-top:12px"><button class="btn p" data-act="submitmgr" ${ro?'disabled':''}>${st==='rejected'?'Resubmit':'Submit for review'}</button></div></div>`;
+}
+function vOverview(){
+  if(S.mgr!=='approved')return gateMgr();
+  const m=myShips();
+  return head('Overview','Welcome back, Al Noor Trading LLC.',`<button class="btn p" data-go="new">+ List a shipment</button>`)+
+  `<div class="grid g4" style="margin-bottom:16px"><div class="stat"><span>Active shipments</span><b>${m.filter(l=>l.status==='live').length}</b></div><div class="stat"><span>Capital deployed</span><b>${usd(100000)}</b></div><div class="stat"><span>Expected manager share</span><b>${usd(21760)}</b></div><div class="stat"><span>Wallet</span><b>${usdx(34210.5)}</b></div></div>
+  <div class="card"><h2>Needs your attention</h2>${table(['Shipment','Status','Action'],m.filter(l=>l.status==='awaiting_deposit'||l.status==='pending_review').map(l=>[esc(l.name),stTag(l.status),l.status==='awaiting_deposit'?`<a data-go="mdetail" data-arg="${l.id}">Send deposit of ${usd(l.target*l.mgrPct/100)} →</a>`:'<span class="perm">Waiting for reviewer</span>']),'All caught up.')}</div>
+  <div class="card"><h2>My shipments</h2><div class="grid g3">${m.map(l=>card(l,'mdetail')).join('')}</div></div>`;
+}
+function vMShips(){
+  if(S.mgr!=='approved')return gateMgr();
+  return head('My shipments','All shipments you have listed.',`<button class="btn p" data-go="new">+ List a shipment</button>`)+
+  `<div class="card">${table(['Shipment','Route','>Target','Funded','Status','Stage'],myShips().map(l=>[`<a data-go="mdetail" data-arg="${l.id}">${esc(l.name)}</a>`,`${l.src} → ${l.buy}`,usd(l.target),Math.round(l.raised/l.target*100)+'%',stTag(l.status),STAGES[l.stage]]))}</div>`;
+}
+function vMDetail(){
+  if(S.mgr!=='approved')return gateMgr();
+  const l=byId(S.arg)||byId(105), dep=l.target*l.mgrPct/100, r=roi(l.target,l.exp,l.share,l.cycle);
+  const mgrShare=r.mgr, onCap=r.pool*l.mgrPct/100;
+  return `<p><a data-go="ships">← My shipments</a></p>`+head(esc(l.name),`${cn(l.src)} → ${cn(l.buy)} · ${l.cat}`,stTag(l.status))+
+  (l.status==='awaiting_deposit'?`<div class="alert warn"><b>Next step:</b> transfer <b>${usdx(dep)}</b> (${l.mgrPct}% of target) in USD to the Shehnat escrow account, reference <b>LISTING-${l.id}</b>. Finance confirms once it arrives.<div style="margin-top:8px"><button class="btn p s" data-act="depsent">I have sent the deposit</button></div></div>`:'')+
+  (l.status==='pending_review'?'<div class="alert">A reviewer is checking this listing.</div>':'')+
+  `<div class="grid g2"><div><div class="card"><h2>Funding</h2>${prog(l)}<div class="row sp perm" style="margin:6px 0"><span>${usd(l.raised)} raised</span><span>target ${usd(l.target)}</span></div>
+   <dl class="kv"><dt>Your deposit (${l.mgrPct}%)</dt><dd>${usdx(dep)}</dd><dt>Investors needed</dt><dd>${usd(l.target-dep)}</dd><dt>Minimum investment</dt><dd>${usd(l.min)}</dd></dl></div>
+   <div class="card"><h2>Terms</h2><dl class="kv"><dt>Cycle</dt><dd>${l.cycle} days</dd><dt>Investors' share of net profit</dt><dd>${l.share}%</dd><dt>Manager share</dt><dd>${100-l.share}%</dd><dt>Expected profit (gross)</dt><dd>${usd(l.exp)}</dd><dt>Cost of goods</dt><dd>${l.cost?usd(l.cost):'—'}</dd><dt>Certificate</dt><dd>${l.cert||'—'}</dd></dl></div></div>
+  <div><div class="card"><h2>${l.status==='completed'?'Actual result':'Expected result'}</h2>
+   ${l.status==='completed'?settleTable(l,true):`<dl class="kv"><dt>Platform fee (1%)</dt><dd>${usd(r.fee)}</dd><dt>Net profit</dt><dd>${usd(r.net)}</dd><dt>Your manager share</dt><dd>${usd(mgrShare)}</dd><dt>Profit on your capital</dt><dd>${usd(Math.round(onCap))}</dd><dt><b>Total expected</b></dt><dd><b>${usd(Math.round(mgrShare+onCap))}</b></dd></dl><div class="priv">Estimates only. A loss is shared pro-rata and no manager share is paid on a loss.</div>`}</div>
+  <div class="card"><h2>Progress</h2>${timeline(l)}</div></div></div>`;
+}
+function vNew(){
+  if(S.mgr!=='approved')return gateMgr();
+  return head('List a shipment','Reviewed by Shehnat staff before it goes live.')+
+  `<div class="grid g2"><div class="card"><div class="form">
+   ${field('n_name','Shipment name','text','',"e.g. Coffee beans – 40ft container",'maxlength="120"')}
+   ${sel('n_cat','Category',CATS)}
+   <div class="f"><label>Goods sourced from</label><select id="n_src">${copts('IN')}</select></div>
+   <div class="f"><label>Buyer is in</label><select id="n_buy">${copts('KE')}</select><div class="hint">Must differ from the source. ${BLOCKED} not accepted.</div></div>
+   ${field('n_target','Funding target (USD)','number','100000','1,000 – 10,000,000, including your deposit','data-prev')}
+   ${field('n_mp','Your share of capital (%)','number','20','20–90%','data-prev min="20" max="90"')}
+   ${field('n_min','Minimum investment (USD)','number','500','1 – 1,000,000','data-prev')}
+   ${field('n_share','Investors\' share of net profit (%)','number','60','40–95%. You keep the rest as manager share.','data-prev min="40" max="95"')}
+   ${field('n_exp','Expected profit (USD, gross)','number','20000','1 – 10,000,000','data-prev')}
+   ${field('n_cycle','Cycle (days)','number','60','1 – 365','data-prev')}
+   ${field('n_cert','Product certificate (optional)','text','','e.g. ISO number, max 80 characters','maxlength="80"')}</div>
+   <button class="btn p" data-act="createlisting">Submit for review</button></div>
+  <div class="card" style="position:sticky;top:110px;align-self:start"><h2>Live preview</h2><div id="newPrev"></div></div></div>`;
+}
+
+/* ---------- STAFF ---------- */
+function perms(){return `<span class="perm">Signed in as <b>${S.staffRole}</b></span>`}
+function vHome(){
+  return head('Staff home',perms())+
+  `<div class="grid g4" style="margin-bottom:16px"><div class="stat"><span>Items to review</span><b>7</b></div><div class="stat"><span>Live shipments</span><b>${LISTINGS.filter(l=>l.status==='live').length}</b></div><div class="stat"><span>Total raised (live)</span><b>${usd(LISTINGS.filter(l=>l.status==='live').reduce((a,l)=>a+l.raised,0))}</b></div><div class="stat"><span>Funding overdue</span><b style="color:var(--bad)">1</b></div></div>
+  <div class="grid g2"><div class="card"><h2>Ledger integrity</h2><div class="alert ok">✓ All transactions sum to zero. No negative balances. Last checked just now.</div>${S.staffRole==='owner'?'<button class="btn s" data-act="ledger">Run ledger check</button>':'<span class="perm">Only the owner can run the check.</span>'}</div>
+  <div class="card"><h2>Queue</h2>${table(['Type','Count',''],[['Investor KYC','3','<a data-go="review" data-arg="investors">Open</a>'],['Manager registrations','1','<a data-go="review" data-arg="managers">Open</a>'],['New listings','1','<a data-go="review" data-arg="listings">Open</a>'],['Deposits to confirm','1','<a data-go="review" data-arg="deposits">Open</a>'],['Withdrawals','2','<a data-go="money">Open</a>']])}</div></div>`;
+}
+const APPS={investors:[['Sara Ahmed','GB → AE','Passport','2h ago','—'],['Lucas Meyer','DE','National ID','5h ago','Priya (reviewer)'],['Tunde Bello','NG','Driving licence','1d ago','—']],managers:[['Saigon Weave Co.','VN · Business','Trade licence','3h ago','—']]};
+function vReview(){
+  const t=S.arg||S.tab; S.tab=t;
+  const T=[['investors','Investors (3)'],['managers','Managers (1)'],['listings','Listings (1)'],['deposits','Deposits (1)']];
+  let body='';
+  if(t==='investors'||t==='managers'){
+    body=table(['Applicant','Country','Documents','Submitted','Assigned to','Decision'],APPS[t].map(a=>[`<b>${a[0]}</b>`,a[1],`<a data-act="doc">${a[2]} ↗</a><div class="perm">views are logged</div>`,a[3],`${a[4]} <a data-act="assign">assign</a>`,`<button class="btn s p" data-act="approve" data-v="${a[0]}"${dis('review')}>Approve</button> <button class="btn s d" data-act="reject" data-v="${a[0]}"${dis('review')}>Reject</button>`]));
+  } else if(t==='listings'){
+    const l=byId(106);body=table(['Shipment','Manager','Route','>Target','Terms','Decision'],[[`<b>${esc(l.name)}</b>`,l.mgr,`${l.src} → ${l.buy}`,usd(l.target),`${l.mgrPct}% mgr · ${l.share}% investors · ${l.cycle}d`,`<button class="btn s p" data-act="approve" data-v="${esc(l.name)}"${dis('review')}>Approve</button> <button class="btn s d" data-act="reject" data-v="${esc(l.name)}"${dis('review')}>Reject</button>`]]);
+  } else {
+    const l=byId(105),dep=l.target*l.mgrPct/100;
+    body=table(['Listing','Manager','>Deposit due','Manager flagged sent','Confirm receipt'],[[`<b>${esc(l.name)}</b><div class="perm">ref LISTING-${l.id}</div>`,l.mgr,usdx(dep),'<span class="tag ok">Yes</span>',`<div class="row"><input placeholder="Bank reference" style="width:150px" id="depref"><button class="btn s p" data-act="confdep"${dis('deposit')}>Confirm</button></div>`]]);
+  }
+  return head('Review','Applications, listings and deposits.',perms())+`<div class="tabs">${T.map(x=>`<a class="${t===x[0]?'on':''}" data-go="review" data-arg="${x[0]}">${x[1]}</a>`).join('')}</div><div class="card">${body}</div>
+  ${S.staffRole!=='owner'&&S.staffRole!=='reviewer'&&(t==='investors'||t==='managers'||t==='listings')?'<div class="alert warn">Your role can view but not decide here.</div>':''}`;
+}
+function vOverdue(){
+  const l=byId(102);
+  return head('Funding overdue','Live for 5+ days and not fully funded.')+
+  `<div class="card">${table(['Shipment','Live for','Raised','>Remaining','Action'],[[`<b>${esc(l.name)}</b>`,l.days+' days',`${usd(l.raised)} (${Math.round(l.raised/l.target*100)}%)`,usd(l.target-l.raised),`<button class="btn s p" data-act="fundrem" data-v="${l.target-l.raised}"${dis('ops')}>Fund from treasury</button>`]])}
+   <div class="priv">Treasury balance: <b>${usd(250000)}</b>. Platform capital earns profit or takes losses like any other capital; the payout returns to the treasury.</div></div>`;
+}
+function vSShips(){
+  return head('Shipments','All listings on the platform.')+`<div class="card">${table(['ID','Shipment','Manager','Route','>Target','Funded','Status','Stage'],LISTINGS.map(l=>[l.id,`<a data-go="sdetail" data-arg="${l.id}">${esc(l.name)}</a>`,l.mgr,`${l.src} → ${l.buy}`,usd(l.target),Math.round(l.raised/l.target*100)+'%',stTag(l.status),STAGES[l.stage]]))}</div>`;
+}
+function vSDetail(){
+  const l=byId(S.arg)||byId(101), dep=l.target*l.mgrPct/100, r=roi(l.target,l.exp,l.share,l.cycle);
+  const nextOk=l.status==='live'&&l.stage<5, atFive=l.stage===5;
+  return `<p><a data-go="ships">← All shipments</a></p>`+head(esc(l.name),`#${l.id} · ${l.mgr} · ${cn(l.src)} → ${cn(l.buy)}`,stTag(l.status))+
+  `<div class="grid g2"><div><div class="card"><h2>Deposit & funding</h2><dl class="kv"><dt>Target</dt><dd>${usd(l.target)}</dd><dt>Manager deposit (${l.mgrPct}%)</dt><dd>${usdx(dep)}</dd><dt>Raised (incl. deposit)</dt><dd>${usd(l.raised)}</dd><dt>Remaining</dt><dd>${usd(l.target-l.raised)}</dd><dt>Expected profit</dt><dd>${usd(l.exp)}</dd><dt>Investor / manager share</dt><dd>${l.share}% / ${100-l.share}%</dd></dl>
+    <div class="row" style="margin-top:12px">${l.status==='awaiting_deposit'?`<button class="btn p s" data-act="confdep"${dis('deposit')}>Confirm deposit</button>`:''}${l.status==='live'&&l.stage===0&&l.raised<l.target?`<button class="btn s" data-act="fundrem" data-v="${l.target-l.raised}"${dis('ops')}>Fund remaining from treasury</button>`:''}</div></div>
+   <div class="card"><h2>Contributions</h2>${table(['Source','>Amount','>Share'],[['Manager',usd(dep),l.mgrPct+'%'],['Investors',usd(Math.max(0,l.raised-dep)),pct((l.raised-dep)/l.target*100)],['Platform','$0','0%']])}</div></div>
+  <div><div class="card"><h2>Operations</h2>${timeline(l)}
+   ${nextOk?`<hr style="border:0;border-top:1px solid var(--line)"><div class="f" style="margin-top:12px"><label>Next: ${STAGES[l.stage+1]}</label>${l.stage===0?field('adv_cost','Cost of goods (USD)','number','',`Max ${usd(l.raised)}; needs 100% funding`):''}<input id="adv_note" placeholder="Note for investors (optional, 500 chars)"></div><button class="btn p s" data-act="advance" data-id="${l.id}"${dis('ops')}>Advance stage</button>`:''}
+   ${atFive?`<div class="f" style="margin-top:12px">${field('sale','Sale price (USD)','number',String(Math.round(l.target+l.exp)),'Settlement pays every wallet at once','data-sale')}<div id="salePrev" class="alert" style="font-size:13px"></div></div><button class="btn p" data-act="complete"${dis('ops')}>Complete & settle</button>`:''}
+   ${l.status==='completed'?`<hr style="border:0;border-top:1px solid var(--line)"><h3 style="margin-top:12px">Settlement</h3>${settleTable(l,true)}`:''}
+  </div></div></div>`;
+}
+function vMoney(){
+  const W=[['Priya Nair','IN · HDFC Bank','HDFC…4411','HDFCINBB',2400],['Omar Al Noor','AE · Emirates NBD','AE07…3456','EBILAEAD',34000],['Lucas Meyer','DE · Deutsche Bank','DE89…1300','DEUTDEFF',900]];
+  return head('Money','Withdrawals and treasury.',perms())+
+  `<div class="card"><h2>Pending withdrawals</h2>${table(['User','Bank','Account','SWIFT','>Amount','Decision'],W.map(w=>{const big=w[4]>=10000, ok=can('wd')&&(!big||S.staffRole==='owner');return [w[0],w[1],w[2],w[3],usdx(w[4])+(big?'<div><span class="tag warn">Owner approval</span></div>':''),`<button class="btn s p" data-act="wdok" data-v="${w[0]}"${ok?'':` disabled title="${big?'Owner only (≥ $10,000)':'Needs finance / owner'}"`}>Approve</button> <button class="btn s d" data-act="wdno" data-v="${w[0]}"${dis('wd')}>Decline</button>`]}))}
+   <div class="hint">Approving needs the bank reference of the transfer you made. Declining needs a reason and returns the money to the wallet.</div></div>
+  <div class="grid g2"><div class="card"><h2>Treasury</h2><div style="font-size:28px;font-weight:800">${usd(250000)}</div><div class="perm" style="margin-bottom:10px">Platform capital available to fund shortfalls</div>
+   ${field('t_amt','Top-up amount (USD)','number','','1 – 100,000,000')}${field('t_ref','Bank reference','text','','Required. The same reference is only credited once.')}<button class="btn p" data-act="treasury"${dis('deposit')}>Record top-up</button></div>
+  <div class="card"><h2>Platform revenue</h2><div style="font-size:28px;font-weight:800">${usdx(1240)}</div><div class="perm">1% fees from profitable shipments</div></div></div>`;
+}
+function vTeam(){
+  const T=[['Hadi Karim','owner','hadi@shehnat.example','Active'],['Priya Nair','reviewer','priya@shehnat.example','Active'],['Chen Wei','ops','chen@shehnat.example','Active'],['Fatima Zaid','finance','fatima@shehnat.example','Active'],['Old Account','reviewer','old@shehnat.example','Inactive']];
+  const A=[['10:42','Priya Nair (reviewer)','kyc.approve','application #31'],['10:15','Fatima Zaid (finance)','deposit.confirm','listing #101 · REF-77310'],['09:58','Chen Wei (ops)','stage.advance','listing #103 → At sea'],['09:12','system','wallet.topup','user 1042 · $10,000 · TX-1001'],['Yesterday','Hadi Karim (owner)','withdrawal.approve','#2 · $34,000 · REF-88231'],['Yesterday','Sara Ahmed (investor)','document.view','—']];
+  if(!can('team'))return head('Team','Staff and activity log')+`<div class="alert warn">Only the owner can manage staff and read the audit log. Switch the staff role to <b>owner</b> to preview this page.</div>`;
+  return head('Team','Staff accounts and the audit log.',`<button class="btn p" data-act="addstaff">+ Add staff</button>`)+
+  `<div class="card"><h2>Staff</h2>${table(['Name','Role','Email','Status',''],T.map(t=>[t[0],`<select style="width:auto"><option${t[1]==='owner'?' selected':''}>owner</option><option${t[1]==='reviewer'?' selected':''}>reviewer</option><option${t[1]==='ops'?' selected':''}>ops</option><option${t[1]==='finance'?' selected':''}>finance</option></select>`,t[2],`<span class="tag ${t[3]==='Active'?'ok':'bad'}">${t[3]}</span>`,t[0]==='Hadi Karim'?'<span class="perm">You – cannot deactivate yourself</span>':`<button class="btn s" data-act="toggle">${t[3]==='Active'?'Deactivate':'Activate'}</button>`]))}</div>
+  <div class="card"><h2>Activity log <span class="perm">(latest 60)</span></h2>${table(['Time','Actor','Action','Detail'],A)}</div>`;
+}
+
+/* ---------- router / render ---------- */
+const VIEWS={
+ investor:{explore:vExplore,detail:vDetail,kyc:vKyc,portfolio:vPortfolio,track:vTrack,wallet:vWallet},
+ manager:{register:vRegister,overview:vOverview,ships:vMShips,mdetail:vMDetail,new:vNew},
+ staff:{home:vHome,review:vReview,overdue:vOverdue,ships:vSShips,sdetail:vSDetail,money:vMoney,team:vTeam}
+};
+function render(){
+  const authed=S.signed;
+  $('#roles').style.display=authed?'':'none';$('#nav').style.display=authed?'':'none';
+  $('#staffRoleBox').style.display=authed&&S.role==='staff'?'':'none';
+  if(!authed){$('#app').innerHTML=vAuth();return}
+  document.querySelectorAll('#roles button').forEach(b=>b.classList.toggle('on',b.dataset.role===S.role));
+  const nav=NAV[S.role], navKey={detail:'explore',mdetail:'ships',sdetail:'ships'}[S.screen]||S.screen;
+  $('#nav').innerHTML=nav.map(n=>`<a class="${n[0]===navKey?'on':''}" data-go="${n[0]}">${n[1]}</a>`).join('');
+  const v=VIEWS[S.role][S.screen]||VIEWS[S.role][nav[0][0]];
+  $('#app').innerHTML=v();
+  $('#staffRole').value=S.staffRole;
+  bindLive();window.scrollTo(0,0);
+}
+function bindLive(){
+  const ia=$('#inv_amt');
+  if(ia){const u=()=>{const l=byId(S.arg)||LISTINGS[0],a=+ia.value||0,r=roi(l.target,l.exp,l.share,l.cycle);$('#invPreview').innerHTML=`Estimated profit on ${usd(a)}: <b>${usdx(r.pool*a/l.target)}</b> (${pct(r.cycle)} per cycle)`};ia.oninput=u;u()}
+  if(S.screen==='new'&&S.role==='manager'){
+    const u=()=>{const g=id=>+$('#'+id).value||0,t=g('n_target'),mp=g('n_mp'),sh=g('n_share'),ex=g('n_exp'),cy=g('n_cycle')||1;
+      const r=roi(t,ex,sh,cy),dep=t*mp/100;
+      $('#newPrev').innerHTML=`<dl class="kv"><dt>Your deposit</dt><dd>${usd(dep)}</dd><dt>Investors fund</dt><dd>${usd(t-dep)}</dd><dt>Platform fee</dt><dd>${usd(r.fee)}</dd><dt>Net profit</dt><dd>${usd(r.net)}</dd><dt>Manager share</dt><dd>${usd(r.mgr)}</dd><dt>Investor pool</dt><dd>${usd(r.pool)}</dd></dl><hr style="border:0;border-top:1px solid var(--line)"><div class="row sp"><span>Investors see</span><b>${pct(r.cycle)} / cycle · ${pct(r.year)} / year</b></div>
+      ${t<1000||t>1e7?'<div class="alert bad" style="margin-top:8px">Target must be $1,000 – $10,000,000</div>':''}${mp<20||mp>90?'<div class="alert bad" style="margin-top:8px">Your capital share must be 20–90%</div>':''}${sh<40||sh>95?'<div class="alert bad" style="margin-top:8px">Investor share must be 40–95%</div>':''}`};
+    document.querySelectorAll('[data-prev]').forEach(i=>i.oninput=u);u();}
+  const sl=$('#sale');
+  if(sl){const l=byId(S.arg)||byId(101),u=()=>{const s=settle(l.target,l.cost,+sl.value||0,l.share);$('#salePrev').innerHTML=`Fee <b>${usd(s.fee)}</b> · Net <b>${usd(s.net)}</b> · Manager share <b>${usd(s.mgr)}</b> · Investor pool <b>${usd(s.pool)}</b>`};sl.oninput=u;u()}
+  const tr=$('#trk');if(tr)tr.onchange=()=>go('investor','track',tr.value);
+}
+
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]');
+  if(g&&!e.target.closest('[data-act]')){go(S.role,g.dataset.go,g.dataset.arg);return}
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,v=b.dataset.v;
+  const A={
+   mclose,mok:()=>{const f=modal.ok;mclose();f&&f()},
+   authtab:()=>{S.authTab=v;render()},
+   signin:()=>{S.signed=true;go(v,NAV[v][0][0]);},
+   signup:()=>{S.kyc='none';S.mgr='none';S.signed=true;const r=$('#a_role').value;go(r,r==='investor'?'kyc':'register');toast('Account created – complete your verification')},
+   filter:()=>{S.f={q:$('#f_q').value,c:$('#f_c').value,s:$('#f_s').value,b:$('#f_b').value};render()},
+   clearf:()=>{S.f={};render()},
+   invest:()=>{const l=byId(b.dataset.id),amt=+$('#inv_amt').value;
+     if(amt<l.min||amt>l.target-l.raised)return toast(`Amount must be between ${usd(l.min)} and ${usd(l.target-l.raised)}`);
+     if(amt>S.wallet)return toast('Insufficient funds – top up your wallet');
+     modal('Confirm investment',`<p>Invest <b>${usdx(amt)}</b> in <b>${esc(l.name)}</b>?</p><p class="perm">Profit and losses are shared in proportion to capital. This is not a fixed-return product.</p>`,()=>{S.wallet-=amt;l.raised+=amt;toast('Investment confirmed');render()},'Invest')},
+   setkyc:()=>{S.kyc=v;render()},setmgr:()=>{S.mgr=v;render()},mtype:()=>{S.mtype=v;render()},
+   upload:()=>toast('File picker would open (PDF/JPEG/PNG, max 5 MB)'),
+   submitkyc:()=>{S.kyc='pending';toast('Submitted for review');render()},
+   submitmgr:()=>{S.mgr='pending';toast('Submitted for review');render()},
+   topup:()=>{S.wallet+=+$('#topup').value||0;toast('Sandbox top-up added');render()},
+   withdraw:()=>{const a=+$('#w_amt').value;if(!a||a>S.wallet)return toast(a?'Insufficient funds':'Enter an amount');toast(a>=10000?'Requested – needs owner approval':'Withdrawal requested – amount held')},
+   depsent:()=>toast('Marked as sent – finance will confirm receipt'),
+   createlisting:()=>{if(!$('#n_name').value)return toast('Give the shipment a name');if($('#n_src').value===$('#n_buy').value)return toast('Source and buyer country must differ');toast('Submitted – pending review');go('manager','ships')},
+   ledger:()=>toast('Ledger OK – 0 imbalances'),
+   doc:()=>toast('Opening document (this view is logged in the audit log)'),
+   assign:()=>modal('Assign reviewer',`<div class="f"><label>Reviewer</label><select><option>Priya Nair</option><option>Hadi Karim</option><option>— Clear assignment —</option></select></div>`,()=>toast('Assigned')),
+   approve:()=>modal('Approve',`<p>Approve <b>${esc(v)}</b>? Country is re-checked against the blocked list.</p>`,()=>toast('Approved and logged')),
+   reject:()=>modal('Reject',`<p>Reject <b>${esc(v)}</b>.</p><div class="f"><label>Reason (required, visible to the applicant)</label><textarea id="rr" rows="3"></textarea></div>`,()=>toast('Rejected and logged'),'Reject','d'),
+   confdep:()=>modal('Confirm deposit',`<p>Confirm the manager deposit has arrived in the bank.</p><div class="f"><label>Bank reference</label><input id="cdr" placeholder="e.g. REF-77311"></div>`,()=>toast('Deposit booked – listing is now live')),
+   fundrem:()=>modal('Fund from treasury',`<p>Move <b>${usd(v)}</b> from the platform treasury into this shipment?</p>`,()=>toast('Funded from treasury')),
+   advance:()=>toast('Stage advanced – investors can see the update'),
+   complete:()=>modal('Complete & settle',`<p>This pays <b>every wallet at once</b> with no second approval. Continue?</p>`,()=>toast('Settled – wallets credited'),'Settle'),
+   wdok:()=>modal('Approve withdrawal',`<p>Withdrawal for <b>${esc(v)}</b>. Make the bank transfer, then enter its reference.</p><div class="f"><label>Bank reference</label><input></div>`,()=>toast('Approved')),
+   wdno:()=>modal('Decline withdrawal',`<div class="f"><label>Reason (required)</label><textarea rows="3"></textarea></div>`,()=>toast('Declined – money returned to wallet'),'Decline','d'),
+   treasury:()=>{if(!$('#t_amt').value||!$('#t_ref').value)return toast('Amount and bank reference are required');toast('Treasury top-up recorded')},
+   addstaff:()=>modal('Add staff',`<div class="f"><label>Name</label><input></div><div class="f"><label>Email</label><input type="email"></div><div class="f"><label>Password</label><input type="password"></div><div class="f"><label>Role</label><select><option>reviewer</option><option>ops</option><option>finance</option><option>owner</option></select></div>`,()=>toast('Staff added')),
+   toggle:()=>toast('Status updated'),
+  };
+  A[a]&&A[a]();
+});
+$('#roles').addEventListener('click',e=>{const b=e.target.closest('[data-role]');if(b)go(b.dataset.role,NAV[b.dataset.role][0][0])});
+$('#staffRole').addEventListener('change',e=>{S.staffRole=e.target.value;render()});
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')mclose()});
+window.addEventListener('hashchange',()=>{fromHash();render()});
+fromHash();render();
+</script>
+</body>
+</html>

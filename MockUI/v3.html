@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shehnat – Mock UI v3 (step plans)</title>
+<!--
+PROTOTYPE: throwaway, in-memory only. Double-click to run.
+QUESTION: does the step-plan model feel right for every role? Registration history, Listing step plan (template -> Manager proposes
+-> reviewer approves -> locked), step owners, documents, costs paid by ops from escrow, step states, late flags, settlement gate,
+role-based timeline. Follows GLOSSARY.md (Step plan, Step, Step owner, Counterparty, Step cost, Step state, Stage, Timeline).
+ASSUMPTION: cost of goods = paid cost lines on steps flagged "goods" (Advances, Purchase); Stages stay and are NOT linked to steps.
+-->
+<style>
+:root{--bg:#f4f1ea;--panel:#fffdf8;--ink:#1d2a24;--mut:#6d766f;--line:#e2dccd;--pri:#1f6f54;--pri-i:#fff;--acc:#b8862b;--ok:#1f7a45;--bad:#a8322d;--warn:#9a6b10;--okbg:#dff1e4;--badbg:#f7dcd9;--warnbg:#f8ecc9;--infobg:#e1ecf2;--info:#2a6585}
+@media(prefers-color-scheme:dark){:root{--bg:#121714;--panel:#1b221e;--ink:#e7ece8;--mut:#98a39b;--line:#2d3731;--pri:#4cc79a;--pri-i:#0d1a14;--acc:#e0b35a;--ok:#7bd89d;--bad:#f09a94;--warn:#e8c26a;--okbg:#18382a;--badbg:#472220;--warnbg:#41331a;--infobg:#1b3340;--info:#8cc4de}}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.5 system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);display:flex;min-height:100vh}
+a{color:var(--pri);cursor:pointer}
+aside{width:240px;flex:none;background:var(--panel);border-right:1px solid var(--line);padding:16px 12px;position:sticky;top:0;height:100vh;overflow:auto;display:flex;flex-direction:column;gap:14px}
+.logo{font:800 20px Georgia,serif;letter-spacing:1px;color:var(--pri)}.logo small{display:block;font:500 10px system-ui;color:var(--mut);letter-spacing:0}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;background:var(--bg);padding:3px;border-radius:9px}
+.seg button{border:0;background:none;padding:6px 0;border-radius:7px;font-weight:600;font-size:12px;color:var(--mut);cursor:pointer}
+.seg button.on{background:var(--pri);color:var(--pri-i)}
+.nav a{display:flex;justify-content:space-between;padding:8px 10px;border-radius:8px;color:var(--mut);font-weight:600}.nav a.on{background:var(--infobg);color:var(--info)}
+.badge{background:var(--bad);color:#fff;border-radius:99px;font-size:11px;padding:0 7px;line-height:18px}
+.who{margin-top:auto;font-size:12px;color:var(--mut)}.who b{color:var(--ink)}
+.clock{border:1px dashed var(--line);border-radius:9px;padding:8px;font-size:12px}
+main{flex:1;min-width:0;padding:24px 28px 80px;max-width:1150px}
+@media(max-width:760px){body{flex-direction:column}aside{width:auto;height:auto;position:static}.nav{display:flex;overflow:auto}.who{display:none}main{padding:16px}}
+h1{font:700 24px Georgia,serif;margin:0 0 2px}h2{font-size:15px;margin:0 0 10px}h3{font-size:13px;margin:12px 0 6px}.sub{color:var(--mut);margin:0 0 18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.grid{display:grid;gap:14px}.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}.g3{grid-template-columns:repeat(auto-fill,minmax(290px,1fr))}.g4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}.stat b{display:block;font-size:20px}.stat span{font-size:12px;color:var(--mut)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.sp{justify-content:space-between}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 13px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer}
+.btn.p{background:var(--pri);border-color:var(--pri);color:var(--pri-i)}.btn.d{background:var(--bad);border-color:var(--bad);color:#fff}.btn.s{padding:3px 9px;font-size:12px}.btn[disabled]{opacity:.45;cursor:not-allowed}
+.tag{display:inline-block;padding:1px 9px;border-radius:99px;font-size:11px;font-weight:700;background:var(--line);color:var(--mut)}
+.tag.ok{background:var(--okbg);color:var(--ok)}.tag.bad{background:var(--badbg);color:var(--bad)}.tag.warn{background:var(--warnbg);color:var(--warn)}.tag.info{background:var(--infobg);color:var(--info)}
+.note{padding:9px 12px;border-radius:9px;background:var(--infobg);color:var(--info);margin:0 0 12px;font-size:13px}.note.warn{background:var(--warnbg);color:var(--warn)}.note.bad{background:var(--badbg);color:var(--bad)}.note.ok{background:var(--okbg);color:var(--ok)}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--mut)}.r{text-align:right}
+.f{margin-bottom:10px}.f label{display:block;font-size:12px;font-weight:600;color:var(--mut);margin-bottom:3px}
+input,select,textarea{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+input.sm,select.sm{width:auto;padding:3px 7px;font-size:12px}
+.bar{height:8px;background:var(--line);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--pri)}
+.steps{display:flex;gap:3px}.steps i{flex:1;height:6px;border-radius:3px;background:var(--line)}.steps i.d{background:var(--pri)}
+.mut{color:var(--mut)}.pos{color:var(--ok)}.neg{color:var(--bad)}.sm-t{font-size:12px}
+.priv{font-size:12px;color:var(--mut);border:1px dashed var(--line);border-radius:9px;padding:8px 10px;margin-top:10px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-weight:600;z-index:9}
+.auth{max-width:440px;margin:30px auto}
+.tl{border-left:2px solid var(--line);margin-left:7px;padding-left:18px}
+.st{position:relative;margin-bottom:14px;padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.st:before{content:'';position:absolute;left:-27px;top:14px;width:14px;height:14px;border-radius:50%;background:var(--line);border:2px solid var(--bg)}
+.st.s-in_progress:before{background:var(--info)}.st.s-done:before,.st.s-verified:before{background:var(--ok)}.st.s-blocked:before,.st.s-skip_requested:before{background:var(--warn)}.st.late:before{background:var(--bad)}
+.inst{border-top:1px dashed var(--line);margin-top:8px;padding-top:8px}
+.ev{font-size:12px;padding:3px 0;border-bottom:1px solid var(--line)}.ev b{color:var(--mut);font-weight:600}
+</style>
+</head>
+<body>
+<aside>
+  <div class="logo">SHEHNAT<small>Container-export profit sharing · USD · v3</small></div>
+  <div class="seg" id="roles"><button data-role="investor">Investor</button><button data-role="manager">Manager</button><button data-role="staff">Staff</button></div>
+  <div id="staffsel"></div>
+  <nav class="nav" id="nav"></nav>
+  <div class="clock" id="clock"></div>
+  <div class="who" id="who"></div>
+</aside>
+<main id="main"></main>
+<script>
+/* =====================================================================
+   PART 1: LOGIC (no DOM). This is the bit worth lifting into the real code.
+   ===================================================================== */
+const COUNTRIES={IN:'India',AE:'United Arab Emirates',DE:'Germany',ZA:'South Africa',ES:'Spain',SA:'Saudi Arabia',BR:'Brazil',JP:'Japan',TR:'Turkey',VN:'Vietnam',US:'United States',GH:'Ghana',IR:'Iran',KP:'North Korea',SY:'Syria',CU:'Cuba'};
+const BLOCKED=['CU','IR','KP','SY'];
+const STAGES=['Funding open','Goods purchased','Loaded at port','At sea','Customs cleared','Goods sold','Profit paid out'];
+const PROHIBITED=['Alcohol','Pork products','Tobacco','Weapons','Gambling equipment'];
+const LARGE=10000, FEE=0.01;
+const OWNERS={manager:'Manager',ops:'Ops',finance:'Finance',reviewer:'Reviewer'};
+const STATE_LABEL={planned:'Planned',in_progress:'In progress',blocked:'Blocked',done:'Done',verified:'Verified',skip_requested:'Skip requested',skipped:'Skipped'};
+const STATE_CLS={planned:'',in_progress:'info',blocked:'warn',done:'ok',verified:'ok',skip_requested:'warn',skipped:''};
+// name, scope, owner, days, goods?, needs verification?, counterparty, required docs, cost lines [label, % of target]
+const TEMPLATE=[
+ ['Ordering','listing','manager',5,0,0,'Supplier',['Purchase order'],[]],
+ ['Advances','listing','ops',3,1,1,'Supplier',['Advance payment proof'],[['Supplier advance',25]]],
+ ['Purchase','listing','ops',7,1,1,'Supplier',['Supplier invoice'],[['Goods balance',55]]],
+ ['Payments','listing','finance',4,0,0,'Insurer / port agent',['Payment receipts'],[['Insurance & port charges',2]]],
+ ['Transportation','ship','manager',18,0,0,'Freight forwarder',['Bill of lading'],[['Sea freight',3]]],
+ ['Clearance','ship','manager',6,0,1,'Customs broker',['Customs clearance'],[['Duties & broker fee',2]]],
+ ['Receipts','ship','manager',4,0,0,'Buyer',['Delivery receipt'],[]],
+ ['Invoicing','listing','ops',3,0,1,'Buyer',['Sale invoice'],[]],
+];
+const S={
+  day:0,role:'investor',staffRole:'owner',screen:'home',sel:null,toast:'',lineSeq:100,
+  investor:{name:'Amina Rahman',country:'BR',kyc:'approved',wallet:12000},
+  manager:{name:'Al Noor Trading',kind:'Business',country:'AE',reg:'approved',wallet:60000},
+  hist:{investor:[{day:-40,t:'Profile filled'},{day:-40,t:'KYC documents uploaded (Passport, proof of address)'},{day:-39,t:'Submitted for review'},{day:-37,t:'Approved by reviewer'}],
+        manager:[{day:-80,t:'Profile filled (Business, UAE)'},{day:-80,t:'Documents uploaded (registration, owner ID, business profile)'},{day:-78,t:'Submitted for review'},{day:-75,t:'Rejected: owner ID expired'},{day:-72,t:'Resubmitted with new owner ID'},{day:-70,t:'Approved by reviewer'}]},
+  treasury:250000,revenue:480,mine:{1:5000,3:2000,4:3000},payoutMine:{},
+  listings:[],
+  apps:[
+   {id:'k1',type:'Investor KYC',who:'Omar Haddad',country:'AE',docs:'Passport + proof of address',status:'pending'},
+   {id:'m1',type:'Manager (Individual trader)',who:'Kofi Mensah',country:'GH',docs:'Owner ID + proof of address + trading profile',status:'pending'},
+  ],
+  wds:[{id:1,who:'Amina Rahman',amount:3000,bank:'Itaú · BR',status:'pending'},{id:2,who:'Saigon Seafood Co.',amount:18000,bank:'Vietcombank · VN',status:'pending'}],
+  audit:[],
+};
+const ship=(stage=0,sale=0,doc=false)=>({stage,sale,doc});
+const L=id=>S.listings.find(l=>l.id===id);
+const raised=l=>l.inv+l.mgrDep+l.plat, funded=l=>raised(l)>=l.target;
+const sale=l=>l.ships.reduce((a,s)=>a+s.sale,0);
+const lstage=l=>Math.min(...l.ships.map(s=>s.stage));
+const mgrDeposit=l=>l.target*l.depPct/100;
+const allSold=l=>l.ships.every(s=>s.stage>=5&&s.sale>0&&s.doc);
+const isFundOverdue=l=>l.status==='live'&&l.days>=5&&!funded(l)&&l.ships.every(s=>s.stage===0);
+/* step plan */
+function mkPlan(target,n){
+  return TEMPLATE.map(([name,scope,owner,days,goods,verify,cp,docs,ls],k)=>({
+    id:k,name,scope,owner,days,goods:!!goods,verify:!!verify,cp,docs:[...docs],
+    lines:ls.map(([label,pct])=>({id:S.lineSeq++,label,exp:Math.round(target*pct/100),act:0,status:'planned',planned:true})),
+    inst:Array.from({length:scope==='ship'?n:1},()=>({state:'planned',start:null,end:null,docsUp:[],reason:''}))}));
+}
+const allLines=l=>l.plan.flatMap((s,si)=>s.lines.map(x=>({...x,si,s})));
+const paid=l=>allLines(l).filter(x=>x.status==='paid').reduce((a,x)=>a+x.act,0);
+const goodsPaid=l=>allLines(l).filter(x=>x.status==='paid'&&x.s.goods).reduce((a,x)=>a+x.act,0);
+const expTotal=l=>allLines(l).filter(x=>x.status!=='rejected').reduce((a,x)=>a+x.exp,0);
+const held=l=>l.status==='completed'?0:raised(l)-paid(l);
+const isClosed=(s,n)=>n.state==='verified'||n.state==='skipped'||(n.state==='done'&&!s.verify);
+const dueDay=(s,n)=>n.start==null?null:n.start+s.days;
+const isLate=(s,n)=>['in_progress','blocked'].includes(n.state)&&S.day>dueDay(s,n);
+const lateList=l=>l.status!=='live'?[]:l.plan.flatMap((s,si)=>s.inst.map((n,ii)=>({s,si,n,ii})).filter(x=>isLate(x.s,x.n)));
+const gate=l=>({sold:allSold(l),steps:l.plan.every(s=>s.inst.every(n=>isClosed(s,n))),costs:allLines(l).every(x=>['paid','rejected'].includes(x.status))});
+const canSettle=l=>{const g=gate(l);return g.sold&&g.steps&&g.costs};
+function settle(l){
+  const cap=raised(l),sl=sale(l),cost=paid(l),gross=sl-cost,fee=gross>0?Math.min(sl*FEE,gross):0,net=gross-fee;
+  const mshare=net>0?net*(100-l.invPct)/100:0,pool=net-mshare,pay=x=>x+pool*x/cap;
+  return {cap,sale:sl,cost,gross,fee,net,mshare,pool,inv:pay(l.inv),mgr:pay(l.mgrDep)+mshare,plat:pay(l.plat),pay};
+}
+/* who may do what */
+const act=()=>({role:S.role,staff:S.staffRole});
+const isStaff=(a,...r)=>a.role==='staff'&&(a.staff==='owner'||r.includes(a.staff));
+const isOwner=(a,s)=>(a.role==='manager'&&s.owner==='manager')||(a.role==='staff'&&(a.staff==='owner'||a.staff===s.owner));
+const canUpload=a=>a.role==='manager'||isStaff(a,'ops');
+const canVerify=(a,s)=>a.role==='staff'&&['ops','finance','owner'].includes(a.staff)&&a.staff!==s.owner;
+const whoName=a=>a.role==='staff'?'Staff · '+a.staff:a.role==='manager'?S.manager.name:S.investor.name;
+const ev=(l,who,text,vis='all')=>l.events.unshift({day:S.day,who,text,vis});
+const log=t=>S.audit.unshift(`Day ${S.day} · ${S.role==='staff'?'staff/'+S.staffRole:S.role} · ${t}`);
+const instName=(s,ii)=>s.name+(s.scope==='ship'?` (container ${ii+1})`:'');
+/* step state machine. returns {ok}|{err} */
+function stepAct(l,si,ii,what,arg){
+  const a=act(),s=l.plan[si],n=s.inst[ii],nm=instName(s,ii),own=isOwner(a,s);
+  if(l.status!=='live')return {err:'The Listing is not live'};
+  const to=(st,text,vis)=>{n.state=st;ev(l,whoName(a),`${nm}: ${text}`,vis);return {ok:text}};
+  switch(what){
+   case 'start': if(!own||n.state!=='planned')return {err:`Only the owner (${OWNERS[s.owner]}) can start a planned step`}; n.start=S.day; return to('in_progress','started');
+   case 'upload': if(!canUpload(a))return {err:'Only the Manager or ops can upload documents'}; if(!['in_progress','blocked'].includes(n.state))return {err:'Start the step first'};
+     n.docsUp.push(arg); return to(n.state,`document uploaded: ${arg}`,'internal');
+   case 'done': { if(!own||n.state!=='in_progress')return {err:'Only the owner can finish a step that is in progress'};
+     const miss=s.docs.filter(d=>!n.docsUp.includes(d)); if(miss.length)return {err:'Missing documents: '+miss.join(', ')};
+     n.end=S.day; return to('done',s.verify?'done, waiting for verification':'done and closed'); }
+   case 'verify': if(n.state!=='done'||!s.verify)return {err:'Nothing to verify'}; if(!canVerify(a,s))return {err:`Needs ops or finance (not the step owner, ${OWNERS[s.owner]})`}; log(`verified ${nm} on #${l.id}`); return to('verified','verified by '+a.staff);
+   case 'block': if(!own||n.state!=='in_progress')return {err:'Only the owner can block an in-progress step'}; if(!arg)return {err:'A reason is required'}; n.reason=arg; return to('blocked','blocked: '+arg);
+   case 'unblock': if(!own||n.state!=='blocked')return {err:'Only the owner can unblock'}; return to('in_progress','unblocked');
+   case 'skipreq': if(!own||!['planned','in_progress','blocked'].includes(n.state))return {err:'Only the owner can ask to skip an open step'}; if(!arg)return {err:'A reason is required'};
+     n.prev=n.state;n.reason=arg; return to('skip_requested','skip requested: '+arg);
+   case 'skipok': if(n.state!=='skip_requested')return {err:'No skip request'}; if(!isStaff(a,'ops'))return {err:'Needs ops or owner'}; log(`approved skip of ${nm} on #${l.id}`); return to('skipped','skipped (approved): '+n.reason);
+   case 'skipno': if(n.state!=='skip_requested')return {err:'No skip request'}; if(!isStaff(a,'ops'))return {err:'Needs ops or owner'}; return to(n.prev,'skip denied');
+  }
+}
+/* cost lines. "planned" ones come from the plan; unplanned ones are requested by the Manager, approved by finance, paid by ops from escrow */
+function costAct(l,si,lineId,what,arg){
+  const a=act(),s=l.plan[si],x=s.lines.find(z=>z.id===lineId);
+  if(l.status!=='live')return {err:'The Listing is not live'};
+  switch(what){
+   case 'request': { if(a.role!=='manager')return {err:'Only the Manager requests extra costs'}; if(!arg.label||!(arg.amt>0))return {err:'Label and amount required'};
+     s.lines.push({id:S.lineSeq++,label:arg.label,exp:arg.amt,act:0,status:'requested',planned:false});ev(l,whoName(a),`${s.name}: extra cost requested: ${arg.label} ${usd(arg.amt)} (quote attached)`,'internal');return {ok:'Requested: finance must approve before ops can pay'}; }
+   case 'approve': case 'reject': { if(x.status!=='requested')return {err:'Not waiting for approval'}; if(!isStaff(a,'finance'))return {err:'Needs finance or owner'};
+     x.status=what==='approve'?'approved':'rejected';log(`${what}d extra cost ${x.label} on #${l.id}`);ev(l,whoName(a),`${s.name}: extra cost ${x.label} ${what==='approve'?'approved':'rejected'}`);return {ok:'Done'}; }
+   case 'drop': if(x.status!=='planned'||!isStaff(a,'ops'))return {err:'Ops can drop only a planned line'}; x.status='rejected';ev(l,whoName(a),`${s.name}: planned cost ${x.label} not needed`);return {ok:'Dropped'};
+   case 'pay': { if(!['planned','approved'].includes(x.status))return {err:'Not payable (unplanned costs need finance approval first)'}; if(!isStaff(a,'ops'))return {err:'Only ops pays costs'};
+     if(!funded(l))return {err:'Escrow is not fully funded yet'}; if(!(arg>0))return {err:'Enter the amount paid'};
+     if(paid(l)+arg>raised(l))return {err:`Total paid would exceed the capital raised (${usd(raised(l))})`};
+     x.act=arg;x.status='paid';log(`paid ${x.label} ${usd(arg)} on #${l.id}`);ev(l,whoName(a),`${s.name}: paid ${x.label} ${usd(arg)} from escrow (proof attached)`);return {ok:`Paid ${usd(arg)} from escrow`}; }
+  }
+}
+/* =====================================================================
+   PART 2: SEED DATA
+   ===================================================================== */
+function mkListing(o){const l={days:0,inv:0,mgrDep:0,plat:0,events:[],proposedBy:null,...o};l.plan=mkPlan(l.target,l.ships.length);return l}
+(function seed(){
+  const e=(l,day,who,text,vis='all')=>l.events.push({day,who,text,vis});
+  // 1: live, fully funded, execution under way
+  const l1=mkListing({id:1,name:'Basmati rice, 2 containers',cat:'Food',src:'IN',dst:'AE',target:120000,min:500,invPct:70,depPct:30,est:'6–9%',mgr:'me',status:'live',days:20,inv:84000,mgrDep:36000,ships:[ship(),ship()]});
+  const p=l1.plan,done=(s,a,b,d)=>Object.assign(s.inst[0],{state:'done',start:a,end:b,docsUp:[...s.docs]});
+  done(p[0],-20,-16);p[1].inst[0]=Object.assign(p[1].inst[0],{state:'verified',start:-15,end:-13,docsUp:[...p[1].docs]});
+  p[1].lines[0].status='paid';p[1].lines[0].act=30000;
+  Object.assign(p[2].inst[0],{state:'in_progress',start:-9,docsUp:[]});
+  p[3].lines.push({id:S.lineSeq++,label:'Warehouse storage (3 weeks)',exp:1200,act:0,status:'requested',planned:false});
+  [[-22,'Al Noor Trading','Listing live: fully funded','all'],[-20,'Al Noor Trading','Ordering: started','all'],[-16,'Al Noor Trading','Ordering: done and closed','all'],
+   [-15,'Staff · ops','Advances: started','all'],[-14,'Staff · ops','Advances: paid Supplier advance $30,000 from escrow (proof attached)','all'],
+   [-13,'Staff · finance','Advances: verified by finance','all'],[-9,'Staff · ops','Purchase: started','all'],[-2,'Al Noor Trading','Payments: extra cost requested: Warehouse storage (3 weeks) $1,200 (quote attached)','internal']].forEach(x=>e(l1,...x));
+  l1.events.reverse();
+  // 2: pending review
+  const l2=mkListing({id:2,name:'Solar panel modules',cat:'Energy',src:'DE',dst:'ZA',target:250000,min:2000,invPct:70,depPct:20,est:'8–12%',mgr:'me',status:'pending_review',ships:[ship()]});
+  // 3: live, still funding, other manager
+  const l3=mkListing({id:3,name:'Frozen shrimp',cat:'Food',src:'VN',dst:'JP',target:150000,min:1000,invPct:65,depPct:35,est:'7–10%',mgr:'Saigon Seafood Co.',status:'live',days:6,inv:30000,mgrDep:52500,ships:[ship(),ship(),ship()]});
+  l3.events.push({day:-6,who:'Saigon Seafood Co.',text:'Listing live: open for funding',vis:'all'});
+  // 4: completed
+  const l4=mkListing({id:4,name:'Medjool dates',cat:'Food',src:'AE',dst:'JP',target:60000,min:500,invPct:70,depPct:25,est:'5–8%',mgr:'me',status:'completed',days:90,inv:45000,mgrDep:15000,ships:[ship(6,64000,true)]});
+  l4.plan.forEach((s,k)=>{s.inst.forEach((n,i)=>Object.assign(n,{state:s.verify?'verified':'done',start:-80+k*8,end:-76+k*8,docsUp:[...s.docs]}));s.lines.forEach(x=>{x.status='paid';x.act=x.exp})});
+  [[-85,'Al Noor Trading','Listing live: fully funded','all'],[-60,'Staff · ops','Purchase: paid Goods balance $33,000 from escrow (proof attached)','all'],[-5,'Staff · finance','Settlement approved: everyone paid','all']].forEach(x=>e(l4,...x));
+  // 5: approved, deposit due
+  const l5=mkListing({id:5,name:'Cotton textiles',cat:'Textiles',src:'TR',dst:'US',target:80000,min:1000,invPct:70,depPct:30,est:'6–9%',mgr:'me',status:'approved',ships:[ship(),ship()]});
+  l5.events.push({day:-1,who:'Staff · reviewer',text:'Listing and step plan approved: plan locked',vis:'all'});
+  S.listings.push(l1,l2,l3,l4,l5);
+  S.payoutMine[4]=settle(l4).pay(S.mine[4]);
+})();
+/* =====================================================================
+   PART 3: PAGE (thin shell over the logic)
+   ===================================================================== */
+const cn=c=>COUNTRIES[c]||c;
+const usd=n=>(n<0?'-':'')+'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:Math.abs(n)%1?2:0,maximumFractionDigits:2});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=s=>document.querySelector(s), val=id=>{const e=document.getElementById(id);return e?e.value:''};
+const dt=d=>new Date(Date.UTC(2026,9,26+d)).toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'});
+const say=t=>{S.toast=t;render();setTimeout(()=>{S.toast='';render()},2400)};
+const STATUS={pending_review:['warn','Pending review'],approved:['info','Approved · deposit due'],live:['ok','Live'],completed:['','Completed'],rejected:['bad','Rejected'],cancelled:['bad','Cancelled']};
+const tag=l=>{const [c,t]=STATUS[l.status];return `<span class="tag ${c}">${t}</span>`+(l.proposedBy&&l.status==='live'?` <span class="tag warn">Settlement proposed</span>`:'')+(lateList(l).length?` <span class="tag bad">${lateList(l).length} late</span>`:'')};
+const stagebar=l=>`<div class="steps" title="${STAGES[lstage(l)]}">${STAGES.map((_,i)=>`<i class="${i<=lstage(l)?'d':''}"></i>`).join('')}</div>`;
+const note=(t,c='')=>`<div class="note ${c}">${t}</div>`;
+const head=(t,s,r='')=>`<div class="row sp"><div><h1>${t}</h1><p class="sub">${s}</p></div><div>${r}</div></div>`;
+const stat=(l,v)=>`<div class="stat"><span>${l}</span><b>${v}</b></div>`;
+const table=(h,rows)=>`<table><tr>${h.map(x=>`<th class="${x[0]=='>'?'r':''}">${x.replace('>','')}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${h[i][0]=='>'?'r':''}">${c}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${h.length}" class="mut">Nothing here.</td></tr>`}</table>`;
+const btn=(a,t,o={})=>`<button class="btn ${o.c||''}" data-act="${a}" ${['id','s','i','x','k'].map(k=>o[k]!=null?`data-${k}="${esc(o[k])}"`:'').join(' ')} ${o.off?'disabled':''}>${t}</button>`;
+const route=l=>`${cn(l.src)} → ${cn(l.dst)}`;
+const mut=t=>`<span class="mut sm-t">${t}</span>`;
+function history(items){return `<div class="tl">${[...items].reverse().map(h=>`<div class="st" style="padding:6px 10px;margin-bottom:8px"><span class="mut sm-t">${dt(h.day)}</span> · ${esc(h.t)}</div>`).join('')}</div>`}
+const hist=(who,t)=>S.hist[who].push({day:S.day,t});
+
+/* ---- listing timeline: ONE component, permission-driven, for every audience ---- */
+function eventsView(l,aud){
+  const items=l.events.filter(e=>aud!=='investor'||e.vis==='all');
+  return `<div class="card"><h2>Timeline of changes</h2>${items.map(e=>`<div class="ev"><b>${dt(e.day)} · ${esc(e.who)}</b> — ${esc(e.text)}</div>`).join('')||mut('Nothing yet.')}</div>`;
+}
+function planEditor(l){
+  const a=act(),ok=a.role==='manager'||isStaff(a,'reviewer');
+  const inp=(f,s,v,t='text',w='')=>`<input class="sm" ${w?`style="width:${w}"`:''} type="${t}" value="${esc(v)}" data-plan="${f}" data-id="${l.id}" data-s="${s}" ${ok?'':'disabled'}>`;
+  const sel=(f,s,v,opts)=>`<select class="sm" data-plan="${f}" data-id="${l.id}" data-s="${s}" ${ok?'':'disabled'}>${opts.map(([k,t])=>`<option value="${k}" ${k==v?'selected':''}>${t}</option>`).join('')}</select>`;
+  return `<div class="card"><h2>Step plan <span class="tag warn">draft: not locked</span></h2>
+  ${note(a.role==='investor'?'':ok?'The standard template is pre-filled. The Manager adjusts it; the reviewer approves or edits it with the Listing. It locks when approved.':'Only the Manager or a reviewer edits the plan.')}
+  ${table(['Step','Scope','Owner','Days','Counterparty','Required documents (comma separated)','Verify?','>Expected cost',''],l.plan.map((s,k)=>[
+    inp('name',k,s.name,'text','120px'),sel('scope',k,s.scope,[['listing','Whole Listing'],['ship','Per container']]),sel('owner',k,s.owner,Object.entries(OWNERS).filter(([o])=>o!=='reviewer')),
+    inp('days',k,s.days,'number','60px'),inp('cp',k,s.cp,'text','120px'),inp('docs',k,s.docs.join(', '),'text','170px'),
+    `<input type="checkbox" style="width:auto" data-plan="verify" data-id="${l.id}" data-s="${k}" ${s.verify?'checked':''} ${ok?'':'disabled'}>`,
+    s.lines.map(x=>`<div class="sm-t">${esc(x.label)} ${inp('exp:'+x.id,k,x.exp,'number','90px')}</div>`).join('')||mut('none'),
+    btn('plan-del','✕',{id:l.id,s:k,c:'s',off:!ok})]))}
+  <div class="row" style="margin-top:10px"><input id="np_name" placeholder="New step name (e.g. Inspection)" style="max-width:260px"><button class="btn s" data-act="plan-add" data-id="${l.id}" ${ok?'':'disabled'}>Add step</button></div></div>`;
+}
+function instActions(l,s,si,n,ii,aud){
+  const a=act();if(l.status!=='live'||aud==='investor')return '';
+  const own=isOwner(a,s),k=`${l.id}_${si}_${ii}`,o={id:l.id,s:si,i:ii,c:'s'};let h='';
+  if(n.state==='planned'){h=btn('step',own?'Start':'Start',{...o,k:'start',off:!own})}
+  if(['in_progress','blocked'].includes(n.state)){
+    const miss=s.docs.filter(d=>!n.docsUp.includes(d));
+    h=miss.map(d=>btn('step','Upload: '+esc(d),{...o,k:'upload',x:d,off:!canUpload(a)})).join(' ');
+    if(n.state==='in_progress')h+=' '+btn('step','Mark done',{...o,k:'done',c:'s p',off:!own})+` <input class="sm" id="r${k}" placeholder="reason" style="width:120px"> `+btn('step','Block',{...o,k:'block',off:!own})+' '+btn('step','Ask to skip',{...o,k:'skipreq',off:!own});
+    else h+=' '+btn('step','Unblock',{...o,k:'unblock',off:!own});
+  }
+  if(n.state==='planned')h+=` <input class="sm" id="r${k}" placeholder="reason" style="width:120px"> `+btn('step','Ask to skip',{...o,k:'skipreq',off:!own});
+  if(n.state==='done'&&s.verify)h=btn('step','Verify',{...o,k:'verify',c:'s p',off:!canVerify(a,s)})+(canVerify(a,s)?'':mut(` needs ops/finance, not ${OWNERS[s.owner]}`));
+  if(n.state==='skip_requested')h=mut('Reason: '+esc(n.reason)+' ')+btn('step','Approve skip',{...o,k:'skipok',off:!isStaff(a,'ops')})+' '+btn('step','Deny',{...o,k:'skipno',off:!isStaff(a,'ops')});
+  if(!own&&['planned','in_progress','blocked'].includes(n.state))h+=' '+mut(`Owner: ${OWNERS[s.owner]}`);
+  return h;
+}
+function linesView(l,s,si,aud){
+  const a=act(),live=l.status==='live';
+  if(!s.lines.length&&!(live&&a.role==='manager'))return '';
+  const rows=s.lines.map(x=>{
+    const tg={planned:['','Planned'],requested:['warn','Awaiting finance'],approved:['info','Approved · ops to pay'],paid:['ok','Paid'],rejected:['bad','Rejected / not needed']}[x.status];
+    let act_='';
+    if(live&&aud!=='investor'){
+      if(['planned','approved'].includes(x.status))act_=`<input class="sm" id="pay${x.id}" type="number" value="${x.exp}" style="width:90px"> `+btn('cost','Pay from escrow',{id:l.id,s:si,x:x.id,k:'pay',c:'s p',off:!isStaff(a,'ops')})+(x.status==='planned'?' '+btn('cost','Not needed',{id:l.id,s:si,x:x.id,k:'drop',c:'s',off:!isStaff(a,'ops')}):'');
+      if(x.status==='requested')act_=btn('cost','Approve',{id:l.id,s:si,x:x.id,k:'approve',c:'s p',off:!isStaff(a,'finance')})+' '+btn('cost','Reject',{id:l.id,s:si,x:x.id,k:'reject',c:'s',off:!isStaff(a,'finance')});
+    }
+    return [esc(x.label)+(x.planned?'':' <span class="tag info">unplanned</span>'),usd(x.exp),x.status==='paid'?`<b class="${x.act>x.exp?'neg':''}">${usd(x.act)}</b>`:'–',`<span class="tag ${tg[0]}">${tg[1]}</span>`,act_];
+  });
+  const req=live&&a.role==='manager'?`<div class="row" style="margin-top:6px"><input class="sm" id="rl${l.id}_${si}" placeholder="Extra cost (e.g. demurrage)" style="width:190px"><input class="sm" id="ra${l.id}_${si}" type="number" placeholder="USD" style="width:90px"><span class="mut sm-t">quote attached</span>${btn('cost','Request extra cost',{id:l.id,s:si,x:0,k:'request',c:'s'})}</div>`:'';
+  return `<h3>Costs (paid by ops from escrow)</h3>${table(['Line','>Expected','>Actual','Status',aud==='investor'?'':'Action'],rows)}${req}`;
+}
+function timelineView(l,aud){
+  const a=act();
+  return `<div class="card"><h2>Step timeline ${l.status==='live'?'':tag(l)}</h2>
+  ${l.status==='pending_review'||l.status==='rejected'?'':mut('Plan locked. Changes after approval need staff approval and would appear in the timeline (not modelled here).')}
+  <div class="tl" style="margin-top:12px">${l.plan.map((s,si)=>{
+    const worst=s.inst.some((n,ii)=>isLate(s,n));
+    return `<div class="st ${worst?'late':''} s-${s.inst.every(n=>isClosed(s,n))?'verified':s.inst.some(n=>n.state==='in_progress')?'in_progress':s.inst.some(n=>n.state==='blocked')?'blocked':'planned'}">
+     <div class="row sp"><b>${si+1}. ${esc(s.name)}</b><span class="mut sm-t">${s.scope==='ship'?'per container':'whole Listing'} · owner ${OWNERS[s.owner]} · ${s.days} day${s.days>1?'s':''}${s.cp?' · with '+esc(s.cp):''}${s.verify?' · needs verification':''}</span></div>
+     ${s.inst.map((n,ii)=>`<div class="inst"><div class="row sp"><span>${s.scope==='ship'?`Container ${ii+1} `:''}<span class="tag ${STATE_CLS[n.state]}">${STATE_LABEL[n.state]}${n.state==='done'&&!s.verify?' · closed':''}</span> ${isLate(s,n)?`<span class="tag bad">late by ${S.day-dueDay(s,n)}d</span>`:''}</span>
+       <span class="mut sm-t">${n.start==null?'not started':`started ${dt(n.start)} · due ${dt(dueDay(s,n))}`}${n.end!=null?` · done ${dt(n.end)}`:''}</span></div>
+       ${aud==='investor'?'':`<div class="sm-t mut">Documents: ${s.docs.map(d=>n.docsUp.includes(d)?`✓ ${esc(d)}`:`○ ${esc(d)}`).join(' · ')}</div>`}
+       <div class="row" style="margin-top:4px">${instActions(l,s,si,n,ii,aud)}</div></div>`).join('')}
+     ${linesView(l,s,si,aud)}</div>`}).join('')}</div>
+  ${aud==='investor'?'<div class="priv">🔒 You see steps, owners, durations, states, dates and costs. Uploaded documents, the Manager’s deposit, expected profit, Manager share and Manager result are not shown to Investors.</div>':''}</div>`;
+}
+function costSummary(l){
+  return `<div class="grid g4" style="margin-bottom:14px">${stat('Capital raised',usd(raised(l)))}${stat('Paid out of escrow',usd(paid(l)))}${stat('Still held in escrow',usd(held(l)))}${stat('Expected total costs',usd(expTotal(l)))}</div>`;
+}
+function card(l){
+  const p=Math.min(100,raised(l)/l.target*100);
+  return `<div class="card" style="margin:0"><div class="row sp"><b>${esc(l.name)}</b>${tag(l)}</div>
+  <div class="mut">${route(l)} · ${l.cat} · ${l.ships.length} container${l.ships.length>1?'s':''}</div>
+  <div class="bar" style="margin:10px 0 4px"><i style="width:${p}%"></i></div>
+  <div class="row sp mut"><span>${usd(raised(l))} of ${usd(l.target)}</span><span>${Math.round(p)}%</span></div>
+  ${stagebar(l)}<div class="row sp" style="margin-top:10px"><span class="mut">Min ${usd(l.min)} · est. ${l.est}</span>${btn('open','View',{id:l.id,c:'s'})}</div></div>`;
+}
+
+/* ---- tasks: every role gets an inbox of what is waiting on THEM ---- */
+function tasks(role,staff){
+  const T=[],live=S.listings.filter(l=>l.status==='live'),mine=S.listings.filter(l=>l.mgr==='me');
+  const add=(t,r,sc,sel,cls='')=>T.push({t,r,sc,sel,cls});
+  if(role==='investor'){
+    if(S.investor.kyc!=='approved')add(S.investor.kyc==='pending'?'Your identity check is with a reviewer':'Complete your identity check to invest','investor','profile');
+    Object.keys(S.mine).map(Number).forEach(id=>{const l=L(id);if(l.status==='live'){const late=lateList(l).length,last=l.events.find(e=>e.vis==='all');add(`${l.name}: ${late?late+' step(s) running late. ':''}latest: ${last?last.text:'no updates'}`,'investor','detail',id,late?'bad':'')}});
+    live.filter(l=>!funded(l)&&!S.mine[l.id]).forEach(l=>add(`${l.name} is open for funding (${usd(l.target-raised(l))} left)`,'investor','detail',l.id));
+  }
+  if(role==='manager'){
+    if(S.manager.reg!=='approved')add('Registration needs attention','manager','profile');
+    mine.forEach(l=>{
+      if(l.status==='approved')add(`${l.name}: approved, pay your deposit ${usd(mgrDeposit(l))} to go live`,'manager','detail',l.id);
+      if(l.status==='rejected')add(`${l.name}: rejected, edit the plan and resubmit`,'manager','detail',l.id,'bad');
+      if(l.status==='live')l.plan.forEach((s,si)=>{if(s.owner!=='manager')return;s.inst.forEach((n,ii)=>{
+        if(n.state==='planned'&&si===l.plan.findIndex(z=>z.inst.some(m=>m.state==='planned')))add(`${l.name}: start "${instName(s,ii)}"`,'manager','detail',l.id);
+        if(n.state==='in_progress'){const miss=s.docs.filter(d=>!n.docsUp.includes(d));add(`${l.name}: "${instName(s,ii)}" ${miss.length?'needs documents: '+miss.join(', '):'is ready to mark done'}${isLate(s,n)?' (LATE)':''}`,'manager','detail',l.id,isLate(s,n)?'bad':'')}})});
+      if(l.status==='live')allLines(l).filter(x=>x.status==='requested').forEach(x=>add(`${l.name}: your extra cost "${x.label}" awaits finance`,'manager','detail',l.id));
+    });
+  }
+  if(role==='staff'){
+    const has=(...r)=>staff==='owner'||r.includes(staff);
+    if(has('reviewer')){S.apps.filter(a=>a.status==='pending').forEach(a=>add(`Review application: ${a.type} · ${a.who}`,'staff','review'));
+      S.listings.filter(l=>l.status==='pending_review').forEach(l=>add(`Review Listing and step plan: ${l.name}`,'staff','review'))}
+    S.listings.filter(l=>l.status==='live').forEach(l=>{
+      l.plan.forEach((s,si)=>s.inst.forEach((n,ii)=>{
+        const nm=`${l.name}: ${instName(s,ii)}`;
+        if(has('ops','finance')&&n.state==='done'&&s.verify&&(staff==='owner'||staff!==s.owner))add(`Verify ${nm}`,'staff','ldetail',l.id);
+        if(has('ops')&&n.state==='skip_requested')add(`Decide skip request: ${nm}`,'staff','ldetail',l.id);
+        if(has(s.owner)&&s.owner!=='manager'&&n.state==='planned'&&si===l.plan.findIndex(z=>z.inst.some(m=>m.state==='planned')))add(`Start ${nm} (you own it)`,'staff','ldetail',l.id);
+        if(has(s.owner)&&s.owner!=='manager'&&n.state==='in_progress')add(`${nm}: ${s.docs.filter(d=>!n.docsUp.includes(d)).length?'upload documents':'mark done'} (you own it)${isLate(s,n)?' LATE':''}`,'staff','ldetail',l.id,isLate(s,n)?'bad':'');
+        if(isLate(s,n)&&s.owner==='manager'&&has('ops'))add(`Chase Manager: ${nm} is late`,'staff','ldetail',l.id,'bad');
+      }));
+      allLines(l).forEach(x=>{
+        if(has('finance')&&x.status==='requested')add(`Approve extra cost: ${l.name} · ${x.label} ${usd(x.exp)}`,'staff','costs');
+        if(has('ops')&&['planned','approved'].includes(x.status)&&funded(l)&&x.s.inst.some(n=>n.state!=='planned'))add(`Pay ${x.label} ${usd(x.exp)} (${l.name})`,'staff','costs');
+      });
+      if(has('ops')&&!l.proposedBy&&canSettle(l))add(`Propose settlement: ${l.name}`,'staff','ldetail',l.id);
+      if(has('finance')&&l.proposedBy&&(staff==='owner'||staff!==l.proposedBy))add(`Approve settlement: ${l.name}`,'staff','ldetail',l.id);
+      if(has('ops')&&isFundOverdue(l))add(`Funding overdue: ${l.name}`,'staff','overdue');
+    });
+    if(has('finance'))S.wds.filter(w=>w.status==='pending'&&(w.amount<LARGE||staff==='owner')).forEach(w=>add(`Withdrawal ${usd(w.amount)} · ${w.who}`,'staff','money'));
+    if(staff!=='owner')S.wds.filter(w=>w.status==='pending'&&w.amount>=LARGE&&has('finance')).forEach(w=>add(`Withdrawal ${usd(w.amount)} needs the owner`,'staff','money','mut'));
+  }
+  return T;
+}
+let TASKS=[];
+const homeView=(title,sub)=>{
+  TASKS=tasks(S.role,S.staffRole);
+  return head(title,sub)+`<div class="card"><h2>Waiting on you (${TASKS.filter(t=>t.cls!=='mut').length})</h2>${TASKS.length?TASKS.map((t,i)=>`<div class="row sp" style="padding:6px 0;border-bottom:1px solid var(--line)"><span class="${t.cls==='bad'?'neg':''}">${esc(t.t)}</span>${btn('task','Open',{k:i,c:'s'})}</div>`).join(''):mut('Nothing is waiting on you.')}</div>`;
+};
+
+/* ---- navigation ---- */
+const NAV={
+  investor:[['home','My updates'],['explore','Explore'],['portfolio','My investments'],['wallet','Wallet'],['profile','Identity check']],
+  manager:[['home','My tasks'],['listings','My listings'],['new','List a trade'],['wallet','Wallet'],['profile','Registration']],
+  staff:[['home','My tasks'],['review','Review'],['listings','Listings'],['costs','Costs & payments'],['overdue','Funding overdue'],['money','Money'],['team','Team & audit']],
+};
+const go=(role,screen,sel=null)=>{S.role=role;S.screen=screen;S.sel=sel;render()};
+const V={investor:{},manager:{},staff:{}};
+
+/* ---- investor ---- */
+V.investor.home=()=>homeView('My updates','Everything that moved on your trades, and what you can do next.');
+V.investor.welcome=null;
+V.investor.explore=()=>{
+  const q=(S.q||'').toLowerCase(),list=S.listings.filter(l=>l.status==='live'&&(!q||(l.name+cn(l.src)+cn(l.dst)+l.cat).toLowerCase().includes(q)));
+  return head('Explore shipments','Live trades. Returns are estimates, not guarantees.')+(S.investor.kyc!=='approved'?note('Complete your identity check to invest.','warn'):'')+
+   `<div class="f"><input id="q" placeholder="Search goods, country, category…" value="${esc(S.q||'')}"></div><div class="grid g3">${list.map(card).join('')||'<p class="mut">No live listings match.</p>'}</div>`;
+};
+V.investor.detail=()=>{
+  const l=L(S.sel),mine=S.mine[l.id]||0,open=l.status==='live'&&!l.ships.some(s=>s.stage>=1)&&!funded(l),left=l.target-raised(l);
+  return `<p><a data-act="back">← Back</a></p>`+head(esc(l.name),`${route(l)} · ${l.cat}`,tag(l))+
+  `<div class="grid g4" style="margin-bottom:14px">${stat('Funding target',usd(l.target))}${stat('Still open',usd(Math.max(0,left)))}${stat('Investors’ profit share',l.invPct+'%')}${stat('Costs paid so far',usd(paid(l)))}</div>
+  <div class="grid g2"><div class="card"><h2>Stage</h2>${stagebar(l)}<p>Overall: <b>${STAGES[lstage(l)]}</b> (least advanced container)</p>${table(['#','Stage'],l.ships.map((s,i)=>[i+1,STAGES[s.stage]]))}</div>
+   <div class="card"><h2>Invest</h2>${mine?note(`You have ${usd(mine)} in this trade.`,'ok'):''}
+   ${!open?note(l.status!=='live'?'Not open for funding.':'Funding is closed for this trade.'):S.investor.kyc!=='approved'?note('Identity check required before investing.','warn'):
+    `<div class="f"><label>Amount (USD) · min ${usd(l.min)} · up to ${usd(left)}</label><input id="amt" type="number" value="${Math.min(left,Math.max(l.min,1000))}"></div><p class="mut">Wallet ${usd(S.investor.wallet)}. Money moves to this trade’s escrow.</p>${btn('invest','Invest',{c:'p',id:l.id})}`}</div></div>`
+  +timelineView(l,'investor')+eventsView(l,'investor');
+};
+V.investor.portfolio=()=>{
+  const rows=Object.entries(S.mine).map(([id,a])=>{const l=L(+id);return [`<a data-act="open" data-id="${id}">${esc(l.name)}</a>`,tag(l),STAGES[lstage(l)],usd(a),S.payoutMine[id]!=null?`<b class="${S.payoutMine[id]>=a?'pos':'neg'}">${usd(S.payoutMine[id])}</b>`:'<span class="mut">pending</span>']});
+  return head('My investments','Your share of each trade, paid into your Wallet at Settlement.')+`<div class="grid g4" style="margin-bottom:14px">${stat('Invested',usd(Object.values(S.mine).reduce((a,b)=>a+b,0)))}${stat('Active trades',Object.keys(S.mine).filter(i=>L(+i).status==='live').length)}${stat('Paid out',usd(Object.values(S.payoutMine).reduce((a,b)=>a+b,0)))}${stat('Wallet',usd(S.investor.wallet))}</div><div class="card">${table(['Trade','Status','Stage','>Invested','>Paid out'],rows)}</div>`;
+};
+const walletView=u=>head('Wallet','Your balance in US dollars.')+
+ `<div class="grid g2"><div class="card"><h2>Balance</h2><div style="font-size:30px;font-weight:700">${usd(u.wallet)}</div><h2 style="margin-top:16px">Top up (payment gateway)</h2>${u.kyc==='approved'||u.reg==='approved'?`<div class="f"><input id="topamt" type="number" value="5000"></div>${btn('topup','Pay by card / bank',{c:'p'})}`:note('Only approved users can top up.','warn')}</div>
+ <div class="card"><h2>Withdraw to a bank</h2><div class="f"><label>Bank account / IBAN</label><input value="GB82WEST12345698765432"></div><div class="f"><label>Amount (USD)</label><input id="wdamt" type="number" value="2000"></div>${btn('withdraw','Request withdrawal',{c:'p'})}<p class="mut sm-t">Held at once. USD ${LARGE.toLocaleString()} and above needs owner approval.</p></div></div>`;
+V.investor.wallet=()=>walletView(S.investor);
+V.manager.wallet=()=>walletView(S.manager);
+V.investor.profile=()=>head('Identity check','Fill profile → upload documents → office decides. Every attempt stays on record.')+`<div class="grid g2"><div class="card">
+ ${S.investor.kyc==='approved'?note('Approved. You can invest.','ok'):S.investor.kyc==='pending'?note('Submitted. A reviewer will decide.','warn'):(S.investor.kyc==='rejected'?note('Rejected: '+esc(S.investor.reason||'')+'. You can fix it and resubmit.','bad'):'')+
+ `<div class="grid g2"><div class="f"><label>Country of residence</label><select><option>${cn(S.investor.country)}</option></select></div><div class="f"><label>ID type</label><select><option>Passport</option><option>National ID</option></select></div><div class="f"><label>ID number</label><input></div><div class="f"><label>Documents</label><input type="file" multiple></div></div>${btn('kyc',S.investor.kyc==='rejected'?'Resubmit':'Submit',{c:'p'})}`}
+ <p class="mut" style="margin-top:12px">${esc(S.investor.name)} · ${cn(S.investor.country)}</p></div><div class="card"><h2>History</h2>${history(S.hist.investor)}</div></div>`;
+
+/* ---- manager ---- */
+V.manager.home=()=>homeView('My tasks','Steps you own, documents due, deposits and costs waiting on others.');
+V.manager.listings=()=>head('My listings','Trades you have listed, with your own capital in each.',btn('go-new','List a trade',{c:'p'}))+
+  (S.manager.reg!=='approved'?note('Your registration must be approved before you can list.','warn'):'')+
+  `<div class="card">${table(['Trade','Status','Containers','>Target','>My deposit',''],S.listings.filter(l=>l.mgr==='me').map(l=>[`<b>${esc(l.name)}</b><br>${mut(route(l))}`,tag(l)+(l.reason?`<br>${mut(esc(l.reason))}`:''),l.ships.length,usd(l.target),usd(mgrDeposit(l)),btn('open',l.status==='approved'?'Pay deposit':'View',{id:l.id,c:'s'})]))}</div>`;
+V.manager.new=()=>head('List a trade','Goods sourced in one country, sold to a buyer in another. The standard step plan is added for you to adjust next.')+
+ note(`Prohibited goods (Shariah): ${PROHIBITED.join(', ')}.`)+
+ `<div class="card"><div class="grid g2"><div class="f"><label>Goods</label><input id="n_name" value="Olive oil, bottled"></div><div class="f"><label>Category</label><select id="n_cat"><option>Food</option><option>Building</option><option>Textiles</option><option>Energy</option><option>Other</option></select></div>
+ <div class="f"><label>Sourced in</label><select id="n_src">${Object.keys(COUNTRIES).map(c=>`<option value="${c}">${COUNTRIES[c]}</option>`).join('')}</select></div><div class="f"><label>Sold to a buyer in</label><select id="n_dst">${Object.keys(COUNTRIES).map(c=>`<option value="${c}" ${c==='JP'?'selected':''}>${COUNTRIES[c]}</option>`).join('')}</select></div>
+ <div class="f"><label>Containers (fixed once approved)</label><input id="n_ships" type="number" min="1" value="2"></div><div class="f"><label>Funding target (USD)</label><input id="n_target" type="number" value="100000"></div>
+ <div class="f"><label>My deposit, % of target (20–90)</label><input id="n_dep" type="number" value="30"></div><div class="f"><label>Investors’ share of net profit, %</label><input id="n_inv" type="number" value="70"></div>
+ <div class="f"><label>Minimum investment (USD)</label><input id="n_min" type="number" value="500"></div><div class="f"><label>Product certificate</label><input type="file"></div></div>${btn('create','Create and edit step plan',{c:'p'})}</div>`;
+V.manager.profile=()=>head('Registration','A Manager is a Business or an Individual trader.')+`<div class="grid g2"><div class="card"><div class="row sp"><b>${esc(S.manager.name)}</b><span class="tag ok">${S.manager.reg}</span></div><p class="mut">${S.manager.kind} · registered in ${cn(S.manager.country)}</p>${table(['Document','Status'],[['Registration document','<span class="tag ok">verified</span>'],['Owner ID','<span class="tag ok">verified</span>'],['Business profile','<span class="tag ok">verified</span>']])}</div><div class="card"><h2>History</h2>${history(S.hist.manager)}</div></div>`;
+V.manager.detail=()=>{
+  const l=L(S.sel),st=l.status==='completed'?settle(l):null,enough=S.manager.wallet>=mgrDeposit(l),editing=['pending_review','rejected'].includes(l.status);
+  return `<p><a data-act="back">← My listings</a></p>`+head(esc(l.name),`${route(l)} · ${l.cat}`,tag(l))+
+  (l.status==='pending_review'?note('Waiting for review. You can still adjust the step plan below.'):'')+
+  (l.status==='approved'?note(`Approved with the step plan locked. Pay your deposit of <b>${usd(mgrDeposit(l))}</b> and the Listing goes live.`)+btn('deposit','Pay deposit & go live',{c:'p',id:l.id,off:!enough})+(enough?'':` <span class="neg">Wallet ${usd(S.manager.wallet)} too low: top up first.</span>`):'')+
+  (l.status==='rejected'?note('Rejected: '+esc(l.reason||''),'bad')+btn('resubmit','Resubmit',{id:l.id,c:'p'}):'')+
+  `<div class="grid g4" style="margin:14px 0">${stat('Raised',usd(raised(l))+' / '+usd(l.target))}${stat('My deposit',usd(mgrDeposit(l)))}${stat('Paid by ops from escrow',usd(paid(l)))}${stat('Manager share',(100-l.invPct)+'% of net profit')}</div>`+
+  (editing?planEditor(l):timelineView(l,'manager'))+
+  `<div class="card"><h2>Containers (Stage, set by ops)</h2>${table(['#','Stage','>Sale price'],l.ships.map((s,i)=>[i+1,STAGES[s.stage],s.sale?usd(s.sale):'–']))}</div>`+
+  (st?`<div class="card"><h2>Result</h2><div class="grid g4">${stat('Sale price',usd(st.sale))}${stat('Costs paid',usd(st.cost))}${stat('Service fee (1%)',usd(st.fee))}${stat('Net profit',usd(st.net))}</div><p class="mut">My payout ${usd(st.mgr)} = deposit + pro-rata profit + Manager share ${usd(st.mshare)}.</p></div>`:'')+
+  eventsView(l,'manager');
+};
+
+/* ---- staff ---- */
+V.staff.home=()=>homeView(`Staff console · ${S.staffRole}`,'Each role sees only the work that is theirs. Switch role at left.')+
+  `<div class="card"><h2>Who does what</h2>${table(['Role','Can'],[['reviewer','approve / reject applications, Listings and step plans; edit plans in review'],['ops','start/finish steps they own, upload docs, verify steps (not their own), decide skip requests, <b>pay all costs from escrow</b>, advance Stages, record sales, propose settlement, cancel'],['finance','approve unplanned costs, verify steps (not their own), own Payments step, approve settlement (not the proposer), approve withdrawals'],['owner','everything, incl. withdrawals ≥ $10,000 and team'],['Manager','start/finish owned steps, upload docs, request extra costs, pay deposit'],['Investor','invest, watch the timeline (no documents, no Manager figures)']])}</div>`;
+V.staff.review=()=>{
+  const ok=isStaff(act(),'reviewer');
+  return head('Review','Applications and new Listings with their step plans.')+(ok?'':note('Your role cannot decide here. Switch to reviewer or owner.','warn'))+
+  `<div class="card"><h2>Applications</h2>${table(['Type','Who','Country','Documents','Status',''],S.apps.map((a,i)=>[a.type,esc(a.who),cn(a.country),a.docs,`<span class="tag ${a.status==='pending'?'warn':a.status==='approved'?'ok':'bad'}">${a.status}</span>`,a.status==='pending'?`<input class="sm" id="ar${i}" placeholder="reason if rejecting" style="width:140px"> `+btn('app-ok','Approve',{i,c:'s',off:!ok})+' '+btn('app-no','Reject',{i,c:'s',off:!ok}):'']))}</div>`+
+  S.listings.filter(l=>l.status==='pending_review').map(l=>`<div class="card"><div class="row sp"><h2>${esc(l.name)} · ${route(l)} · target ${usd(l.target)} · ${l.ships.length} container(s)</h2></div>${planEditor(l).replace('<div class="card">','<div>')}
+   <div class="row"><input id="rej${l.id}" placeholder="reason if rejecting (e.g. prohibited goods)" style="max-width:320px">${btn('lst-ok','Approve Listing + lock plan',{id:l.id,c:'p',off:!ok})} ${btn('lst-no','Reject',{id:l.id,off:!ok})}</div></div>`).join('')||'';
+};
+V.staff.listings=()=>head('Listings','Open one for the full timeline and every action your role allows.')+`<div class="card">${table(['Trade','Status','Raised','Escrow held','Costs paid','Late',''],S.listings.map(l=>[`<b>${esc(l.name)}</b><br>${mut(route(l))}`,tag(l),usd(raised(l)),usd(held(l)),usd(paid(l)),lateList(l).length||'–',btn('open',"Open",{id:l.id,c:'s'})]))}</div>`;
+V.staff.ldetail=()=>{
+  const l=L(S.sel),a=act(),g=gate(l),st=canSettle(l)||l.status==='completed'?settle(l):null,ck=(b,t)=>`<div class="${b?'pos':'neg'}">${b?'✓':'✗'} ${t}</div>`;
+  return `<p><a data-act="back">← Listings</a></p>`+head(esc(l.name),`${route(l)} · ${l.cat} · ${l.mgr==='me'?S.manager.name:l.mgr}`,tag(l))+costSummary(l)+
+  (l.status==='live'?`<div class="card"><h2>Containers & Stages</h2>${table(['#','Stage','>Sale','Sale doc',''],l.ships.map((s,i)=>[i+1,STAGES[s.stage],s.sale?usd(s.sale):'–',s.doc?'✓ invoice':'–',
+    l.proposedBy?'':s.stage===0?btn('adv','Goods purchased',{id:l.id,i,c:'s',off:!isStaff(a,'ops')}):s.stage<4?btn('adv','Next stage',{id:l.id,i,c:'s',off:!isStaff(a,'ops')}):s.stage===4?`<input class="sm" id="s${l.id}_${i}" type="number" placeholder="sale price" style="width:110px"> `+btn('sold','Record sale + doc',{id:l.id,i,c:'s',off:!isStaff(a,'ops')}):'']))}
+   <p class="mut sm-t">Stages are set by ops and are not linked to steps (v3 decision).</p></div>`:'')+
+  timelineView(l,'staff')+
+  (l.status==='live'?`<div class="card"><h2>Settlement</h2>${ck(g.sold,'Every container sold, with sale price and sale document')}${ck(g.steps,'Every step verified, closed or skipped')}${ck(g.costs,'Every cost line paid or rejected')}
+   <div class="row" style="margin-top:8px">${!l.proposedBy?btn('propose','Propose settlement',{id:l.id,c:'p',off:!canSettle(l)||!isStaff(a,'ops')})+(isStaff(a,'ops')?'':mut(' needs ops')):`<span class="tag warn">proposed by ${l.proposedBy}</span> ${st?mut(`sale ${usd(st.sale)} − costs ${usd(st.cost)} = gross ${usd(st.gross)}, fee ${usd(st.fee)}, net ${usd(st.net)}`):''} `+btn('approve-settle','Approve & pay everyone',{id:l.id,c:'p',off:!isStaff(a,'finance')||a.staff===l.proposedBy})+(a.staff===l.proposedBy?mut(' a different staff member must approve'):'')}</div>
+   <div class="row" style="margin-top:8px">${paid(l)===0?`<input class="sm" id="cr${l.id}" placeholder="cancel reason" style="width:180px"> `+btn('cancel','Cancel & refund all',{id:l.id,c:'d s',off:!isStaff(a,'ops')}):mut('Cannot cancel once any cost has been paid from escrow; can only settle, even at a loss.')}</div></div>`:'')+
+  (st&&l.status==='completed'?`<div class="card"><h2>Result</h2><div class="grid g4">${stat('Sale price',usd(st.sale))}${stat('Costs paid',usd(st.cost))}${stat('Service fee',usd(st.fee))}${stat('Net profit',usd(st.net))}</div></div>`:'')+eventsView(l,'staff');
+};
+V.staff.costs=()=>{
+  const a=act(),rows=[];S.listings.filter(l=>l.status==='live').forEach(l=>allLines(l).filter(x=>!['paid','rejected'].includes(x.status)).forEach(x=>rows.push({l,x})));
+  return head('Costs & payments','Unplanned costs need finance approval. Ops pays every cost from the Listing’s escrow, with proof.')+
+  `<div class="card">${table(['Listing','Step','Line','>Amount','Status','Escrow held',''],rows.map(({l,x})=>[esc(l.name),esc(x.s.name),esc(x.label)+(x.planned?'':' <span class="tag info">unplanned</span>'),usd(x.exp),`<span class="tag ${x.status==='requested'?'warn':'info'}">${x.status==='requested'?'Awaiting finance':x.status==='approved'?'Approved · ops to pay':'Planned'}</span>`,funded(l)?usd(held(l)):mut('not funded'),
+    x.status==='requested'?btn('cost','Approve',{id:l.id,s:x.si,x:x.id,k:'approve',c:'s p',off:!isStaff(a,'finance')})+' '+btn('cost','Reject',{id:l.id,s:x.si,x:x.id,k:'reject',c:'s',off:!isStaff(a,'finance')}):`<input class="sm" id="pay${x.id}" type="number" value="${x.exp}" style="width:90px"> `+btn('cost','Pay from escrow',{id:l.id,s:x.si,x:x.id,k:'pay',c:'s p',off:!isStaff(a,'ops')})]))}</div>`;
+};
+V.staff.overdue=()=>{
+  const o=S.listings.filter(isFundOverdue),late=S.listings.flatMap(l=>lateList(l).map(x=>({l,...x})));
+  return head('Overdue','Late steps are flagged only. Nothing is cancelled or penalised automatically.')+
+  `<div class="card"><h2>Late steps</h2>${table(['Listing','Step','Owner','>Late by',''],late.map(({l,s,ii,n})=>[esc(l.name),esc(instName(s,ii)),OWNERS[s.owner],(S.day-dueDay(s,n))+' days',btn('open','Open',{id:l.id,c:'s'})]))}</div>
+  <div class="card"><h2>Funding overdue</h2>${table(['Trade','Days live','>Raised','>Remaining',''],o.map(l=>[esc(l.name),l.days,usd(raised(l)),usd(l.target-raised(l)),btn('fill','Fill from treasury',{id:l.id,c:'s',off:!isStaff(act(),'ops')})]))}<p class="mut">Treasury: ${usd(S.treasury)}.</p></div>`;
+};
+V.staff.money=()=>head('Money','Withdrawals and treasury.')+
+  `<div class="card"><h2>Withdrawals</h2>${table(['Who','Bank','>Amount','Status',''],S.wds.map((w,i)=>{const big=w.amount>=LARGE,ok=isStaff(act(),'finance')&&(!big||S.staffRole==='owner');return [esc(w.who),w.bank,usd(w.amount)+(big?' <span class="tag warn">owner only</span>':''),`<span class="tag ${w.status==='pending'?'warn':w.status==='paid'?'ok':'bad'}">${w.status}</span>`,w.status==='pending'?btn('wd-ok','Approve & pay',{i,c:'s',off:!ok})+' '+btn('wd-no','Decline',{i,c:'s',off:!isStaff(act(),'finance')}):''] }))}</div>
+  <div class="card"><h2>Treasury top-up</h2><div class="row"><input id="tamt" type="number" placeholder="Amount USD" style="width:160px"><input id="tref" placeholder="Bank reference" style="width:200px">${btn('treasury','Record',{c:'p',off:!isStaff(act(),'finance')})}</div></div>`;
+V.staff.team=()=>head('Team & audit','Every approval, rejection, verification, payment and payout is recorded.')+
+  `<div class="grid g2"><div class="card"><h2>Staff</h2>${table(['Name','Role'],[['Dana (you, demo)',S.staffRole],['Priya','reviewer'],['Marco','ops'],['Fatima','finance']])}</div><div class="card"><h2>Audit log</h2>${S.audit.map(x=>`<div class="ev">${esc(x)}</div>`).join('')||mut('No actions yet this session.')}</div></div>`;
+
+/* ---- actions ---- */
+const R=r=>r&&say(r.err||r.ok);
+const A={
+ back:()=>{S.sel=null;S.screen=S.role==='investor'?'explore':'listings';render()},
+ open:d=>{S.sel=+d.id;S.screen=S.role==='staff'?'ldetail':'detail';render()},
+ 'go-new':()=>go('manager','new'),
+ task:d=>{const t=TASKS[+d.k];go(t.r,t.sc,t.sel||null)},
+ topup:()=>{const a=+val('topamt');if(a>0){(S.role==='investor'?S.investor:S.manager).wallet+=a;say(`Wallet credited ${usd(a)}`)}},
+ withdraw:()=>{const u=S.role==='investor'?S.investor:S.manager,a=+val('wdamt');if(!(a>0)||a>u.wallet)return say('Not enough in Wallet');u.wallet-=a;S.wds.unshift({id:Date.now(),who:u.name,amount:a,bank:'Your bank',status:'pending'});say(`${usd(a)} held, awaiting approval`)},
+ invest:d=>{const l=L(+d.id),a=+val('amt'),left=l.target-raised(l);
+   if(!(a>=l.min))return say(`Minimum is ${usd(l.min)}`);if(a>left)return say(`Only ${usd(left)} left`);if(a>S.investor.wallet)return say('Wallet too low: top up first');
+   S.investor.wallet-=a;l.inv+=a;S.mine[l.id]=(S.mine[l.id]||0)+a;ev(l,'Investor','An investor funded the trade','internal');say(`Invested ${usd(a)}`)},
+ kyc:()=>{S.investor.kyc='pending';hist('investor',S.hist.investor.some(h=>h.t.startsWith('Rejected'))?'Resubmitted with corrected documents':'Profile filled, documents uploaded, submitted for review');
+   S.apps.unshift({id:'k0',type:'Investor KYC',who:S.investor.name,country:S.investor.country,docs:'Passport + proof of address',status:'pending'});say('Submitted for review')},
+ create:()=>{const dep=+val('n_dep'),n=+val('n_ships'),t=+val('n_target');
+   if(val('n_src')===val('n_dst'))return say('Source and buyer countries must differ');
+   if(BLOCKED.includes(val('n_src'))||BLOCKED.includes(val('n_dst')))return say('A blocked country cannot be involved');
+   if(dep<20||dep>90)return say('Deposit must be 20–90% of target');if(!(n>=1)||!(t>0))return say('Check containers and target');
+   const l=mkListing({id:Date.now(),name:val('n_name'),cat:val('n_cat'),src:val('n_src'),dst:val('n_dst'),target:t,min:+val('n_min'),invPct:+val('n_inv'),depPct:dep,est:'—',mgr:'me',status:'pending_review',ships:Array.from({length:n},()=>ship())});
+   ev(l,S.manager.name,'Listing and step plan submitted for review');S.listings.push(l);go('manager','detail',l.id);say('Submitted. You can still adjust the step plan')},
+ resubmit:d=>{const l=L(+d.id);l.status='pending_review';l.reason='';ev(l,S.manager.name,'Resubmitted for review');say('Back in review')},
+ deposit:d=>{const l=L(+d.id),m=mgrDeposit(l);S.manager.wallet-=m;l.mgrDep=m;l.status='live';l.days=0;ev(l,S.manager.name,'Deposit paid: Listing is live','internal');ev(l,S.manager.name,'Listing is live and open for funding');log(`manager paid deposit ${usd(m)} on #${l.id}`);say('Deposit paid: Listing is live')},
+ 'plan-add':d=>{const l=L(+d.id),n=val('np_name');if(!n)return say('Name the step');l.plan.push({id:l.plan.length,name:n,scope:'listing',owner:'manager',days:3,goods:false,verify:false,cp:'',docs:[],lines:[],inst:[{state:'planned',start:null,end:null,docsUp:[],reason:''}]});render()},
+ 'plan-del':d=>{const l=L(+d.id);if(l.plan.length<=1)return say('A plan needs at least one step');l.plan.splice(+d.s,1);render()},
+ 'app-ok':d=>{if(!isStaff(act(),'reviewer'))return;const a=S.apps[+d.i];if(BLOCKED.includes(a.country))return say('Blocked country');a.status='approved';if(a.who===S.investor.name){S.investor.kyc='approved';hist('investor','Approved by reviewer')}log(`approved ${a.type} ${a.who}`);say('Approved')},
+ 'app-no':d=>{const a=S.apps[+d.i],r=val('ar'+d.i);if(!r)return say('A reason is required');a.status='rejected';if(a.who===S.investor.name){S.investor.kyc='rejected';S.investor.reason=r;hist('investor','Rejected: '+r)}log(`rejected ${a.type} ${a.who}`);say('Rejected')},
+ 'lst-ok':d=>{const l=L(+d.id);l.status='approved';ev(l,'Staff · reviewer','Listing and step plan approved: plan locked');log(`approved listing #${l.id} and its step plan`);say('Approved: plan is locked, Manager can pay deposit')},
+ 'lst-no':d=>{const r=val('rej'+d.id);if(!r)return say('A reason is required');const l=L(+d.id);l.status='rejected';l.reason=r;ev(l,'Staff · reviewer','Rejected: '+r);log(`rejected listing #${l.id}: ${r}`);say('Rejected')},
+ step:d=>{const l=L(+d.id),s=+d.s,i=+d.i,k=`${d.id}_${s}_${i}`;R(stepAct(l,s,i,d.k,d.k==='upload'?d.x:val('r'+k)))},
+ cost:d=>{const l=L(+d.id),s=+d.s;const arg=d.k==='pay'?+val('pay'+d.x):d.k==='request'?{label:val(`rl${d.id}_${s}`),amt:+val(`ra${d.id}_${s}`)}:null;R(costAct(l,s,+d.x,d.k,arg))},
+ adv:d=>{const l=L(+d.id),sh=l.ships[+d.i];if(sh.stage===0&&!funded(l))return say('Goods are bought only once fully funded');sh.stage++;ev(l,'Staff · ops',`Container ${+d.i+1}: Stage now "${STAGES[sh.stage]}"`);log(`stage container ${+d.i+1} of #${l.id}`);say('Stage updated')},
+ sold:d=>{const l=L(+d.id),v=+val(`s${d.id}_${d.i}`);if(!(v>0))return say('Enter sale price');const sh=l.ships[+d.i];sh.sale=v;sh.doc=true;sh.stage=5;ev(l,'Staff · ops',`Container ${+d.i+1}: sold for ${usd(v)} (invoice attached)`);say('Sale recorded with invoice')},
+ propose:d=>{const l=L(+d.id);if(!canSettle(l))return say('Not ready');l.proposedBy=S.staffRole;ev(l,'Staff · '+S.staffRole,'Settlement proposed');log(`proposed settlement #${l.id}`);say('Proposed: another staff member must approve')},
+ 'approve-settle':d=>{const l=L(+d.id),r=settle(l);S.treasury+=r.plat;S.revenue+=r.fee;S.manager.wallet+=r.mgr;
+   if(S.mine[l.id]){const p=r.pay(S.mine[l.id]);S.payoutMine[l.id]=p;S.investor.wallet+=p}
+   l.ships.forEach(s=>s.stage=6);l.status='completed';l.proposedBy=null;ev(l,'Staff · '+S.staffRole,`Settlement approved: net profit ${usd(r.net)} paid out`);log(`approved settlement #${l.id}, net ${usd(r.net)}`);say(`Settled: ${usd(r.net)} net profit paid out`)},
+ cancel:d=>{const l=L(+d.id),r=val('cr'+d.id);if(!r)return say('A reason is required');if(paid(l)>0)return say('Costs already paid');
+   if(S.mine[l.id]){S.investor.wallet+=S.mine[l.id];delete S.mine[l.id]}S.manager.wallet+=l.mgrDep;S.treasury+=l.plat;l.inv=l.mgrDep=l.plat=0;l.status='cancelled';l.reason=r;ev(l,'Staff · '+S.staffRole,'Cancelled: '+r);say('Cancelled: everyone refunded in full')},
+ fill:d=>{const l=L(+d.id),r=l.target-raised(l);if(r>S.treasury)return say('Treasury too low');S.treasury-=r;l.plat+=r;ev(l,'Staff · ops','Remaining funding filled from treasury','internal');say(`Filled ${usd(r)} from treasury`)},
+ 'wd-ok':d=>{const w=S.wds[+d.i];w.status='paid';log(`approved withdrawal ${usd(w.amount)} ${w.who}`);say('Paid out via gateway')},
+ 'wd-no':d=>{const w=S.wds[+d.i];w.status='declined';if(w.who===S.investor.name)S.investor.wallet+=w.amount;if(w.who===S.manager.name)S.manager.wallet+=w.amount;say('Declined: money returned to Wallet')},
+ treasury:()=>{const a=+val('tamt');if(a>0&&val('tref')){S.treasury+=a;log(`treasury top-up ${usd(a)}`);say('Treasury topped up')}else say('Amount and reference required')},
+ day:d=>{S.day+=+d.k;S.listings.forEach(l=>{if(l.status==='live'&&!funded(l))l.days+=+d.k});render()},
+};
+
+/* ---- render ---- */
+function badge(role,screen){return screen==='home'?tasks(role,S.staffRole).filter(t=>t.cls!=='mut').length:0}
+function render(){
+  document.querySelectorAll('#roles button').forEach(b=>b.classList.toggle('on',b.dataset.role===S.role));
+  $('#staffsel').innerHTML=S.role==='staff'?`<div class="f" style="margin:0"><label>Signed in as</label><select id="srole">${['owner','reviewer','ops','finance'].map(r=>`<option ${r===S.staffRole?'selected':''}>${r}</option>`).join('')}</select></div>`:'';
+  const nav=NAV[S.role];if(!nav.some(n=>n[0]===S.screen)&&!['detail','ldetail'].includes(S.screen))S.screen=nav[0][0];
+  $('#nav').innerHTML=nav.map(([k,t])=>{const b=badge(S.role,k);return `<a data-nav="${k}" class="${S.screen===k?'on':''}">${t}${b?`<span class="badge">${b}</span>`:''}</a>`}).join('');
+  $('#clock').innerHTML=`<b>Demo clock: ${dt(S.day)}</b> (day ${S.day})<div class="row" style="margin-top:6px">${btn('day','+1 day',{k:1,c:'s'})}${btn('day','+7 days',{k:7,c:'s'})}</div><div class="mut" style="margin-top:4px">Late steps appear as time passes.</div>`;
+  $('#who').innerHTML=S.role==='investor'?`<b>${S.investor.name}</b><br>Wallet ${usd(S.investor.wallet)}`:S.role==='manager'?`<b>${S.manager.name}</b><br>Wallet ${usd(S.manager.wallet)}`:`<b>Staff · ${S.staffRole}</b><br>Treasury ${usd(S.treasury)}`;
+  let sc=S.screen;if(S.role==='staff'&&sc==='detail')sc='ldetail';
+  const v=V[S.role][sc]||V[S.role][nav[0][0]];
+  $('#main').innerHTML=v()+(S.toast?`<div class="toast">${esc(S.toast)}</div>`:'');
+  const f=S.focus;if(f&&document.getElementById(f)){const e=document.getElementById(f);e.focus();e.setSelectionRange&&e.setSelectionRange(e.value.length,e.value.length)}
+}
+document.addEventListener('click',e=>{
+  const r=e.target.closest('[data-role]');if(r)return go(r.dataset.role,NAV[r.dataset.role][0][0]);
+  const n=e.target.closest('[data-nav]');if(n){S.sel=null;S.screen=n.dataset.nav;return render()}
+  const a=e.target.closest('[data-act]');if(a&&!a.disabled){const f=A[a.dataset.act];f&&f(a.dataset)}
+});
+document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;S.focus='q';render();S.focus=null}});
+document.addEventListener('change',e=>{
+  const t=e.target;if(t.id==='srole'){S.staffRole=t.value;return render()}
+  if(t.dataset&&t.dataset.plan){const l=L(+t.dataset.id),s=l.plan[+t.dataset.s],f=t.dataset.plan,v=t.type==='checkbox'?t.checked:t.value;
+    if(f.startsWith('exp:')){const x=s.lines.find(z=>z.id===+f.slice(4));x.exp=Math.max(0,+v)}
+    else if(f==='docs')s.docs=v.split(',').map(x=>x.trim()).filter(Boolean);
+    else if(f==='days')s.days=Math.max(1,+v);
+    else if(f==='scope'){s.scope=v;s.inst=Array.from({length:v==='ship'?l.ships.length:1},()=>({state:'planned',start:null,end:null,docsUp:[],reason:''}))}
+    else s[f]=v}
+});
+render();
+</script>
+</body>
+</html>
