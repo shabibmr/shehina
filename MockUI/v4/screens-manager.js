@@ -59,9 +59,24 @@
       }).join("");
     }
 
-    function eventTrack(rows) {
+    /* Greyed-out preview shown while a listing has no history yet. */
+    function expectedTrack(l) {
+      var plan = [["Submitted for review", "Today"], ["Reviewed and approved", "After staff review"], ["Funding open", "Investors can fund"], ["Fully funded", "Within " + Store.state.settings.autoWithdrawDays + " days of approval"]];
+      var sh = (l.shipments || [])[0];
+      var day = sh ? sh.startDay || 0 : 0;
+      if (sh) (sh.steps || []).forEach(function (st) {
+        day += st.days || 0;
+        if (st.tag) plan.push([st.tag, "About day " + day + " after funding"]);
+      });
+      plan.push(["Profit paid out", "About day " + (L.cycleDays ? L.cycleDays(l) : day) + " after funding"]);
+      return "<p class=\"muted\">Nothing has happened yet. This is what to expect.</p><ol class=\"events events-expected\" aria-label=\"Expected timeline\">" + plan.map(function (p) {
+        return "<li><span class=\"event-dot\" aria-hidden=\"true\">&bull;</span><div class=\"event-body\"><p class=\"event-when\">" + esc(p[1]) + "</p><p class=\"title\">" + esc(p[0]) + "</p></div></li>";
+      }).join("") + "</ol>";
+    }
+
+    function eventTrack(rows, l) {
       var list = (rows || []).slice().reverse();
-      if (!list.length) return "<p class=\"muted\">No history yet.</p>";
+      if (!list.length) return l ? expectedTrack(l) : "<p class=\"muted\">No history yet.</p>";
       return "<ol class=\"events\">" + list.map(function (h, i) {
         var who = h.actorId ? Store.byId(h.actorId) : null;
         var bad = /reject|withdr|cancel|return|late/i.test(h.action);
@@ -747,27 +762,61 @@
       return known ? { proceeds: proceeds, costs: costs } : null;
     }
 
+    function factTile(label, value, sub, tone) {
+      return "<div class=\"fact" + (tone ? " fact-" + tone : "") + "\"><p class=\"fig-label\">" + label + "</p><p class=\"fact-value num\">" + value + "</p><p class=\"fig-sub\">" + sub + "</p></div>";
+    }
+
     function figuresPanel(l) {
+      var now = Store.state.now;
       var view = L.projection(l);
       var actual = actualFigures(l);
       var target = L.fundingTarget(l);
       var raised = L.raised(l);
+      var funded = target > 0 && raised >= target;
       var pct = target ? Math.min(100, Math.round(raised * 100 / target)) : 0;
       var profit = actual ? actual.proceeds - actual.costs : 0;
-      var notYet = "<span class=\"muted\">Not yet</span>";
-      function pair(label, expected, act) {
-        return "<div class=\"fig-card\"><p class=\"fig-label\">" + label + "</p><p class=\"fig-big num\">" + (act == null ? L.formatUsd(expected) : L.formatUsd(act)) + "</p>" +
-          "<p class=\"fig-sub\">" + (act == null ? "Expected · actual after the sale" : "Expected " + L.formatUsd(expected)) + "</p></div>";
-      }
+      var cycle = view.cycle;
+      var done = l.status === "completed";
+
+      /* expiry and turnaround */
+      var expiry;
+      if (done) expiry = factTile("Listing", "Completed", "Profit paid out");
+      else if (funded) expiry = factTile("Listing", "Funded", "Funding window closed");
+      else if (l.status === "live" || l.status === "approved") {
+        var left = daysLeft(l);
+        var endsOn = (l.approvedAt || now) + Store.state.settings.autoWithdrawDays * L.DAY;
+        expiry = factTile("Funding expires", left + (left === 1 ? " day" : " days"), "Closes " + UI.when(endsOn), left <= 3 ? "warn" : "");
+      } else expiry = factTile("Listing", esc(STATUS[l.status] || l.status), "Not open for funding yet");
+      var elapsed = funded && l.liveAt ? Math.max(0, Math.floor((now - l.liveAt) / L.DAY)) : 0;
+      var turn = factTile("Turnaround", cycle + " days", funded && !done ? "Day " + Math.min(elapsed, cycle) + " of " + cycle : "Planned, funding to payout");
+      var late = elapsed > cycle && !done;
+      var eta = funded && l.liveAt ? factTile("Expected payout", UI.when(l.liveAt + cycle * L.DAY), late ? "Past plan by " + (elapsed - cycle) + " days" : "From funding date", late ? "warn" : "")
+        : factTile("Expected payout", "Funding + " + cycle + "d", "Date is set once fully funded");
+      var roi = factTile("Return for investors", (view.roiCycle * 100).toFixed(1) + "%", "About " + (view.roiYear * 100).toFixed(0) + "% a year");
+
+      /* profit with a range: sale price 10% below / above plan */
+      var low = view.expectedSale * 0.9 - target;
+      var high = view.expectedSale * 1.1 - target;
       var hero = actual
         ? "<p class=\"fig-label\">Actual profit</p><p class=\"fig-hero num " + (profit >= 0 ? "gain" : "loss") + "\">" + (profit >= 0 ? "+" : "") + L.formatUsd(profit) + "</p><p class=\"fig-sub\">Expected " + L.formatUsd(view.expectedProfit) + "</p>"
-        : "<p class=\"fig-label\">Expected profit</p><p class=\"fig-hero num\">" + L.formatUsd(view.expectedProfit) + "</p><p class=\"fig-sub\">Actual profit is known after the sale</p>";
-      return "<section class=\"stack\"><div class=\"fig-hero-card\">" + hero + "</div>" +
+        : "<p class=\"fig-label\">Expected profit</p><p class=\"fig-hero num\">" + L.formatUsd(view.expectedProfit) + "</p>" +
+          "<div class=\"range\" role=\"img\" aria-label=\"Profit range\"><i class=\"range-fill\"></i><i class=\"range-mark\"></i></div>" +
+          "<div class=\"range-labels num\"><span>" + L.formatUsd(Math.round(low)) + "<small>Sale 10% lower</small></span><span class=\"mid\">" + L.formatUsd(view.expectedProfit) + "<small>As planned</small></span><span>" + L.formatUsd(Math.round(high)) + "<small>Sale 10% higher</small></span></div>";
+
+      function pair(label, expected, act) {
+        return "<div class=\"fig-card\"><p class=\"fig-label\">" + label + "</p><p class=\"fig-big num\">" + L.formatUsd(act == null ? expected : act) + "</p>" +
+          "<p class=\"fig-sub\">" + (act == null ? "Expected \u00B7 actual after the sale" : "Expected " + L.formatUsd(expected)) + "</p></div>";
+      }
+      var margin = view.expectedSale ? Math.round(view.expectedProfit * 1000 / view.expectedSale) / 10 : 0;
+      return "<section class=\"stack\"><div class=\"fact-grid\">" + expiry + turn + eta + roi + "</div>" +
+        "<div class=\"fig-hero-card\">" + hero + "</div>" +
         "<div class=\"fig-card\"><div class=\"fig-row\"><p class=\"fig-label\">Funding</p><p class=\"num\"><b>" + pct + "%</b></p></div>" +
         "<div class=\"progress\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"" + pct + "\" aria-label=\"Funded\"><i style=\"width:" + pct + "%\"></i></div>" +
-        "<p class=\"fig-sub\"><span class=\"num\">" + L.formatUsd(raised) + "</span> raised of <span class=\"num\">" + L.formatUsd(target) + "</span></p></div>" +
+        "<p class=\"fig-sub\"><span class=\"num\">" + L.formatUsd(raised) + "</span> raised of <span class=\"num\">" + L.formatUsd(target) + "</span>" + (funded ? "" : " \u00B7 <span class=\"num\">" + L.formatUsd(target - raised) + "</span> to go") + "</p></div>" +
         "<div class=\"fig-grid\">" + pair("Cost", view.target, actual ? actual.costs : null) + pair("Sale", view.expectedSale, actual ? actual.proceeds : null) + "</div>" +
-        "<div class=\"fig-card fig-row\"><div><p class=\"fig-label\">Your share</p><p class=\"fig-sub\">" + (actual ? "Paid after settlement" : "Expected, after settlement") + "</p></div><p class=\"fig-big num\">" + L.formatUsd(view.managerCut) + "</p></div></section>";
+        "<div class=\"fig-grid\"><div class=\"fig-card\"><p class=\"fig-label\">Margin</p><p class=\"fig-big num\">" + margin + "%</p><p class=\"fig-sub\">Expected profit on sale</p></div>" +
+        "<div class=\"fig-card\"><p class=\"fig-label\">Platform fee</p><p class=\"fig-big num\">" + L.formatUsd(view.fee) + "</p><p class=\"fig-sub\">Taken from profit</p></div></div>" +
+        "<div class=\"fig-card fig-row\"><div><p class=\"fig-label\">Your share</p><p class=\"fig-sub\">" + (done ? "Paid at settlement" : "Expected, after settlement") + "</p></div><p class=\"fig-big num\">" + L.formatUsd(view.managerCut) + "</p></div></section>";
     }
 
     function shipmentsPanel(l) {
@@ -845,7 +894,7 @@
           (action ? "<div class=\"stack\">" + action + "</div>" : "") +
           UI.tabs([["overview", "Overview"], ["shipments", "Shipments"], ["history", "Timeline"]], deskTab, "desktab") +
           (deskTab === "overview" ? figuresPanel(l) : "") + (deskTab === "shipments" ? shipmentsPanel(l) : "") +
-          (deskTab === "history" ? eventTrack(l.history) : "") + "</div>";
+          (deskTab === "history" ? eventTrack(l.history, l) : "") + "</div>";
       },
       on: function (act, el, params) {
         var l = mine(params.id);
