@@ -458,3 +458,23 @@ a.bento:focus-visible { outline: 3px solid var(--color-ring); outline-offset: 2p
 @keyframes ico-float { 50% { transform: translateY(-5px); } }
 @keyframes ico-sail { 50% { transform: translateX(2px); } }
 @keyframes ico-slide { 50% { transform: translateY(2px); } }
+
+/* Hero icon, row icons, money arrows, Post Shipment plus. */
+.hero-ico { display: flex; margin-block-end: var(--space-3); }
+.hero-ico.center { justify-content: center; margin-block: var(--space-4); }
+.hero-ico.center .ico { width: 72px; height: 72px; }
+.hero-ico .ico { width: 44px; height: 44px; }
+.row.has-lead { grid-template-columns: auto 1fr auto; }
+.row.has-lead > .row-ico { grid-row: 1 / span 2; grid-column: 1; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--color-surface-sunken); color: var(--color-muted-foreground); }
+.row.has-lead > .title, .row.has-lead > .meta { grid-column: 2; }
+.row.has-lead > .end { grid-column: 3; }
+.row-ico-in { background: var(--color-primary-subtle); color: var(--color-primary); }
+.row-ico-out { background: var(--color-warning-bg); color: var(--color-warning); }
+.fab { display: inline-flex; align-items: center; gap: var(--space-2); }
+.fab-ico { display: inline-grid; transition: transform var(--duration-move) var(--ease-fade); }
+.fab:hover .fab-ico, .fab:focus-visible .fab-ico { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .fab-ico { transition: none; } .fab:hover .fab-ico { transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .row-ico-in svg { animation: ico-slide calc(var(--duration-pulse) * 1.5) ease-in-out 2; }
+  .row-ico-out svg { animation: ico-slide calc(var(--duration-pulse) * 1.5) ease-in-out 2 reverse; }
+}

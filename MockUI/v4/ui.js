@@ -87,6 +87,7 @@
     flag: "<path d=\"M6 20.5v-17M6 4.5h11l-2 4 2 4H6\"/>",
     info: "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 11v5M12 8v.1\"/>",
     cross: "<path d=\"M6.5 6.5l11 11M17.5 6.5l-11 11\"/>",
+    search: "<circle cx=\"10.5\" cy=\"10.5\" r=\"6\"/><path d=\"M15 15l5 5\"/>",
     wallet: "<path d=\"M4.5 8h15.5V18a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 18V8Z\"/><path d=\"M4.5 8 7 5h9.5L19 8\"/><path d=\"M14 13.2h6v3h-6a1.5 1.5 0 0 1 0-3Z\"/>",
     port: "<path d=\"M3.5 19.5h17\"/><path d=\"M6 19.5V11h7v8.5\"/><path d=\"M8 13.5h3M8 16h3\"/><path d=\"M16.5 19.5V8M16.5 8h4.5M19 8v3.5\"/>"
   };
@@ -112,8 +113,58 @@
     return "<span class=\"ico ico-" + (tone || "neutral") + (motion ? " ico-" + motion : "") + "\" aria-hidden=\"true\">" + strokeIcon(name, 28) + "</span>";
   }
 
-  /* Adds a purposeful icon to empty states, banners and status labels after a screen renders. */
+  /* One hero icon per screen: [icon, tone, motion, centered]. Motion only where it says something. */
+  var HERO = {
+    splash: ["ship", "success", "float", 1], welcome: ["globe", "success", "float", 1], signin: ["lock", "neutral", "", 1],
+    join: ["user", "neutral", "", 1], forgot: ["lock", "warning", "", 1], you: ["user", "neutral", ""], notices: ["bell", "neutral", ""],
+    risk: ["shield", "warning", ""], search: ["search", "neutral", ""],
+    home: ["chart", "success", ""], kyc: ["shield", "neutral", ""], "kyc-status": ["clock", "neutral", "pulse"], shipments: ["ship", "neutral", ""],
+    listing: ["ship", "neutral", ""], invest: ["in", "success", ""], receipt: ["check", "success", "pop"], portfolio: ["chart", "success", ""],
+    track: ["ship", "neutral", ""], statement: ["receipt", "neutral", ""], wallet: ["wallet", "neutral", ""], topup: ["in", "success", ""],
+    withdraw: ["out", "neutral", ""], withdrawal: ["out", "neutral", ""],
+    register: ["user", "neutral", ""], registration: ["document", "neutral", ""], desk: ["chart", "success", ""], listings: ["document", "neutral", ""],
+    "listing-form": ["plus", "success", ""], "listing-desk": ["ship", "neutral", ""], terms: ["document", "neutral", ""], deposit: ["in", "success", ""],
+    step: ["package", "neutral", ""], plan: ["flag", "neutral", ""],
+    ops: ["package", "neutral", ""], approvals: ["check", "success", ""], settlement: ["receipt", "neutral", ""], queue: ["inbox", "neutral", ""],
+    "queue-list": ["inbox", "neutral", ""], review: ["user", "neutral", ""], view: ["document", "neutral", ""], "queue-listing": ["document", "neutral", ""],
+    revise: ["gear", "neutral", ""], overdue: ["alert", "warning", "pulse"], "staff-listings": ["ship", "neutral", ""], "staff-money": ["bank", "neutral", ""],
+    team: ["users", "neutral", ""], shareholders: ["users", "neutral", ""], users: ["users", "neutral", ""], settings: ["gear", "neutral", ""],
+    audit: ["document", "neutral", ""], ledger: ["receipt", "neutral", ""]
+  };
+  /* Leading icon for a tappable row, picked from where it goes. */
+  var ROW_ICON = [
+    [/^#\/(listing|listing-desk|track)\//, "ship"], [/^#\/step\//, "package"], [/^#\/(queue-listing|review|view)\//, "document"],
+    [/^#\/withdrawal\//, "out"], [/^#\/kyc/, "shield"], [/^#\/notices/, "bell"], [/^#\/risk/, "shield"], [/^#\/settings/, "gear"],
+    [/^#\/(team|users|shareholders)/, "users"], [/^#\/(ledger|audit|statement)/, "receipt"], [/^#\/registration/, "document"]
+  ];
+
+  /* Adds purposeful icons to a screen after it renders: hero, rows, money lines, empty states, banners, status labels. */
   function decorate(stage) {
+    var col = stage.querySelector(".column");
+    var hero = current && HERO[current.id];
+    if (col && hero && !col.querySelector(":scope > .hero-ico")) {
+      col.insertAdjacentHTML("afterbegin", "<div class=\"hero-ico" + (hero[3] ? " center" : "") + "\">" + badge(hero[0], hero[1], hero[2]) + "</div>");
+    }
+    stage.querySelectorAll("a.row[data-go]").forEach(function (el) {
+      if (el.classList.contains("has-lead") || el.querySelector(".chev")) return;
+      var go = el.getAttribute("data-go") || "";
+      var hit = ROW_ICON.filter(function (r) { return r[0].test(go); })[0];
+      if (!hit) return;
+      el.classList.add("has-lead");
+      el.insertAdjacentHTML("afterbegin", "<span class=\"row-ico\" aria-hidden=\"true\">" + strokeIcon(hit[1], 20) + "</span>");
+    });
+    stage.querySelectorAll(".row .title").forEach(function (el) {
+      var row = el.parentNode;
+      if (row.classList.contains("has-lead")) return;
+      var t = el.textContent.trim().toLowerCase();
+      var kind = /^(deposit|top.?up|payout)/.test(t) ? ["in", "in"] : /^withdraw/.test(t) ? ["out", "out"] : null;
+      if (!kind) return;
+      row.classList.add("has-lead");
+      row.insertAdjacentHTML("afterbegin", "<span class=\"row-ico row-ico-" + kind[1] + "\" aria-hidden=\"true\">" + strokeIcon(kind[0], 20) + "</span>");
+    });
+    stage.querySelectorAll(".fab").forEach(function (el) {
+      if (!el.querySelector("svg")) el.insertAdjacentHTML("afterbegin", "<span class=\"fab-ico\" aria-hidden=\"true\">" + strokeIcon("plus", 18) + "</span>");
+    });
     stage.querySelectorAll(".empty").forEach(function (el) {
       if (el.querySelector(".ico")) return;
       el.insertAdjacentHTML("afterbegin", badge("inbox", "neutral", "float"));
