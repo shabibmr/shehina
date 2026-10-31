@@ -1,0 +1,179 @@
+/* Shehnat paper column. Rules: design-system/shehnat/MASTER.md.
+   Components use the semantic and component tokens only, never the primitives.
+   Launch is light. A later dark theme redefines the semantic block only. */
+
+:root {
+  /* === PRIMITIVES === */
+
+  /* Logo green. Mean of 39,754 sampled pixels in docs/assets/SHEHNAT LOGO.png. */
+  --color-green-900: #043A2A;
+  --color-green-800: #06503A;
+  --color-green-700: #246552;
+  --color-green-100: #E3E8E4;
+
+  /* Logo gold. Mean of 14,722 sampled pixels. Not an interface color. */
+  --color-logo-gold: #B39047;
+
+  --color-paper-0: #FFFFFF;
+  --color-paper-50: #F7F6F3;
+  --color-paper-100: #E9ECE8;
+
+  --color-ink-900: #141816;
+  --color-ink-600: #666866;
+  --color-line-500: #6F716E;
+  --color-line-200: #D7D7D4;
+
+  --color-gain-700: #2F7D1F;
+  --color-gain-100: #EEF6E9;
+  --color-loss-700: #B42318;
+  --color-loss-100: #FDEDEB;
+  --color-warning-700: #93370D;
+  --color-warning-100: #FEF4E6;
+  --color-info-700: #1F5E8C;
+  --color-info-100: #EAF2F8;
+
+  --space-1: 0.25rem;  /* 4 */
+  --space-2: 0.5rem;   /* 8 */
+  --space-3: 0.75rem;  /* 12 */
+  --space-4: 1rem;     /* 16 */
+  --space-5: 1.25rem;  /* 20 */
+  --space-6: 1.5rem;   /* 24 */
+  --space-8: 2rem;     /* 32 */
+  --space-10: 2.5rem;  /* 40 */
+  --space-12: 3rem;    /* 48 */
+
+  --font-serif: "Newsreader", "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  --font-sans: "IBM Plex Sans", "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --font-arabic: "IBM Plex Sans Arabic", "IBM Plex Sans", system-ui, sans-serif;
+
+  --font-size-meta: 0.875rem;    /* 14. Smallest text that must be read. */
+  --font-size-body: 1.0625rem;   /* 17 */
+  --font-size-price: 1rem;       /* 16. Floor for a price. */
+  --font-size-title-sm: 1.375rem; /* 22 */
+  --font-size-title: 1.75rem;    /* 28 */
+  --font-size-title-lg: 2.125rem; /* 34 */
+  --font-size-figure: 2.75rem;   /* 44 */
+
+  --radius-reading: 0;
+  --radius-panel: 0.75rem; /* 12. Utility panels and the one primary button. */
+  --line-hair: 1px;
+
+  --duration-fade: 160ms;
+  --duration-move: 240ms;
+  --duration-pulse: 1200ms;
+  --ease-fade: cubic-bezier(0.2, 0, 0, 1);
+  --move-screen: 16px;
+
+  /* === SEMANTIC === */
+
+  --color-background: var(--color-paper-50);
+  --color-foreground: var(--color-ink-900);
+  --color-surface: var(--color-paper-0);
+  --color-surface-sunken: var(--color-paper-100);
+
+  --color-primary: var(--color-green-800);
+  --color-primary-hover: var(--color-green-700);
+  --color-primary-active: var(--color-green-900);
+  --color-primary-foreground: var(--color-paper-0);
+  --color-primary-subtle: var(--color-green-100);
+
+  --color-muted-foreground: var(--color-ink-600);
+  --color-border: var(--color-line-200);
+  --color-input: var(--color-line-500);
+  --color-ring: var(--color-primary);
+  --color-rule: var(--color-ink-900);
+
+  --color-gain: var(--color-gain-700);
+  --color-gain-bg: var(--color-gain-100);
+  --color-loss: var(--color-loss-700);
+  --color-loss-bg: var(--color-loss-100);
+  --color-warning: var(--color-warning-700);
+  --color-warning-bg: var(--color-warning-100);
+  --color-info: var(--color-info-700);
+  --color-info-bg: var(--color-info-100);
+  --color-expected: var(--color-foreground);
+
+  --font-heading: var(--font-serif);
+  --font-body: var(--font-sans);
+  --spacing-gutter: var(--space-4);
+  --spacing-column: var(--space-4);
+  --spacing-target: var(--space-2);
+  --size-hit: 2.75rem;       /* 44 */
+  --size-control: 3rem;      /* 48 */
+  --size-bar: 3.5rem;        /* 56, plus the safe area */
+  --measure-reading: 66ch;
+  --column-max: 37.5rem;     /* 600 */
+
+  /* === COMPONENTS === */
+
+  --masthead-height: var(--size-bar);
+  --masthead-bg: var(--color-background);
+  --masthead-fg: var(--color-foreground);
+
+  --mode-bar-bg: var(--color-background);
+  --mode-bar-fg: var(--color-foreground);
+  --mode-bar-fg-active: var(--color-primary);
+  --mode-bar-rule: var(--color-rule);
+  --mode-bar-height: var(--size-bar);
+
+  --action-bar-bg: var(--color-background);
+  --action-bar-height: var(--size-bar);
+
+  --button-bg: var(--color-primary);
+  --button-fg: var(--color-primary-foreground);
+  --button-bg-hover: var(--color-primary-hover);
+  --button-bg-active: var(--color-primary-active);
+  --button-bg-disabled: var(--color-surface-sunken);
+  --button-fg-disabled: var(--color-muted-foreground);
+  --button-radius: var(--radius-panel);
+  --button-height: var(--size-control);
+  --button-pad-x: var(--space-4);
+
+  --button-secondary-bg: transparent;
+  --button-secondary-fg: var(--color-foreground);
+  --button-secondary-border: var(--color-input);
+
+  --input-bg: var(--color-surface);
+  --input-fg: var(--color-foreground);
+  --input-border: var(--color-input);
+  --input-radius: var(--radius-reading);
+  --input-height: var(--size-control);
+  --input-focus-ring: var(--color-ring);
+
+  --row-min-height: 4.5rem;
+  --row-rule: var(--color-border);
+  --row-title: var(--font-heading);
+  --row-meta: var(--color-muted-foreground);
+
+  --panel-bg: var(--color-surface);
+  --panel-fg: var(--color-foreground);
+  --panel-radius: var(--radius-panel);
+  --panel-pad: var(--space-4);
+  --panel-rule: var(--color-border);
+
+  --lead-radius: var(--radius-reading);
+  --column-pad: var(--spacing-column);
+
+  --focus-width: 2px;
+  --focus-offset: 2px;
+}
+
+:lang(ar) {
+  --font-heading: var(--font-arabic);
+  --font-body: var(--font-arabic);
+}
+
+@media (min-width: 600px) {
+  :root {
+    --spacing-gutter: var(--space-6);
+    --spacing-column: var(--space-6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fade: 120ms;
+    --duration-move: 1ms;
+    --move-screen: 0px;
+  }
+}
