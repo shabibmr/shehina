@@ -18,7 +18,38 @@
     save();
   }
 
+  /* Tell the manager, ops and the investors once when a step passes its due date. There is no
+     clock job in the mock, so this runs on every save, including the one at boot. */
+  function scanLate() {
+    if (!state || !L) return;
+    state.listings.forEach(function (row) {
+      if (row.status !== "live") return;
+      (row.shipments || []).forEach(function (sh) {
+        (sh.steps || []).forEach(function (st, i) {
+          if (!L.isLate(row, sh, i, state.now)) return;
+          var due = L.stepDue(row, sh, i);
+          if (st.lateNoted === due) return;
+          st.lateNoted = due;
+          var text = st.name + " for " + row.name + " is late. It was due " + dateText(due) + ".";
+          var people = {};
+          if (row.managerId) people[row.managerId] = text + (st.owner === "manager" ? " Please send it to staff." : " Staff are handling it.");
+          state.users.forEach(function (u) { if (u.role === "ops") people[u.id] = text + " Set a new date or move the step."; });
+          (row.contributions || []).forEach(function (c) {
+            if (c.kind === "investor" && !people[c.userId]) people[c.userId] = text + " Your money stays safe in escrow.";
+          });
+          Object.keys(people).forEach(function (id) { note(id, people[id]); });
+          row.history.push({ at: state.now, actorId: "system", action: "Step late", reason: st.name });
+        });
+      });
+    });
+  }
+
+  function dateText(ms) {
+    return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(ms);
+  }
+
   function save() {
+    scanLate();
     if (root.localStorage) root.localStorage.setItem(KEY, JSON.stringify(state));
   }
 
@@ -913,6 +944,30 @@
     return { ok: true };
   }
 
+  /* Staff give a late (or any open) step a new target date and everyone involved is told. */
+  function setStepDate(listingId, shipmentId, stepId, ms, reason) {
+    var gate = need("steps");
+    if (gate.error) return fail(gate.error);
+    var row = listing(listingId);
+    var shipment = row && shipmentById(row, shipmentId);
+    var step = shipment && stepById(shipment, stepId);
+    if (!step) return fail("That step was not found.");
+    if (row.status !== "live") return fail("Error: dates can only change while the listing is live.");
+    if (step.state === "done" || step.state === "verified" || step.state === "skipped") return fail("Error: this step is already finished.");
+    if (!Number.isFinite(ms) || ms <= state.now) return fail("Error: choose a date in the future.");
+    step.revisedAt = ms;
+    delete step.ready;
+    var text = "New date for " + step.name + " on " + row.name + ": " + dateText(ms) + (reason ? ". " + reason : ".");
+    var told = {};
+    if (row.managerId) told[row.managerId] = true;
+    (row.contributions || []).forEach(function (c) { if (c.kind === "investor") told[c.userId] = true; });
+    Object.keys(told).forEach(function (id) { note(id, text); });
+    row.history.push({ at: state.now, actorId: gate.actor.id, action: "New step date", reason: step.name + " · " + dateText(ms) });
+    audit(gate.actor.id, "Set new step date", row.id, step.name + " " + dateText(ms));
+    save();
+    return { ok: true };
+  }
+
   function setStep(listingId, shipmentId, stepId, next, extra) {
     var gate = need("steps");
     if (gate.error) return fail(gate.error);
@@ -1359,7 +1414,7 @@
     assign: assign, decide: decide, invest: invest, topup: topup, withdraw: withdraw,
     saveListing: saveListing, submitListing: submitListing,
     submitManagerApplication: submitManagerApplication, respondTerms: respondTerms, payDeposit: payDeposit,
-    withdrawListing: withdrawListing, deleteDraft: deleteDraft, sendStep: sendStep, proposePlan: proposePlan,
+    withdrawListing: withdrawListing, deleteDraft: deleteDraft, sendStep: sendStep, setStepDate: setStepDate, proposePlan: proposePlan,
     reviewListing: reviewListing, fillOverdue: fillOverdue,
     decideWithdrawal: decideWithdrawal, failWithdrawal: failWithdrawal,
     treasuryTopup: treasuryTopup, moveReserve: moveReserve,

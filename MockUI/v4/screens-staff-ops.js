@@ -43,7 +43,12 @@
                   return "<button type=\"button\" class=\"btn-text\" data-act=\"move\" data-next=\"" + c[0] + "\" data-ship=\"" + sh.id + "\" data-step=\"" + st.id + "\">" + c[1] + "</button>";
                 }).join(""));
               }
-              return "<article class=\"card\"><p>" + UI.esc(st.name) + (st.verify ? " · Document required" : "") + (st.ready ? " · <span class=\"chip chip-warn\">Sent by manager</span>" : "") + "</p>" + docs + moves + "</article>";
+              var lateIdx = (sh.steps || []).indexOf(st);
+              var late = L.isLate(l, sh, lateIdx, Store.state.now);
+              var dateBtn = !L.can(actor, "steps") && l.status === "live" && st.state !== "done" && st.state !== "verified" && st.state !== "skipped"
+                ? "<button type=\"button\" class=\"btn-text\" data-act=\"date\" data-ship=\"" + sh.id + "\" data-step=\"" + st.id + "\">" + (st.revisedAt ? "Change date" : "Set new date") + "</button>" : "";
+              var lateChip = late ? " · <span class=\"chip chip-warn\">Late" + (st.revisedAt ? " · new date " + UI.when(st.revisedAt) : "") + "</span>" : "";
+              return "<article class=\"card\"><p>" + UI.esc(st.name) + (st.verify ? " · Document required" : "") + (st.ready ? " · <span class=\"chip chip-warn\">Sent by manager</span>" : "") + lateChip + "</p>" + docs + moves + dateBtn + "</article>";
             }).join("");
             var count = (sh.steps || []).filter(function (st) { return (st.state || "todo") === col[0]; }).length;
             if (!count) return "";
@@ -82,6 +87,20 @@
           var moved = Store.setStep(params.id, el.getAttribute("data-ship"), el.getAttribute("data-step"), next, {});
           if (!moved.ok) UI.toast(moved.error);
           else UI.go("#/ops/" + params.id);
+          return;
+        }
+        if (act === "date") {
+          UI.openSheet("<h2>Set new date</h2><label class=\"field\" for=\"newdate\"><span>New date</span><input id=\"newdate\" type=\"date\"></label>" +
+            "<label class=\"field\" for=\"why\"><span>Reason</span><textarea id=\"why\"></textarea></label>" +
+            "<button class=\"btn btn-primary\" type=\"button\" data-act=\"date-send\" data-ship=\"" + el.getAttribute("data-ship") + "\" data-step=\"" + el.getAttribute("data-step") + "\">Send</button>");
+          return;
+        }
+        if (act === "date-send") {
+          var picked = document.getElementById("newdate").value;
+          var sentDate = Store.setStepDate(params.id, el.getAttribute("data-ship"), el.getAttribute("data-step"), picked ? Date.parse(picked + "T09:00:00Z") : NaN, document.getElementById("why").value.trim());
+          if (!sentDate.ok) { document.getElementById("why").insertAdjacentHTML("afterend", "<span class=\"err\">" + UI.esc(sentDate.error) + "</span>"); return; }
+          UI.closeSheet();
+          UI.go("#/ops/" + params.id);
           return;
         }
         if (act === "move-send") {

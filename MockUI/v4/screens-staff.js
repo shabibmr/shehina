@@ -80,8 +80,8 @@
               if (s === "done" || s === "verified" || s === "skipped") return;
               var late = L.isLate(l, sh, i, Store.state.now);
               if (!st.ready && st.owner === "manager" && !late) return;
-              var rank = st.ready ? 0 : late ? 1 : 2;
-              var meta = l.name + " · " + (st.ready ? "Sent by the manager" : late ? "Late" : s === "blocked" ? "Blocked" : s === "in_progress" ? "In progress" : "To do");
+              var rank = st.ready ? 0 : late && !st.revisedAt ? 1 : 2;
+              var meta = l.name + " · " + (st.ready ? "Sent by the manager" : late ? "Late" + (st.revisedAt ? " · new date " + UI.when(st.revisedAt) : "") : s === "blocked" ? "Blocked" : s === "in_progress" ? "In progress" : "To do");
               steps.push({ rank: rank, href: "#/ops/" + l.id, title: st.name, meta: meta });
             });
           });
