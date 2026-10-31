@@ -29,7 +29,8 @@
         exposureDefault: 1000000000,
         largeWithdrawal: 1000000,
         blocked: ["CU", "IR", "KP", "SY"],
-        feeBps: 100
+        feeBps: 100,
+        minTicket: 100000
       },
       users: [],
       listings: [],

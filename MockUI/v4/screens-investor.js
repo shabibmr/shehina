@@ -9,7 +9,7 @@
     var errors = {};
     var tab = "overview";
     var openId = "";
-    var filters = { category: "", source: "", buyer: "", share: "", sort: "name" };
+    var filters = { category: "", source: "", buyer: "", sort: "name" };
     var port = "active";
     var walletFilter = "all";
     var gw = "";
@@ -20,14 +20,32 @@
     function liveRows() {
       return Store.state.listings.filter(function (l) { return l.status === "live"; });
     }
-    function row(l, href) {
-      var raised = L.raised(l);
+    function fundingDaysLeft(l) {
+      var s = Store.state;
+      var from = l.approvedAt || s.now;
+      return Math.max(0, Math.ceil((from + s.settings.autoWithdrawDays * L.DAY - s.now) / L.DAY));
+    }
+    function expireLine(l) {
+      if (l.status !== "live" || L.remaining(l) <= 0) return "Funded";
+      var days = fundingDaysLeft(l);
+      return days === 0 ? "Expiring today" : "Expiring in " + days + (days === 1 ? " day" : " days");
+    }
+    function bentoCells(l) {
       var target = L.fundingTarget(l);
+      var have = L.raised(l);
       var left = L.remaining(l);
+      var pct = target ? Math.min(100, Math.round(have / target * 100)) : 0;
       var almost = l.status === "live" && left > 0 && target > 0 && left / target <= 0.1;
-      var meta = UI.esc(UI.cname(l.source)) + " to " + UI.esc(UI.cname(l.buyer));
-      if (almost) meta += " · Almost funded";
-      return "<a class=\"row\" href=\"" + href + "\" data-go=\"" + href + "\"><span class=\"title\">" + UI.esc(l.name) + "</span><span class=\"meta\">" + meta + "</span><span class=\"end price num\">" + L.formatUsd(left) + " left</span></a>";
+      return "<div class=\"bento-cell\"><span class=\"bento-k\">Still open</span><span class=\"bento-v num\">" + L.formatUsd(left) + "</span>" +
+        "<span class=\"progress\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"" + pct + "\" aria-label=\"Funded\"><i style=\"width:" + pct + "%\"></i></span></div>" +
+        "<div class=\"bento-cell\"><span class=\"bento-k\">Funding</span><span class=\"bento-v\">" + expireLine(l) + "</span>" +
+        (almost ? "<span class=\"bento-k\">Almost funded</span>" : "") + "</div>" +
+        "<div class=\"bento-cell bento-wide\">" + profitRange(l) + "</div>";
+    }
+    function row(l, href) {
+      return "<a class=\"bento\" href=\"" + href + "\" data-go=\"" + href + "\">" +
+        "<div class=\"bento-cell bento-wide\"><span class=\"bento-name\">" + UI.esc(l.name) + "</span><span class=\"bento-k\">" + UI.esc(UI.cname(l.source)) + " to " + UI.esc(UI.cname(l.buyer)) + "</span></div>" +
+        bentoCells(l) + "</a>";
     }
     function moneyBlock(user, action, unapproved) {
       var sentence = L.can(user, action);
@@ -177,7 +195,6 @@
           if (filters.category && l.category !== filters.category) return false;
           if (filters.source && l.source !== filters.source) return false;
           if (filters.buyer && l.buyer !== filters.buyer) return false;
-          if (filters.share === "yes" && !l.shareholderListing) return false;
           return true;
         });
         rows.sort(function (a, b) {
@@ -185,28 +202,38 @@
           return a.name.localeCompare(b.name);
         });
         var list = rows.length ? rows.map(function (l) { return row(l, "#/listing/" + l.id); }).join("") : "<div class=\"empty\"><p>No shipments match these filters.</p><button class=\"btn-text\" type=\"button\" data-act=\"clear\">Clear filters</button></div>";
-        var nActive = ["category", "source", "buyer", "share", "sort"].filter(function (k) { return filters[k]; }).length;
+        var nActive = ["category", "source", "buyer"].filter(function (k) { return filters[k]; }).length + (filters.sort && filters.sort !== "name" ? 1 : 0);
         stage.innerHTML = "<div class=\"column\"><h1>Shipments</h1><details class=\"fold\"" + (nActive ? " open" : "") + "><summary>Filters" + (nActive ? " (" + nActive + ")" : "") + "</summary><form class=\"fold-body stack\">" +
           UI.field("category", "Category", "<select id=\"category\" name=\"category\"><option value=\"\">Any</option><option>Food</option><option>Building</option><option>Textiles</option><option>Energy</option><option>Other</option></select>", "") +
           UI.field("source", "Sourced from", "<select id=\"source\" name=\"source\"><option value=\"\">Any</option>" + UI.countryOpts(filters.source) + "</select>", "") +
           UI.field("buyer", "Sold in", "<select id=\"buyer\" name=\"buyer\"><option value=\"\">Any</option>" + UI.countryOpts(filters.buyer) + "</select>", "") +
-          UI.field("share", "Shareholder listing", "<select id=\"share\" name=\"share\"><option value=\"\">Any</option><option value=\"yes\">Shareholder listing</option></select>", "") +
           UI.field("sort", "Sort", "<select id=\"sort\" name=\"sort\"><option value=\"name\">Name</option><option value=\"left\">Amount left</option></select>", "") +
           "<button class=\"btn btn-secondary\" type=\"submit\">Apply filters</button></form></details>" + list + "</div>";
-        ["category", "source", "buyer", "share", "sort"].forEach(function (k) {
+        ["category", "source", "buyer", "sort"].forEach(function (k) {
           var el = document.getElementById(k);
           if (el && filters[k]) el.value = filters[k];
         });
       },
       submit: function (data) {
-        filters = { category: data.get("category") || "", source: data.get("source") || "", buyer: data.get("buyer") || "", share: data.get("share") || "", sort: data.get("sort") || "name" };
+        filters = { category: data.get("category") || "", source: data.get("source") || "", buyer: data.get("buyer") || "", sort: data.get("sort") || "name" };
         UI.go("#/shipments");
       },
-      on: function (act) { if (act === "clear") { filters = { category: "", source: "", buyer: "", share: "", sort: "name" }; UI.go("#/shipments"); } }
+      on: function (act) { if (act === "clear") { filters = { category: "", source: "", buyer: "", sort: "name" }; UI.go("#/shipments"); } }
     });
 
+    function profitBounds(l) {
+      var p = L.projection(l);
+      return { plan: p.expectedProfit, low: Math.round(p.expectedSale * 0.9 - p.target), high: Math.round(p.expectedSale * 1.1 - p.target) };
+    }
+    function profitRange(l) {
+      var b = profitBounds(l);
+      return "<p class=\"muted\">Expected profit</p><p class=\"price num\">" + L.formatUsd(b.plan) + "</p>" +
+        "<div class=\"range\" role=\"img\" aria-label=\"Expected profit from " + L.formatUsd(b.low) + " to " + L.formatUsd(b.high) + "\"><i class=\"range-fill\"></i><i class=\"range-mark\"></i></div>" +
+        "<div class=\"range-labels num\"><span>" + L.formatUsd(b.low) + "<small>Sale 10% lower</small></span><span class=\"mid\">" + L.formatUsd(b.plan) + "<small>As planned</small></span><span>" + L.formatUsd(b.high) + "<small>Sale 10% higher</small></span></div>";
+    }
     function figures(l) {
       var p = L.projection(l);
+      var b = profitBounds(l);
       var lines = [
         ["Funding target", L.formatUsd(p.target)],
         ["Raised", L.formatUsd(L.raised(l))],
@@ -215,7 +242,9 @@
         ["Investor share", l.investorShare + "%"],
         ["Manager capital", l.companyPct + "%"],
         ["Expected sale", L.formatUsd(p.expectedSale)],
-        ["Expected profit", L.formatUsd(p.expectedProfit)],
+        ["Expected profit", L.formatUsd(b.plan)],
+        ["If the sale is 10% lower", L.formatUsd(b.low)],
+        ["If the sale is 10% higher", L.formatUsd(b.high)],
         ["Service fee, expected", L.formatUsd(p.fee)],
         ["Manager share, expected", L.formatUsd(p.managerCut)],
         ["Pool, expected", L.formatUsd(p.pool)],
@@ -258,11 +287,13 @@
         }).join("");
         var body = "";
         if (tab === "overview") {
-          body = "<p>" + UI.esc(UI.cname(l.source)) + " to " + UI.esc(UI.cname(l.buyer)) + " · " + UI.esc(l.category) + "</p>" +
-            "<div class=\"progress\" role=\"progressbar\" aria-valuenow=\"" + pct + "\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-label=\"Funded\"><i data-pct=\"" + pct + "\"></i></div>" +
-            "<p class=\"price num\">" + L.formatUsd(have) + " of " + L.formatUsd(target) + "</p>" +
+          body = "<div class=\"bento\">" +
+            "<div class=\"bento-cell bento-wide\"><p class=\"bento-k\">Route</p><p>" + UI.esc(UI.cname(l.source)) + " to " + UI.esc(UI.cname(l.buyer)) + " · " + UI.esc(l.category) + "</p></div>" +
+            "<div class=\"bento-cell\"><p class=\"bento-k\">Raised</p><p class=\"bento-v num\">" + L.formatUsd(have) + "</p><p class=\"bento-k\">of " + L.formatUsd(target) + "</p>" +
+            "<div class=\"progress\" role=\"progressbar\" aria-valuenow=\"" + pct + "\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-label=\"Funded\"><i data-pct=\"" + pct + "\"></i></div></div>" +
+            "<div class=\"bento-cell\"><p class=\"bento-k\">Funding</p><p class=\"bento-v\">" + expireLine(l) + "</p></div>" +
+            "<div class=\"bento-cell bento-wide\">" + profitRange(l) + "</div></div>" +
             (l.shareholderListing ? "<p>This is a shareholder listing" + (l.waiver ? ", and the manager deposit was waived." : ".") + " The shareholder share of treasury profit is " + l.shareholderSharePct + "%.</p>" : "") +
-            "<p class=\"muted\">You can lose money. Figures before the sale are expected.</p>" +
             (l.status === "live" && L.remaining(l) > 0 ? "<a class=\"btn btn-primary btn-block\" href=\"#/invest/" + l.id + "\" data-go=\"#/invest/" + l.id + "\">Invest</a>" : "");
         }
         if (tab === "shipments") body = l.shipments.map(function (sh) {

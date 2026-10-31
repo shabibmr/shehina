@@ -537,7 +537,6 @@
       } else if (step === 3) {
         form.companyPct = data.get("companyPct") || "";
         form.investorShare = data.get("investorShare") || "";
-        form.minimum = data.get("minimum") || "";
       }
     }
 
@@ -571,9 +570,6 @@
       if (n === 3) {
         if (whole(form.companyPct) < 20 || whole(form.companyPct) > 90) errors.companyPct = "Error: manager capital must be between 20% and 90%.";
         if (whole(form.investorShare) < 40 || whole(form.investorShare) > 95) errors.investorShare = "Error: investor share must be between 40% and 95%.";
-        var min = L.usdToCents(form.minimum);
-        var target = centsOf(form);
-        if (!min.ok || min.cents < 100 || !target || min.cents > target) errors.minimum = "Error: the minimum investment must be between $1.00 and the funding target.";
       }
       return !error && !Object.keys(errors).length;
     }
@@ -696,7 +692,7 @@
         if (step === 3) {
           body = UI.field("companyPct", "Manager capital contribution (%)", "<input id=\"companyPct\" name=\"companyPct\" inputmode=\"numeric\" data-live=\"terms\" value=\"" + esc(form.companyPct) + "\"><span class=\"muted\">20% to 90%.</span>", errors.companyPct) +
             UI.field("investorShare", "Investor profit share (%)", "<input id=\"investorShare\" name=\"investorShare\" inputmode=\"numeric\" data-live=\"terms\" value=\"" + esc(form.investorShare) + "\"><span class=\"muted\">40% to 95%.</span>", errors.investorShare) +
-            UI.field("minimum", "Minimum investor ticket", "<span class=\"amount\"><b>$</b><input id=\"minimum\" name=\"minimum\" inputmode=\"decimal\" data-live=\"terms\" value=\"" + esc(form.minimum) + "\"></span><span class=\"muted\">At least $1.00, and no more than the funding target.</span>", errors.minimum) +
+            "<div class=\"kpi\"><span>Minimum investor ticket</span><b class=\"num\">" + L.formatUsd(Store.state.settings.minTicket || 100000) + "</b></div><p class=\"muted\">Set by the platform. A smaller listing never needs more than its funding target.</p>" +
             "<div id=\"preview\" class=\"stack\">" + previewBody(u) + "</div>";
         }
         var nav = "<p>" + (step > 0 ? "<button class=\"btn-text\" type=\"button\" data-act=\"back-step\">Back</button> " : "") +

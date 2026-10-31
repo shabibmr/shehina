@@ -668,7 +668,8 @@
           UI.group("Timing", num("overdueDays", "Overdue days", s.overdueDays) + num("autoWithdrawDays", "Auto-withdraw days", s.autoWithdrawDays)) +
           UI.group("Money and shares", num("waiverStandInPct", "Waiver stand-in percent", s.waiverStandInPct) +
             num("shareholderSharePct", "Shareholder share percent", s.shareholderSharePct) +
-            num("exposureDefault", "Default exposure (cents)", s.exposureDefault)) +
+            num("exposureDefault", "Default exposure (cents)", s.exposureDefault) +
+            UI.field("minTicketUsd", "Minimum investor ticket (USD)", "<span class=\"amount\"><b>$</b><input id=\"minTicketUsd\" name=\"minTicketUsd\" inputmode=\"decimal\" class=\"num\" value=\"" + ((s.minTicket || 100000) / 100).toFixed(2) + "\"></span><span class=\"muted\">Applies to new and edited listings. Default $1,000.00.</span>", "")) +
           UI.group("Compliance", UI.field("blocked", "Blocked countries", "<input id=\"blocked\" name=\"blocked\" value=\"" + UI.esc((s.blocked || []).join(",")) + "\">", "") +
             UI.field("prohibited", "Prohibited goods", "<input id=\"prohibited\" name=\"prohibited\" value=\"" + UI.esc((s.prohibited || []).join(",")) + "\">", "")) +
           "<p id=\"settings-err\" class=\"err\"></p><button class=\"btn btn-primary\" type=\"submit\">Save settings</button></form></div>";
@@ -680,6 +681,7 @@
           waiverStandInPct: Number(data.get("waiverStandInPct")),
           shareholderSharePct: Number(data.get("shareholderSharePct")),
           exposureDefault: Number(data.get("exposureDefault")),
+          minTicketUsd: data.get("minTicketUsd"),
           blocked: data.get("blocked"),
           prohibited: data.get("prohibited")
         };

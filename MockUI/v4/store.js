@@ -320,7 +320,12 @@
       status: existing ? existing.status : "draft",
       investorShare: whole(raw.investorShare, 40, 95),
       companyPct: whole(raw.companyPct, 20, 90),
-      minimum: (function () { var m = L.usdToCents(raw.minimum); return m.ok ? m.cents : 0; })(),
+      /* the minimum ticket is a platform setting; a smaller listing can never need more than its target */
+      minimum: (function () {
+        var target = L.fundingTarget({ shipments: shipments });
+        var floor = Number(state.settings.minTicket) || 100000;
+        return target > 0 ? Math.min(floor, target) : floor;
+      })(),
       shipments: shipments,
       contributions: existing ? existing.contributions : [],
       waiver: existing ? !!existing.waiver : false,
@@ -1311,6 +1316,11 @@
       var n = Number(patch[nums[i]]);
       if (!Number.isInteger(n) || n < 0) return fail("Error: enter a whole number.");
       state.settings[nums[i]] = n;
+    }
+    if (patch.minTicketUsd != null && patch.minTicketUsd !== "") {
+      var tk = L.usdToCents(patch.minTicketUsd);
+      if (!tk.ok || tk.cents < 100) return fail("Error: the minimum investor ticket must be at least $1.00.");
+      state.settings.minTicket = tk.cents;
     }
     if (patch.blocked != null) {
       var blocked = Array.isArray(patch.blocked) ? patch.blocked : String(patch.blocked).split(",");
