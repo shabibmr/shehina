@@ -412,6 +412,95 @@
       }).join("");
     }
 
+
+    function factTile(label, value, sub, tone) {
+      return "<div class=\"fact" + (tone ? " fact-" + tone : "") + "\"><p class=\"fig-label\">" + label + "</p><p class=\"fact-value num\">" + value + "</p><p class=\"fig-sub\">" + sub + "</p></div>";
+    }
+    /* Overview tab: same layout as the manager's, without company-only figures. */
+    function overviewPanel(l) {
+      var now = Store.state.now;
+      var view = L.projection(l);
+      var target = L.fundingTarget(l);
+      var raised = L.raised(l);
+      var funded = target > 0 && raised >= target;
+      var pct = target ? Math.min(100, Math.round(raised * 100 / target)) : 0;
+      var done = l.status === "completed";
+      var cycle = view.cycle;
+      var u = Store.user();
+      var held = mine(l, u.id);
+      var expiry;
+      if (done) expiry = factTile("Shipment", "Completed", "Profit paid out");
+      else if (funded) expiry = factTile("Shipment", "Funded", "Funding window closed");
+      else {
+        var left = fundingDaysLeft(l);
+        var endsOn = (l.approvedAt || now) + Store.state.settings.autoWithdrawDays * L.DAY;
+        expiry = factTile("Funding expires", left + (left === 1 ? " day" : " days"), "Closes " + UI.when(endsOn), left <= 3 ? "warn" : "");
+      }
+      var elapsed = funded && l.liveAt ? Math.max(0, Math.floor((now - l.liveAt) / L.DAY)) : 0;
+      var turn = factTile("Turnaround", cycle + " days", funded && !done ? "Day " + Math.min(elapsed, cycle) + " of " + cycle : "Planned, funding to payout");
+      var late = elapsed > cycle && !done;
+      var eta = funded && l.liveAt ? factTile("Expected payout", UI.when(l.liveAt + cycle * L.DAY), late ? "Past plan by " + (elapsed - cycle) + " days" : "From funding date", late ? "warn" : "")
+        : factTile("Expected payout", "Funding + " + cycle + "d", "Date is set once fully funded");
+      var roi = factTile("Expected return", (view.roiCycle * 100).toFixed(1) + "%", "About " + (view.roiYear * 100).toFixed(0) + "% a year");
+      var hero = profitRange(l).replace("<p class=\"muted\">Expected profit</p>", "<p class=\"fig-label\">Expected profit</p>").replace("class=\"price num\"", "class=\"fig-hero num\"");
+      var mineCard = held > 0
+        ? "<div class=\"fig-card fig-row\"><div><p class=\"fig-label\">Your investment</p><p class=\"fig-sub\">Expected profit about " + L.formatUsd(L.expectedFor(l, held)) + "</p></div><p class=\"fig-big num\">" + L.formatUsd(held) + "</p></div>" : "";
+      return "<section class=\"stack\"><div class=\"fact-grid\">" + expiry + turn + eta + roi + "</div>" +
+        mineCard + "<div class=\"fig-hero-card\">" + hero + "</div>" +
+        "<div class=\"fig-card\"><div class=\"fig-row\"><p class=\"fig-label\">Funding</p><p class=\"num\"><b>" + pct + "%</b></p></div>" +
+        "<div class=\"progress\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"" + pct + "\" aria-label=\"Funded\"><i style=\"width:" + pct + "%\"></i></div>" +
+        "<p class=\"fig-sub\"><span class=\"num\">" + L.formatUsd(raised) + "</span> raised of <span class=\"num\">" + L.formatUsd(target) + "</span>" + (funded ? "" : " \u00B7 <span class=\"num\">" + L.formatUsd(target - raised) + "</span> to go") + "</p></div>" +
+        (l.shareholderListing ? "<p class=\"muted\">This is a shareholder listing" + (l.waiver ? ", and the manager deposit was waived." : ".") + " The shareholder share of treasury profit is " + l.shareholderSharePct + "%.</p>" : "") +
+        (l.status === "live" && L.remaining(l) > 0 ? "<a class=\"btn btn-primary btn-block\" href=\"#/invest/" + l.id + "\" data-go=\"#/invest/" + l.id + "\">Invest</a>" : "") + "</section>";
+    }
+    /* Shipments tab: step tracker in the manager's layout, read-only. */
+    function shipmentsPanel(l) {
+      var esc = UI.esc;
+      return l.shipments.map(function (sh, si) {
+        var stageN = L.shipmentStage(l, sh);
+        var doneN = 0;
+        var items = sh.steps.map(function (st, i) {
+          var finished = st.state === "done" || st.state === "verified" || st.state === "skipped";
+          if (finished) doneN++;
+          var due = L.stepDue(l, sh, i);
+          var late = L.isLate(l, sh, i, Store.state.now);
+          var cls = finished ? "done" : late ? "late" : st.state === "in_progress" ? "now" : "todo";
+          var dot = finished ? "&#10003;" : late ? "!" : String(i + 1);
+          var meta = st.days + " days" + (due ? " \u00B7 due " + UI.when(due) : "") + (st.tag ? " \u00B7 " + st.tag : "");
+          var state = late ? "Late" : finished ? "done" : String(st.state || "todo").split("_").join(" ");
+          return "<li class=\"" + cls + "\"><div><span class=\"track-dot\" aria-hidden=\"true\">" + dot + "</span><span class=\"track-body\"><span class=\"title\">" + esc(st.name) + "</span><span class=\"meta\">" + esc(meta) + "</span></span><span class=\"track-state status" + (late ? " status-warning" : "") + "\">" + esc(state) + "</span></div></li>";
+        }).join("");
+        var pct = sh.steps.length ? Math.round(doneN * 100 / sh.steps.length) : 0;
+        return "<section class=\"stack\"><h2>Shipment " + (si + 1) + "</h2><p class=\"stage-line muted\">" + UI.stageGlyph(L.STAGES[stageN]) + "<span>" + esc(L.STAGES[stageN]) + "</span></p>" +
+          "<div class=\"progress\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"" + pct + "\" aria-label=\"Steps done\"><i style=\"width:" + pct + "%\"></i></div>" +
+          "<p class=\"meta\">" + doneN + " of " + sh.steps.length + " steps done</p><ol class=\"track\">" + items + "</ol></section>";
+      }).join("");
+    }
+    /* Timeline tab: your investment and the journey so far, in the manager's event style. */
+    function timelinePanel(l) {
+      var esc = UI.esc;
+      var u = Store.user();
+      var rows = [];
+      (l.history || []).forEach(function (h) {
+        if (h.action === "Invested" && h.actorId === u.id) rows.push({ at: h.at, title: "You invested", note: h.reason, cls: "good" });
+        if (h.action === "Settlement approved") rows.push({ at: h.at, title: "Profit paid out", note: h.reason, cls: "good" });
+        if (h.action === "Cancelled") rows.push({ at: h.at, title: "Shipment cancelled", note: h.reason, cls: "bad" });
+      });
+      if (l.liveAt) rows.push({ at: l.liveAt, title: "Funding opened", note: "", cls: "good" });
+      rows.sort(function (a, b) { return b.at - a.at; });
+      var past = rows.map(function (r, i) {
+        return "<li class=\"" + r.cls + (i === 0 ? " latest" : "") + "\"><span class=\"event-dot\" aria-hidden=\"true\">" + (r.cls === "bad" ? "!" : "&#10003;") + "</span><div class=\"event-body\">" +
+          "<p class=\"event-when\">" + UI.when(r.at) + "</p><p class=\"title\">" + esc(r.title) + "</p>" + (r.note ? "<p class=\"muted\">" + esc(r.note) + "</p>" : "") + "</div></li>";
+      }).join("");
+      var sh = l.shipments[0];
+      var n = sh ? L.shipmentStage(l, sh) : 0;
+      if (l.status === "completed") n = L.STAGES.length;
+      var ahead = L.STAGES.map(function (name, i) { return { name: name, i: i }; }).filter(function (x) { return x.i >= n; }).map(function (x) {
+        return "<li><span class=\"event-dot\" aria-hidden=\"true\">" + (UI.stageGlyph(x.name, 16) || "&bull;") + "</span><div class=\"event-body\"><p class=\"event-when\">" + (x.i === n ? "In progress" : "Upcoming") + "</p><p class=\"title\">" + esc(x.name) + "</p><p class=\"muted\">" + STAGE_NOTES[x.i] + "</p></div></li>";
+      }).join("");
+      return "<section class=\"stack\">" + (ahead ? "<ol class=\"events events-expected\" aria-label=\"Still to come\">" + ahead + "</ol>" : "") + (past ? "<ol class=\"events\" aria-label=\"So far\">" + past + "</ol>" : "") + "</section>";
+    }
+
     UI.screen({
       id: "listing",
       auth: "investor",
@@ -435,25 +524,13 @@
         var target = L.fundingTarget(l);
         var have = L.raised(l);
         var pct = target ? Math.round(have / target * 100) : 0;
-        var tabs = ["overview", "shipments", "figures", "timeline"].map(function (id) {
-          var label = id[0].toUpperCase() + id.slice(1);
-          return "<button type=\"button\" role=\"tab\" data-act=\"tab\" data-tab=\"" + id + "\" aria-selected=\"" + (tab === id) + "\">" + label + "</button>";
-        }).join("");
+        var tabs = UI.tabs([["overview", "Overview"], ["shipments", "Shipments"], ["figures", "Figures"], ["timeline", "Timeline"]], tab, "tab");
         var body = "";
-        if (tab === "overview") {
-          body = "<div class=\"bento\">" +
-            "<div class=\"bento-cell bento-wide\"><p class=\"bento-k\">Route</p><p>" + UI.esc(UI.cname(l.source)) + " to " + UI.esc(UI.cname(l.buyer)) + " · " + UI.esc(l.category) + "</p></div>" +
-            "<div class=\"bento-cell\"><p class=\"bento-k\">Raised</p><p class=\"bento-v num\">" + L.formatUsd(have) + "</p><p class=\"bento-k\">of " + L.formatUsd(target) + "</p>" +
-            "<div class=\"progress\" role=\"progressbar\" aria-valuenow=\"" + pct + "\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-label=\"Funded\"><i data-pct=\"" + pct + "\"></i></div></div>" +
-            "<div class=\"bento-cell\"><p class=\"bento-k\">Funding</p><p class=\"bento-v\">" + expireLine(l) + "</p></div>" +
-            "<div class=\"bento-cell bento-wide\">" + profitRange(l) + "</div></div>" +
-            (l.shareholderListing ? "<p>This is a shareholder listing" + (l.waiver ? ", and the manager deposit was waived." : ".") + " The shareholder share of treasury profit is " + l.shareholderSharePct + "%.</p>" : "") +
-            (l.status === "live" && L.remaining(l) > 0 ? "<a class=\"btn btn-primary btn-block\" href=\"#/invest/" + l.id + "\" data-go=\"#/invest/" + l.id + "\">Invest</a>" : "");
-        }
-        if (tab === "shipments") body = "<div class=\"stack\">" + shipmentCards(l, true).html + "</div>";
+        if (tab === "overview") body = overviewPanel(l);
         if (tab === "figures") body = figures(l);
-        if (tab === "timeline") body = stageTimeline(l);
-        stage.innerHTML = "<a class=\"lead\" href=\"#/listing/" + l.id + "\"><p class=\"lead-title\">" + UI.esc(l.name) + "</p></a><div class=\"column\"><div class=\"tabs\" role=\"tablist\">" + tabs + "</div>" + body + "</div>";
+        if (tab === "shipments") body = shipmentsPanel(l);
+        if (tab === "timeline") body = timelinePanel(l);
+        stage.innerHTML = "<a class=\"lead\" href=\"#/listing/" + l.id + "\"><p class=\"lead-title\">" + UI.esc(l.name) + "</p></a><div class=\"column\">" + tabs + body + "</div>";
         stage.querySelectorAll("[data-pct]").forEach(function (el) { el.style.width = el.getAttribute("data-pct") + "%"; });
       },
       on: function (act, el) { if (act === "tab") { tab = el.getAttribute("data-tab"); UI.go("#/listing/" + openId); } }
