@@ -21,7 +21,7 @@ This works as a **profit-sharing partnership**:
 
 ## How a shipment works
 
-1. A manager lists a shipment with a funding target, the country the goods come from, the country the buyer is in, a minimum investment, the expected profit and the investors' share of profit.
+1. A manager lists a shipment. First they declare the terms the deal is built on: the Shipments (containers) with their expected cost and sale price, the Step plan with its planned costs (together these give the **funding target**, the trade's total budget), and the **investors' share of profit** (for example 40%, so the manager keeps 60% of net profit after the 1% platform fee). Then they add the country the goods come from, the country the buyer is in, a minimum investment and the expected profit.
 2. A reviewer approves it.
 3. The manager sends its deposit, and finance confirms it arrived in the bank.
 4. The listing goes live and investors fund it. If it isn't fully funded after 5 days, operations can fill the gap from the platform's own funds.
@@ -32,7 +32,7 @@ This works as a **profit-sharing partnership**:
 
 ## Main rules built in
 
-- **Investors see less than the manager does.** They never see the manager's capital, deposit, expected profit or manager share.
+- **Investors see less than the manager does.** They never see the manager's capital, deposit, expected profit or manager share. *(Agreed change, not built yet: investors will see every figure, and only uploaded documents stay hidden. See ADR 0004.)*
 - **Money is tracked carefully.** Every movement goes through a double-entry ledger and is stored in whole cents (1 USD = 100 cents), so no rounding money is lost. Staff can check the ledger is consistent at any time.
 - **Everything is logged.** Every approval, rejection, payout and change records who did it.
 - **Large withdrawals need the owner.** Withdrawals of USD 10,000 or more need the owner's approval.

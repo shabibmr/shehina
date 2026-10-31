@@ -6,9 +6,29 @@ A funded offer to finance one trade made of one or more Shipments. It has a fund
 
 ## Shipment
 
-One container within a Listing, with its own Stage, cost of goods and sale price. The Manager declares the number of Shipments when creating the Listing, and it is fixed once the Listing is approved. The Listing's overall Stage is the least advanced Shipment's Stage. Goods are bought only once the Listing is fully funded, one Shipment at a time, and the total cost across Shipments may not exceed the capital raised.
+One container within a Listing, with its own Stage, Step plan, cost of goods and sale price. The Manager declares the number of Shipments when creating the Listing, and it is fixed once the Listing is approved. The Listing's overall Stage is the least advanced Shipment's Stage. Goods are bought only once the Listing is fully funded. Each Shipment has a planned start (days after full funding), so Shipments may run in parallel.
 
-_Open question_: what happens to a Shipment that is lost, seized or rejected by the buyer, since the Listing cannot settle until every Shipment is sold.
+A Shipment that won't be sold to its Buyer (lost, seized, rejected or unpaid) goes through Write-off or Resale, whichever ops proposes and a second staff member approves case by case.
+
+## Write-off
+
+Closing a Shipment that will not be sold, treating it as sold for zero or for any insurance or salvage proceeds recorded, so its loss is shared pro-rata at Settlement. Proposed by ops with a reason and a document, approved by a different staff member.
+
+## Resale
+
+Selling a Shipment's goods to a new Buyer after the original Buyer rejected or failed to pay for them. The Shipment's sale price and sale document come from the Resale. A Resale to a Shareholder needs the owner's approval and a market-price check, and the owner decides at that point whether the Listing becomes a Shareholder Listing.
+
+## Funding target
+
+The total budget of a Listing's trade in US dollars (USD 1,000 – 10,000,000): the sum of every Shipment's expected cost of goods and every planned Step cost, so it always matches the plan the Manager submits together with the Investor share. The Manager also declares an expected sale price per Shipment, which reviewers check against the market; expected profit is derived from these, never entered. The Manager deposit counts toward it, and Investors (and, if needed, the treasury) fund the rest. It is fixed once the Listing is approved.
+
+_Avoid_: shipping budget, total budget (as separate terms; they mean the Funding target).
+
+## Investor share
+
+The % of net profit (profit after the Service fee) that goes to capital, declared by the Manager when creating a Listing, together with the Funding target: a whole number from 40% to 95%. The Manager keeps the rest as the Manager share. For example, at 40% the Manager share is 60%, and the 40% pool is divided pro-rata over every Contribution (Investors, the Manager deposit and any treasury money). Investors see it before they invest, and it is fixed once the Listing is approved.
+
+_Avoid_: profit share, investors' cut.
 
 ## Contribution
 
@@ -30,7 +50,7 @@ _Avoid_: company capital, manager capital.
 
 ## Manager share
 
-The Manager's performance cut of net profit (100 minus the investor share %), paid only when net profit is above zero. Separate from the profit the Manager earns on their Manager deposit as a Contribution.
+The Manager's performance cut of net profit (100 minus the Investor share %), paid only when net profit is above zero. Separate from the profit the Manager earns on their Manager deposit as a Contribution.
 
 ## Service fee
 
@@ -50,7 +70,15 @@ A user's balance on Shehna in US dollars. It is funded through the payment gatew
 
 ## Blocked country
 
-A country on the configurable blocked list. People and businesses living or registered there cannot take part, and Listings and bank payouts cannot involve it. A user's country is checked when they submit, when they are approved, and again on every top-up, investment, deposit and withdrawal. Nationality is not checked.
+A country on the configurable blocked list. People and businesses living or registered there cannot take part, and Listings and bank payouts cannot involve it. A user's country is checked when they submit, when they are approved, and again on every top-up, investment, deposit and withdrawal. Nationality is not checked. A Contribution already in a Live Listing when its owner is suspended or blocked stays in and shares the result, but the payout is held in their Wallet until compliance clears it.
+
+## Cycle
+
+The planned length of a Listing from full funding to the last Shipment's Goods sold: the latest Shipment's planned start plus its planned Step durations. It is derived from the Step plan, never entered. A Listing past its Cycle is Late.
+
+## Late
+
+A Listing past its Cycle, or a Step past its planned duration. It is flagged to staff, and Investors see the revised expected date. Nothing happens automatically and nobody is penalised.
 
 ## Overdue
 
@@ -66,7 +94,7 @@ A request to move money out of a Wallet. The amount is held at once. Finance, or
 
 ## Settlement
 
-The final step of a Listing: the sale is recorded and every Contribution is paid out its capital plus or minus its share of the result, in one transaction. Ops can propose it only once every Shipment has reached Goods sold, with a sale price and a sale document (invoice or proof of payment) for each Shipment. The Listing's sale price is their sum. A different staff member (finance or owner) approves it before any money moves.
+The final step of a Listing: the sale is recorded and every Contribution is paid out its capital plus or minus its share of the result, in one transaction. Ops can propose it only once every Shipment has reached Goods sold (or been written off) with its Sale proceeds received in escrow and a sale document (invoice or proof of payment). Each Shipment's sale price is the Sale proceeds actually received, and the Listing's sale price is their sum. A different staff member (finance or owner) approves it before any money moves, or sends it back to ops with a reason.
 
 ## Cancelled
 
@@ -74,7 +102,27 @@ A Listing ended before any Shipment's goods are purchased, by ops or the owner w
 
 ## Rejected
 
-A Listing a reviewer has turned down, with a reason. The Manager can edit and resubmit it, which returns it to review and clears the reason and assignment.
+A Listing a reviewer has turned down, with a reason. The Manager can edit and resubmit it, as many times as needed, which returns it to review and clears the reason and assignment. Earlier rejections and their reasons stay in the Listing's history.
+
+## Draft
+
+A Listing the Manager is still preparing: private to them, freely editable or deletable, and unseen by staff until submitted for Listing review.
+
+## Listing review
+
+A reviewer's check of a submitted Listing, ending in approval, rejection, or Revised terms.
+
+## Revised terms
+
+Changes a reviewer makes to a Listing under review (any term, including amounts, the Investor share and the Step plan), sent to the Manager to accept before the Listing can be approved. If the Manager declines, the Listing returns to them to edit and resubmit.
+
+_Avoid_: counter-offer, amendment.
+
+## Withdrawn
+
+A Listing ended before it went Live, with no money moved: by the Manager at any point before Live, or automatically when the Manager leaves Revised terms unanswered or an approved Listing's Manager deposit unpaid for 14 days (a setting). It is final; the Manager lists again from scratch.
+
+_Avoid_: expired, abandoned.
 
 ## Shariah compliance
 
@@ -94,9 +142,13 @@ _Open question_: how a finding is made and how the loss is recovered (deferred).
 
 ## Manager
 
-A person or business, anywhere, who lists a trade on Shehna and puts in their own capital. A Manager is either a **Business** or an **Individual trader**.
+A person or business, anywhere, who lists a trade on Shehna and puts in their own capital. A Manager is either a **Business** or an **Individual trader**. If a Manager is suspended or their country becomes a Blocked country while a Listing is Live, ops takes over their Steps, the Listing runs on (or is Cancelled, if no goods are bought yet), and their payout is held in their Wallet until compliance clears it.
 
 _Avoid_: Company (legacy name in the code, API and database; not a separate concept).
+
+## Exposure limit
+
+The most a single Manager may have at stake on Shehna at once: the sum of the Funding targets of their Listings in review, approved or Live. A platform-wide default applies (a setting), and the owner can set a different limit for an individual Manager. It is checked when a Listing is submitted and again when it is approved.
 
 ## Shareholder
 
@@ -110,11 +162,11 @@ The party who buys a Listing's goods, recorded by country. If the Buyer is a Sha
 
 ## Treasury
 
-The Platform's own capital. It can put money into a Listing, either as the stand-in under a Deposit waiver or to fill the balance of an Overdue Listing. Each of these is a Contribution that shares profit and loss pro-rata like any other.
+The Platform's own capital. It can put money into a Listing as the stand-in under a Deposit waiver, to fill the balance of an Overdue Listing, or as an Overrun fill. Each of these is a Contribution that shares profit and loss pro-rata like any other.
 
 ## Shareholder Listing
 
-A Listing whose Buyer, or whose Manager, is a Shareholder. The profit on every treasury Contribution on it is split at Settlement: the Shareholder share (75% by default, a setting fixed for the Listing when it is approved) is paid to the Shareholder's Wallet, and the rest goes to the Reserve fund. If the Manager and the Buyer are two different Shareholders, they split the Shareholder share equally. If one Shareholder is both, they receive all of it. A loss on treasury Contributions is borne by the treasury alone: the Shareholder takes none of it, and the Reserve fund is not drawn on automatically. Investors are not told that a Listing is a Shareholder Listing.
+A Listing whose Buyer, or whose Manager, is a Shareholder. The profit on every treasury Contribution on it is split at Settlement: the Shareholder share (75% by default, a setting fixed for the Listing when it is approved) is paid to the Shareholder's Wallet, and the rest goes to the Reserve fund. If the Manager and the Buyer are two different Shareholders, they split the Shareholder share equally. If one Shareholder is both, they receive all of it. A loss on treasury Contributions is borne by the treasury alone: the Shareholder takes none of it, and the Reserve fund is not drawn on automatically. Investors are told that a Listing is a Shareholder Listing (and whether the deposit was waived), but not which Shareholder.
 
 _Avoid_: equity investor listing, related listing.
 
@@ -124,11 +176,11 @@ _Open question_: a Shariah board may treat the Shareholder share as a hidden dis
 
 ## Step plan
 
-The ordered list of Steps a Listing goes through (for example Ordering, Advances, Purchase, Payments, Transportation, Clearance, Receipts, Invoicing). It starts from a standard template, the Manager adjusts it when submitting the Listing, and the reviewer approves or edits it as part of the Listing review. It is locked once the Listing is live; later changes need staff approval and are recorded in the timeline.
+The ordered list of Steps a Shipment goes through (for example Ordering, Advances, Purchase, Payments, Transportation, Clearance, Receipts, Invoicing). It starts from a standard template, the Manager adjusts it when submitting the Listing, and the reviewer approves or edits it as part of the Listing review. Every Shipment in a Listing gets its own copy of the approved plan. It is locked once the Listing is live; later changes are proposed by the Manager or ops, approved by a reviewer (and by finance for any cost change), and recorded in the timeline. A Stage already reached never goes backwards. Each Stage from Goods purchased to Goods sold must have at least one Step tagged with it.
 
 ## Step
 
-One unit of work in a Step plan, with an owner, a planned duration, expected costs and required documents.
+One unit of work in a Step plan, with an owner, a planned duration, expected costs, an optional Stage tag and required documents. The reviewer decides which documents each Step requires.
 
 ## Step owner
 
@@ -140,18 +192,30 @@ The outside party involved in a Step (freight forwarder, customs broker, supplie
 
 ## Step cost
 
-A cost attached to a Step, first as an expected amount set in the Step plan, then as an actual amount. Unplanned Step costs can be added during the shipment and need finance approval. Every Step cost is paid by platform ops from the Listing's escrow, with proof attached, and the total paid may not exceed the capital raised. Paid Step costs are deducted from the sale price, together with the cost of goods, to give net profit. Investors see only per-Step totals of expected against actual.
+A cost attached to a Step, first as an expected amount set in the Step plan, then as an actual amount. Unplanned Step costs can be added during the shipment and need finance approval. Every Step cost is paid by platform ops from the Listing's escrow, with proof attached, and the total paid may not exceed the capital raised. Paid Step costs are deducted from the sale price, together with the cost of goods, to give net profit. Investors see every Step cost, expected and actual.
 
 _Avoid_: expense (implies the Manager pays and is reimbursed).
 
+## Sale proceeds
+
+The money a Buyer pays for a Shipment, paid to Shehna and credited to the Listing's escrow. A shortfall against the invoice is recorded with a reason. Sale proceeds stay in escrow until Settlement, except that finance may approve using them to pay a later Shipment's costs instead of an Overrun fill.
+
+_Avoid_: revenue, sale price (that is the figure Settlement uses, equal to the proceeds received).
+
+## Overrun fill
+
+A treasury Contribution that covers actual costs (cost of goods plus Step costs) beyond the capital raised and any Sale proceeds finance allows to be used, requested by ops with proof and approved by finance or the owner, with no cap. Like any Contribution it shares profit and loss pro-rata, so it dilutes the other Contributions' slices.
+
+_Avoid_: top-up (that is a Wallet payment), extra funding.
+
 ## Step state
 
-Where a Step is in its life: planned, in progress, done, verified, plus blocked and skipped (skipping needs a reason and staff approval). A Step cannot be done until its required documents are uploaded, and Steps that need verification (payment, customs, sale) must be verified by ops. A Step past its planned duration is flagged late, with no automatic action.
+Where a Step is in its life: planned, in progress, done, verified, plus blocked and skipped (skipping needs a reason and a reviewer's approval; a skipped Step counts as done for its Stage tag, and its planned cost is not paid). A Step cannot be done until its required documents are uploaded, and Steps that need verification (payment, customs, sale) must be verified by ops (the same ops user who marked it done may verify it). A Step past its planned duration is Late.
 
 ## Stage
 
-The fixed milestone sequence (Funding open to Profit paid out) that investors see. It is advanced by ops and is separate from Steps: the two are shown side by side and are not linked.
+The fixed milestone sequence (Funding open to Profit paid out) that investors see. A Shipment's Stage is driven by its Steps: a Step may carry a Stage tag, and the Shipment reaches a Stage when every Step tagged with that Stage or an earlier one is done (and verified, where required). Nobody advances a Stage by hand.
 
 ## Timeline
 
-The time-ordered record of a Listing's Step state changes, each with who, when and a note. Everyone with access to the Listing sees the same timeline, including Investors: steps, owners, durations, states, dates and Step costs. Investors do not see uploaded documents, nor the Manager deposit, expected profit, Manager share or Manager result. Registration (Investor or Manager) keeps its own separate history of states and attempts, shown as a timeline too.
+The time-ordered record of a Listing's Step state changes, each with who, when and a note. Everyone with access to the Listing sees the same timeline, including Investors: steps, owners, durations, states, dates, Step costs and sale prices, expected and actual. Investors also see the Listing's figures (expected profit, Manager deposit, Manager share, and the Settlement breakdown with other Investors anonymised). Only uploaded documents are hidden from them. Registration (Investor or Manager) keeps its own separate history of states and attempts, shown as a timeline too.

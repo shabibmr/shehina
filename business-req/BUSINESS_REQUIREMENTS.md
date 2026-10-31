@@ -121,52 +121,80 @@ They tick *"I confirm these details are true and I am authorised to act for this
 
 ### 5.4 Shipment listing lifecycle
 
-> **Agreed change, not built yet (2026-10-31):** all money comes in through the **payment gateway** (§5.5), so there are no manual checks. The manager pays the deposit **from their wallet**, and the listing goes live in the same step. The code still has the old flow: a "deposit sent" flag, then finance confirming a bank transfer with a bank reference. That code is to be removed.
+> **Agreed change, not built yet (2026-10-31):** the workflow below is the agreed one. The code still has the older, simpler flow: one shipment per listing, stages advanced by hand, a final rejection, a single expected-profit figure, a "deposit sent" flag with finance confirming a bank transfer, and settlement by one ops user with no approval. Terms are defined in `GLOSSARY.md`. ADRs 0002 (overrun fill), 0003 (Steps drive Stages) and 0004 (full transparency for investors) record the less obvious choices.
 
 ```
-pending_review ──reject──▶ rejected   (final; the manager must create a new listing)
-      │ approve
-      ▼
-awaiting_deposit ── manager pays the deposit from their wallet
-      │            (or, with a deposit waiver, the treasury stand-in is booked at approval, §11.3)
-      ▼
-live (stage 0 "Funding open") ── investors invest / ops funds the remainder
-      │ stage 1..5 advanced one at a time by ops
-      ▼
-live (stage 5 "Goods sold") ── ops completes with the sale price
-      ▼
-completed (stage 6 "Profit paid out")
+draft ──submit──▶ in_review ──reject (reason)──▶ rejected ──edit + resubmit──▶ in_review
+                     │  └──revised terms──▶ awaiting_terms ──accept──▶ approved
+                     │                          └──decline──▶ back to the manager to edit
+                     │ approve
+                     ▼
+                  approved ── manager pays the deposit from their wallet
+                     │       (with a deposit waiver, the treasury stand-in is booked at approval, §11.3)
+                     ▼
+live, stage 0 "Funding open" ── investors invest / treasury fills an Overdue remainder
+                     │ 100% funded
+                     ▼
+live, stages 1–5 per Shipment ── driven by each Shipment's Steps
+                     │ every Shipment at "Goods sold" with its sale proceeds in escrow,
+                     │ or written off
+                     ▼
+settlement proposed (ops) ──send back (reason)──▶ live
+                     │ approve (finance or owner, not the proposer)
+                     ▼
+completed, stage 6 "Profit paid out"
+
+Withdrawn: by the manager at any time before live, or automatically after 14 days with
+           revised terms unanswered or the deposit unpaid. No money has moved. Final.
+Cancelled: by ops or the owner, with a reason, any time before the first Shipment's
+           goods are bought. Every contribution is refunded in full. Final.
 ```
 
 Each step in detail:
 
-1. **Create** (approved manager only). The fields are in §6.1. The listing starts as `pending_review`.
-2. **Review** (reviewer or owner):
-   - Approving moves it to `awaiting_deposit`.
-   - Rejecting needs a reason and moves it to `rejected`.
+1. **Create** (approved manager only). The listing starts as a **draft**: private to the manager, freely editable or deletable, and unseen by staff. Submitting runs every check and sends it to review. The full field list is in §6.1. The manager first declares the terms the deal is built on:
+   - **Shipments:** how many containers the trade has. Each Shipment has its own **expected cost of goods**, **expected sale price** and **planned start** (days after full funding), so Shipments may run in parallel.
+   - **Step plan:** starts from the standard template (Ordering, Advances, Purchase, Payments, Transportation, Clearance, Receipts, Invoicing). The manager adjusts it, with an owner, planned duration and **planned Step costs** for each Step, and tags Steps with the Stage they complete (rule in step 8). Every Shipment gets its own copy of the approved plan. The reviewer decides which documents each Step requires.
+   - **Funding target** (the total budget): **calculated, never entered**. It is the sum of every Shipment's expected cost of goods and every planned Step cost. Expected profit is also calculated: total expected sale price − funding target.
+   - **Cycle:** **calculated, never entered**. It is the latest Shipment's planned start plus its planned Step durations.
+   - **Investor share:** the % of net profit (profit after the 1% service fee) that goes to capital. The manager keeps the rest as the manager share. *Example:* at an investor share of 40%, the manager share is 60%, and the 40% pool is divided pro-rata over all capital (investors, the manager's deposit and any treasury money), as in §6.3.
+
+   Investors see every term before they invest (§6.5). Everything is fixed once the listing is approved.
+2. **Submit and review** (reviewer or owner). On submission, and again at approval, the manager's **exposure limit** is checked: the funding targets of all their listings in review, approved or live must stay within it. The limit is a platform-wide default (a setting), and the owner can set a different one per manager. The reviewer checks the terms, including the expected cost and sale prices against the market (required on a Shareholder Listing, §11.2), sets the required documents for each Step, and does one of three things:
+   - **Approve:** the listing moves to `approved`.
+   - **Reject** with a reason: the listing moves to `rejected`. The manager can edit and resubmit it as many times as needed. Each resubmit returns it to review and clears the reason and assignment, and earlier rejections stay in its history.
+   - **Revised terms:** the reviewer changes any term (amounts, investor share, Step plan, Shipment count) and sends it to the manager. If the manager **accepts**, the listing is approved with the revised terms. If they **decline**, it returns to them to edit and resubmit.
+   - During review, staff also record whether the buyer is a Shareholder, and owner or finance may waive the deposit (§11).
 3. **Pay deposit** (the manager, from their wallet):
-   - The manager pays `target × company_pct %` from their wallet balance. If the wallet doesn't cover it, they top it up first through the payment gateway (§5.5).
-   - In one transaction, the deposit moves from the wallet into the shipment's escrow and is recorded as the manager's contribution. The listing becomes **live**, and the `live_at` time is stamped. This can happen only once per listing.
+   - The manager pays `funding target × company_pct %` from their wallet balance. If the wallet doesn't cover it, they top it up first through the payment gateway (§5.5).
+   - In one transaction, the deposit moves from the wallet into the listing's escrow and is recorded as the manager's contribution. The listing becomes **live**, and the `live_at` time is stamped.
    - There is no bank transfer to escrow, no "deposit sent" flag and no finance confirmation.
-4. **Deposit waiver** (planned, §11.3): if owner or finance waived the deposit during the review, the treasury stand-in is booked into escrow at approval, and the listing goes live straight away without waiting for the manager.
-5. **Funding** (only while live and at stage 0):
-   - Approved investors invest any amount between the listing's **minimum** and **what is left**, as long as it is covered by their **wallet balance**.
-   - The money moves from the wallet to the shipment's escrow.
-6. **Funding overdue:**
-   - A listing is overdue when it has been live for **5 days or more** at stage 0 and is not fully funded.
-   - Overdue listings appear on the staff "Funding overdue" screen.
-   - Ops or the owner can **fund the remaining balance from the platform treasury**. That capital earns profit like everyone else's.
-7. **Stage 0 → 1, "Goods purchased":**
-   - Needs **100% funding**, plus a **cost of goods** no higher than the capital raised.
-   - The cost is paid out of escrow to the supplier.
-8. **Stages 2 to 5:**
-   - 2 "Loaded at port", 3 "At sea", 4 "Customs cleared", 5 "Goods sold".
-   - Ops or the owner advance one stage at a time, with an optional note of up to 500 characters.
-   - Every update is visible to investors in tracking.
-9. **Complete** (ops or owner, only at stage 5):
-   - Enter the **sale price** in USD.
-   - Settlement runs, and **every wallet is paid immediately in one transaction**, with no second approval.
-   - The listing becomes `completed`, stage 6.
+4. **Deposit waiver** (§11.3): if owner or finance waived the deposit during the review, the treasury stand-in is booked into escrow at approval, and the listing goes live straight away.
+5. **Withdrawn** (before live only): the manager can withdraw the listing at any point before it goes live. It is withdrawn automatically if revised terms are left unanswered, or an approved listing's deposit is left unpaid, for **14 days** (a setting). No money has moved, and it is final: the manager lists again from scratch.
+6. **Funding** (only while live and at stage 0):
+   - Approved investors invest at least the listing's **minimum**, or **exactly the remainder** if less than the minimum is left, and never more than the remainder. The amount must be covered by their **wallet balance**.
+   - The money moves from the wallet to the listing's escrow. **An investment is final.** It comes back early only if the listing is cancelled.
+   - **Overdue:** a listing that has been live for **5 days or more** at stage 0 without being fully funded appears on the staff "Funding overdue" screen. Ops or the owner can fill the remainder from the treasury, or leave it open. There is no time limit, and nothing is cancelled automatically.
+7. **Cancel** (ops or owner, with a reason): allowed only before the first Shipment's goods are bought. Every contribution is refunded in full to the wallet or treasury it came from.
+8. **Run the Shipments** (stages 1–5, per Shipment):
+   - Goods are bought only once the listing is **100% funded**. Each Shipment starts on its planned start.
+   - Each Shipment's Stage is **driven by its Steps**, and nobody advances it by hand. A Step can carry a Stage tag ("Goods purchased", "Loaded at port", "At sea", "Customs cleared", "Goods sold"). A Shipment reaches a Stage when every Step tagged with that Stage, or an earlier one, is done, and verified where verification is required (payment, customs, sale). Any ops user may verify a Step, including the one who marked it done. When approving the plan, the reviewer makes sure every Stage has at least one tagged Step. A Stage already reached never goes backwards.
+   - A Step can't be done until its required documents are uploaded. A Step can be **skipped** with a reason and a reviewer's approval. It then counts as done for its Stage tag, and its planned cost is not paid.
+   - **Changing a live plan** (adding, removing or reordering Steps, or changing durations, owners or Stage tags): the manager or ops proposes the change and a reviewer approves it, with finance also approving any cost change. The cycle is recalculated, and every change is recorded in the timeline.
+   - The listing's overall Stage is its least advanced Shipment's Stage.
+   - **Step costs** (including the cost of goods) are paid by ops from escrow, with proof. Unplanned Step costs need finance approval. Paid costs may never exceed the capital raised.
+   - **Sale proceeds:** the buyer pays Shehna, and the money is credited to the listing's escrow for that Shipment. Any shortfall against the invoice is recorded with a reason. Proceeds stay in escrow until settlement, except that finance may approve using them to pay a later Shipment's costs.
+   - **Overrun fill:** if actual costs would exceed the capital raised (and any proceeds finance allows to be used), ops requests an overrun fill with proof, and finance or the owner approves it. There is **no cap**. The treasury puts the money in as a contribution that shares profit and loss pro-rata, so it dilutes everyone else's slice (ADR 0002).
+   - **Late:** a Step past its planned duration, or a listing past its cycle, is flagged to staff, and investors see the revised expected date. Nothing happens automatically and nobody is penalised.
+   - **Suspended or blocked users:** if the manager is suspended, or their country is added to the blocked list, while the listing is live, ops takes over the manager's Steps and the listing runs on (or ops cancels it, if no goods have been bought yet). An investor's contribution stays in and shares the result in the same situation. Either way, the person's payout is held in their wallet until compliance clears it.
+   - Investors see everything on the listing except uploaded documents (§6.5).
+9. **A Shipment that won't be sold to its buyer** (lost, seized, rejected or unpaid): ops proposes one of two outcomes case by case, and a different staff member approves:
+   - **Write-off:** the Shipment counts as sold for zero, or for any insurance or salvage proceeds recorded, and its loss is shared pro-rata.
+   - **Resale:** the goods are sold to a new buyer, whose country must pass the blocked-country check. The Resale's sale price and sale document become the Shipment's. A Resale to a **Shareholder** needs the owner's approval and a market-price check, and the owner decides then whether the listing becomes a Shareholder Listing.
+10. **Settlement:**
+    - **Propose** (ops or owner): allowed once every Shipment has reached "Goods sold" with its sale proceeds received in escrow and a sale document (invoice or proof of payment), or has been written off. Each Shipment's sale price is the **proceeds actually received**, and the listing's sale price is their sum.
+    - **Approve** (finance or owner, never the person who proposed it): settlement runs (§6.3), and **every contribution is paid in one transaction**, together with any unused capital. The approver can instead **send it back** to ops with a reason.
+    - The listing becomes `completed`, stage 6.
 
 ### 5.5 Wallet top-up
 
@@ -218,24 +246,28 @@ All limits are in `config.js` (`cfg.limits`, whole dollars) and are published to
 
 ### 6.1 Listing terms
 
+> **Agreed change, not built yet (2026-10-31):** the funding target and cycle become calculated from the Shipments and Step plan, and expected profit is replaced by an expected cost of goods and an expected sale price per Shipment (§5.4). The code still takes the target, cycle and expected profit as entered fields.
+
 | Field | Rule |
 |---|---|
 | Name | 1–120 characters |
 | Category | One of: Food, Building, Textiles, Energy, Other |
 | Goods sourced from / buyer is in | Required real countries, **must differ**, neither on the blocked list |
-| Cycle | 1–365 days (whole number) |
-| Funding target | **USD 1,000 – 10,000,000** |
+| Shipments | 1 or more, fixed at approval. Each has an expected cost of goods, an expected sale price and a planned start (days after full funding). |
+| Step plan | One copy per Shipment. Each Step has an owner, a planned duration, planned Step costs, an optional Stage tag and the documents the reviewer requires. Every Stage from "Goods purchased" to "Goods sold" needs at least one tagged Step. |
+| Funding target | **Calculated:** Σ expected cost of goods + Σ planned Step costs. Must be **USD 1,000 – 10,000,000**, and within the manager's exposure limit. |
+| Cycle | **Calculated:** the latest Shipment's planned start + its planned Step durations. 1–365 days. |
+| Expected profit | **Calculated:** Σ expected sale price − funding target. |
 | Manager capital | **20%–90%** of the target (whole %) |
 | Minimum investment | USD 1 – 1,000,000, and no more than the target |
 | Investor share of net profit | **40%–95%** (whole %). The manager's share is the rest. |
-| Expected profit (manager's estimate, gross) | USD 1 – 10,000,000 |
 | Product certificate | Optional text, up to 80 characters (for example an ISO or organic certificate number) |
 
 ### 6.2 Money rules
 
-- **Investment:** USD 1 – 10,000,000 per request. It must be at least the listing's minimum, no more than the remaining amount, and covered by the wallet.
-- **Cost of goods:** no more than the capital raised. Any unused capital stays in escrow and is paid back at settlement.
-- **Sale price:** USD 0.01 – 1,000,000,000.
+- **Investment:** USD 1 – 10,000,000 per request. It must be at least the listing's minimum (or exactly the remainder, when less than the minimum is left), no more than the remainder, and covered by the wallet. *(Remainder rule agreed, not built.)*
+- **Costs:** the cost of goods and paid Step costs together may never exceed the capital raised. Beyond that, finance may approve using sale proceeds already received, or an uncapped treasury overrun fill (§5.4 step 8). Any unused capital stays in escrow and is paid back at settlement. *(Agreed, not built.)*
+- **Sale price:** USD 0.01 – 1,000,000,000 per Shipment. It is the sale proceeds actually received in escrow. *(Agreed, not built.)*
 - **Withdrawals:** USD 1 – 10,000,000. USD 10,000 or more needs owner approval.
 - **Bank credit:** USD 1 – 10,000,000 per event.
 - **Treasury top-up:** USD 1 – 100,000,000.
@@ -243,21 +275,24 @@ All limits are in `config.js` (`cfg.limits`, whole dollars) and are published to
 ### 6.3 Settlement formula (`settlement.js`)
 
 ```
-gross    = sale price − cost of goods
-fee      = 1% of sale price, only if gross > 0, never more than gross
-net      = gross − fee
-manager  = (100 − investor_share)% of net, only if net > 0   (rounded down → manager)
-pool     = net − manager                                       (negative on a loss)
+sale price = Σ sale proceeds received (Write-off: insurance or salvage proceeds, or 0)
+costs      = Σ cost of goods + Σ paid Step costs                (Step costs: agreed, not built)
+gross      = sale price − costs
+fee        = 1% of sale price, only if gross > 0, never more than gross
+net        = gross − fee
+manager    = (100 − investor_share)% of net, only if net > 0   (rounded down → manager)
+pool       = net − manager                                       (negative on a loss)
 each contribution's profit = its pro-rata slice of pool (largest-remainder rounding, sums exactly)
 each payout = its capital + its profit
 ```
 
-- Contributions come from three places: investors, the manager's deposit and platform funding.
+- Contributions come from three places: investors, the manager's deposit and platform funding (the deposit-waiver stand-in, an Overdue fill or an overrun fill).
 - Payouts go to these accounts:
-  - investor and manager **wallets**
+  - investor and manager **wallets** (held there, not withdrawable, while the person is suspended or blocked)
   - the **treasury**, for the platform's own capital
   - **platform revenue**, for the fee
 - On a loss there is no fee and no manager share. The (negative) pool reduces everyone's capital pro-rata.
+
 
 ### 6.4 Projected returns shown before the sale
 
@@ -284,20 +319,25 @@ Investors see an expected profit of `pool × their amount ÷ target`.
 
 ### 6.5 Privacy: who sees what on a listing
 
+> **Agreed change, not built yet (2026-10-31):** investors see **every figure** on a listing, and only uploaded documents stay hidden from them (ADR 0004). The code still hides the manager's capital, deposit, expected profit, manager share and result from investors (`listings.view`).
+
 | Data | Investor / public | Owning manager | Staff |
 |---|---|---|---|
-| Name, route (source and buyer country), category, cycle, target, raised, remaining, % funded, minimum, investor share, stage, ROI | ✔ | ✔ | ✔ |
-| Stage updates and notes | ✔ | ✔ | ✔ |
+| Name, route, category, cycle, target, raised, remaining, % funded, minimum, investor share, stage, ROI | ✔ | ✔ | ✔ |
+| Shipments, Step plan, Step states, owners, dates, notes, timeline | ✔ | ✔ | ✔ |
+| Expected and actual cost of goods, Step costs, expected and actual sale prices, expected profit | ✔ | ✔ | ✔ |
+| Manager capital %, deposit amount, manager share, the manager's projected and actual result | ✔ | ✔ | ✔ |
+| Treasury contributions (stand-in, Overdue fill, overrun fill); that it is a Shareholder Listing and whether the deposit was waived; the Shareholder share and Reserve fund split | ✔ | ✔ | ✔ |
+| Settlement breakdown: sale price, costs, gross, fee, net, pool, payout per contribution | ✔ (other investors anonymised) | ✔ (investors anonymised) | ✔ |
 | Own invested amount | ✔ (own) | – | – |
-| Settlement: sale price, cost, gross, fee, net, investor pool | ✔ | ✔ | ✔ |
-| Manager capital %, deposit amount, expected profit, deposit-sent flag, cost of goods, product certificate | ✗ | ✔ | ✔ |
-| Manager share, the manager's projected and actual result | ✗ | ✔ | ✔ |
-| Payout per contributor, platform-funded amount, manager's registration file | ✗ | ✗ | ✔ |
+| Which Shareholder the buyer or manager is | ✗ | ✗ | ✔ |
+| Uploaded documents, manager's registration file | ✗ | ✔ (own documents) | ✔ |
 
 Visibility rules:
 - Investors can browse **live** listings only.
 - A non-live listing is visible to an investor only if they invested in it.
 - Managers see only their own listings.
+
 
 ### 6.6 Documents
 
@@ -434,10 +474,10 @@ Fixed in the global upgrade:
 Still open:
 1. **Bank credits ignore approval status.** The webhook credits any investor or manager, even one whose KYC or registration was never approved. Withdrawals do check approval. *(Resolved by the agreed change in §5.5: only approved users can top up through the gateway.)*
 2. **Treasury top-ups are de-duplicated by bank reference.** Entering the same reference twice silently books nothing the second time.
-3. **A remaining amount smaller than the minimum investment can't be filled by investors.** For example, USD 300 left on a listing with a minimum of USD 1,000. Only platform funding can close it.
-4. **A rejected listing is final.** There is no edit-and-resubmit path, unlike applications.
+3. **A remaining amount smaller than the minimum investment can't be filled by investors.** For example, USD 300 left on a listing with a minimum of USD 1,000. Only platform funding can close it. *(Resolved by the agreed change in §5.4: an investor may invest exactly the remainder.)*
+4. **A rejected listing is final.** There is no edit-and-resubmit path, unlike applications. *(Resolved by the agreed change in §5.4.)*
 5. **The deposit-sent flag is informational only.** Finance can confirm a deposit the manager never marked as sent. *(Goes away with the agreed change in §5.4: the deposit is paid from the wallet.)*
-6. **Settlement has no second approval.** One ops user enters the sale price and every wallet is paid at once.
+6. **Settlement has no second approval.** One ops user enters the sale price and every wallet is paid at once. *(Resolved by the agreed change in §5.4: ops proposes, a different finance or owner user approves, and the sale proceeds must be in escrow.)*
 7. **The blocked list only checks where someone lives or is registered.** It does not screen names, owners' nationalities or counterparties, and a person who moves country isn't re-checked until their next submission.
 8. **The account-holder name isn't compared to the user's name.** Finance checks it by eye.
 9. **Flag emoji don't render on Windows browsers.** The country name is always shown next to it.
@@ -462,7 +502,7 @@ A Listing is a **Shareholder Listing** when its **buyer** or its **manager** is 
 
 - **Buyer link:** today the buyer is recorded only as a country. During the listing review, staff (`review`) also record **which Shareholder** the buyer is, if any. The manager doesn't choose this and the Shareholder doesn't confirm it. It is locked at approval.
 - The reviewer **checks the expected sale price against the market** before approval, because a Shareholder-buyer who pays a low price lowers the investors' profit. The settlement approver checks the sale document against it. There is no fixed tolerance yet.
-- **Investors are not told** that a Listing is a Shareholder Listing, and they don't see the waiver or the treasury amounts (consistent with §6.5).
+- **Investors are told** that a Listing is a Shareholder Listing, whether the deposit was waived, the treasury amounts and the Shareholder share and Reserve fund split, but **not which Shareholder** (§6.5, ADR 0004).
 - The same Shareholder may be both the manager and the buyer.
 
 ### 11.3 Deposit waiver (only when the buyer is a Shareholder)
@@ -525,4 +565,4 @@ New audited actions: shareholder mark and unmark, buyer-shareholder link, deposi
 
 1. A fixed tolerance for related-party sale prices, if any.
 2. A Shariah board may treat the Shareholder share as a hidden discount to the buyer on the sale price.
-3. Whether investors should be told about the Shareholder relationship. It is hidden for now. This may need to change for compliance or Shariah certification.
+3. ~~Whether investors should be told about the Shareholder relationship.~~ Resolved: they are told, but not which Shareholder (ADR 0004).

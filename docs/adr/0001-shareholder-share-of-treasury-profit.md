@@ -14,6 +14,6 @@ About ten importers each hold 1% of Shehna, and we want their suppliers to trade
 
 ## Consequences
 
-- The Shareholder relationship is not shown to investors, even though a Shareholder-buyer's price affects their returns. Reviewers check the expected sale price against the market as a safeguard, with no fixed tolerance yet.
+- ~~The Shareholder relationship is not shown to investors.~~ Amended by ADR 0004: investors are told that a Listing is a Shareholder Listing, but not which Shareholder. A Shareholder-buyer's price affects their returns. Reviewers check the expected sale price against the market as a safeguard, with no fixed tolerance yet.
 - A Shariah board may treat the payment as a hidden discount to the buyer. This is unresolved.
 - A Shareholder may be both the manager and the buyer on one Listing (self-trade) and receive the whole 75%.
