@@ -540,3 +540,4 @@ a.bento:focus-visible { outline: 3px solid var(--color-ring); outline-offset: 2p
   display: grid; place-items: center; font-size: 10px; line-height: 1;
   background: var(--color-primary); color: var(--color-primary-foreground); border-radius: 8px;
 }
+.sheet header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
