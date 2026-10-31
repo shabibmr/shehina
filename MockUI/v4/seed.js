@@ -233,15 +233,14 @@
     contribute(parallel, "kerala", "manager", 40000);
     contribute(parallel, "layla", "investor", 160000);
 
-    var writeoff = listing({
-      id: "writeoff", name: "Dates rejected at Jeddah", managerId: "omar", source: "OM", buyer: "SA",
+    var dates = listing({
+      id: "dates", name: "Dates to Jeddah", managerId: "omar", source: "OM", buyer: "SA",
       status: "live", investorShare: 50, companyPct: 20, minimum: 10000,
-      shipments: [ship("writeoff-a", 160000, 200000, 0, ["done", "verified", "done", "verified", "done", "done", "verified", "done"], 0, { writtenOff: true, proceeds: 0 })],
-      liveAt: NOW - 30 * L.DAY, approvedAt: NOW - 32 * L.DAY,
-      history: [{ at: NOW - L.DAY, actorId: "sam", action: "Write-off proposed", reason: "Buyer rejected the container." }]
+      shipments: [ship("dates-a", 160000, 200000, 0, ["done", "verified", "done", "verified", "in_progress", "todo", "todo", "todo"])],
+      liveAt: NOW - 10 * L.DAY, approvedAt: NOW - 12 * L.DAY
     });
-    contribute(writeoff, "omar", "manager", 40000);
-    contribute(writeoff, "layla", "investor", 160000);
+    contribute(dates, "omar", "manager", 40000);
+    contribute(dates, "layla", "investor", 160000);
 
     var proposed = listing({
       id: "proposed", name: "Turmeric to Hamburg", managerId: "kerala", source: "IN", buyer: "DE",
