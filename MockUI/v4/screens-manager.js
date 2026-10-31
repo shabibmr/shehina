@@ -70,7 +70,8 @@
       });
       plan.push(["Profit paid out", "About day " + (L.cycleDays ? L.cycleDays(l) : day) + " after funding"]);
       return "<p class=\"muted\">Nothing has happened yet. This is what to expect.</p><ol class=\"events events-expected\" aria-label=\"Expected timeline\">" + plan.map(function (p) {
-        return "<li><span class=\"event-dot\" aria-hidden=\"true\">&bull;</span><div class=\"event-body\"><p class=\"event-when\">" + esc(p[1]) + "</p><p class=\"title\">" + esc(p[0]) + "</p></div></li>";
+        var glyph = UI.stageGlyph(p[0], 16);
+        return "<li><span class=\"event-dot\" aria-hidden=\"true\">" + (glyph || "&bull;") + "</span><div class=\"event-body\"><p class=\"event-when\">" + esc(p[1]) + "</p><p class=\"title\">" + esc(p[0]) + "</p></div></li>";
       }).join("") + "</ol>";
     }
 
@@ -834,7 +835,7 @@
           return "<li class=\"" + cls + "\"><div>" + inner + "</div></li>";
         }).join("");
         var pct = sh.steps.length ? Math.round(doneN * 100 / sh.steps.length) : 0;
-        return "<section class=\"stack\"><h2>Shipment " + (si + 1) + "</h2><p class=\"muted\">" + L.formatUsd(sh.goods) + " goods · " + esc(L.STAGES[stageN]) + "</p>" +
+        return "<section class=\"stack\"><h2>Shipment " + (si + 1) + "</h2><p class=\"stage-line muted\">" + UI.stageGlyph(L.STAGES[stageN]) + "<span>" + L.formatUsd(sh.goods) + " goods · " + esc(L.STAGES[stageN]) + "</span></p>" +
           "<div class=\"progress\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"" + pct + "\" aria-label=\"Steps done\"><i style=\"width:" + pct + "%\"></i></div>" +
           "<p class=\"meta\">" + doneN + " of " + sh.steps.length + " steps done</p><ol class=\"track\">" + items + "</ol></section>";
       }).join("");

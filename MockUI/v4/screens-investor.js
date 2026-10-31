@@ -300,7 +300,8 @@
           var steps = (sh.steps || []).map(function (st) {
             return "<li>" + UI.esc(st.name) + " · " + UI.esc(st.state) + "</li>";
           }).join("");
-          return "<section><p><strong>Shipment</strong> · stage " + UI.esc(L.STAGES[L.shipmentStage(l, sh)]) + "</p><ul>" + steps + "</ul></section>";
+          var stageName = L.STAGES[L.shipmentStage(l, sh)];
+          return "<section><p class=\"stage-line\">" + UI.stageGlyph(stageName) + "<span><strong>Shipment</strong> · " + UI.esc(stageName) + "</span></p><ul>" + steps + "</ul></section>";
         }).join("");
         if (tab === "figures") body = figures(l);
         if (tab === "timeline") body = "<ol class=\"timeline\">" + (l.history || []).map(function (h) { return "<li><p>" + UI.esc(h.action) + (h.reason ? ". " + UI.esc(h.reason) : "") + "</p><p class=\"muted\">" + UI.when(h.at) + "</p></li>"; }).join("") + "</ol>";
@@ -421,8 +422,9 @@
         if (!l) { stage.innerHTML = "<div class=\"column\"><h1>Not found</h1></div>"; return; }
         var body = l.shipments.map(function (sh) {
           var stageN = L.shipmentStage(l, sh);
-          var route = L.STAGES.slice(0, 6).map(function (name, i) {
-            return "<li class=\"" + (i <= stageN ? "done" : "") + "\">" + name + "</li>";
+          var route = L.STAGES.map(function (name, i) {
+            var cls = i < stageN ? "done" : i === stageN ? "now" : "";
+            return "<li class=\"" + cls + "\">" + UI.stageGlyph(name) + "<span>" + UI.esc(name) + "</span></li>";
           }).join("");
           var late = sh.steps.map(function (st, i) {
             if (!L.isLate(l, sh, i, Store.state.now)) return "";

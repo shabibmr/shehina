@@ -86,8 +86,23 @@
     plus: "<path d=\"M12 5v14M5 12h14\"/>",
     flag: "<path d=\"M6 20.5v-17M6 4.5h11l-2 4 2 4H6\"/>",
     info: "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 11v5M12 8v.1\"/>",
-    cross: "<path d=\"M6.5 6.5l11 11M17.5 6.5l-11 11\"/>"
+    cross: "<path d=\"M6.5 6.5l11 11M17.5 6.5l-11 11\"/>",
+    wallet: "<path d=\"M4.5 8h15.5V18a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 18V8Z\"/><path d=\"M4.5 8 7 5h9.5L19 8\"/><path d=\"M14 13.2h6v3h-6a1.5 1.5 0 0 1 0-3Z\"/>",
+    port: "<path d=\"M3.5 19.5h17\"/><path d=\"M6 19.5V11h7v8.5\"/><path d=\"M8 13.5h3M8 16h3\"/><path d=\"M16.5 19.5V8M16.5 8h4.5M19 8v3.5\"/>"
   };
+  var STAGE_ICON = {
+    "Funding open": "wallet",
+    "Goods purchased": "package",
+    "Loaded at port": "port",
+    "At sea": "ship",
+    "Customs cleared": "shield",
+    "Goods sold": "receipt",
+    "Profit paid out": "bank"
+  };
+  function stageGlyph(name, size) {
+    var key = STAGE_ICON[name];
+    return key ? strokeIcon(key, size || 20) : "";
+  }
   function strokeIcon(name, size) {
     return "<svg viewBox=\"0 0 24 24\" width=\"" + size + "\" height=\"" + size + "\" aria-hidden=\"true\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\">" + (STROKES[name] || "") + "</svg>";
   }
@@ -353,7 +368,7 @@
   }
 
   var api = {
-    esc: esc, cname: cname, countryOpts: countryOpts, blockedNote: blockedNote, when: when, money: money, icon: icon, badge: badge, decorate: decorate,
+    esc: esc, cname: cname, countryOpts: countryOpts, blockedNote: blockedNote, when: when, money: money, icon: icon, badge: badge, stageGlyph: stageGlyph, decorate: decorate,
     screen: screen, go: go, back: back, toast: toast, openSheet: openSheet, closeSheet: closeSheet, field: field,
     homeFor: homeFor, start: start,
     kpis: kpis, tabs: tabs, fold: fold, menu: menu, sticky: sticky, group: group,
